@@ -1,5 +1,6 @@
 import sqlite3
 import os
+import json
 
 class VedaMemory:
     def __init__(self, db_path="veda_memory.db"):

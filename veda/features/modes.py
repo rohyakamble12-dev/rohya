@@ -13,7 +13,9 @@ class VedaModes:
         self.assistant.system.set_volume(20)
         # 2. Lower brightness for eye comfort
         self.assistant.system.set_brightness(40)
-        # 3. Protocol updates
+        # 3. Update Theme
+        self.assistant.gui.after(0, lambda: self.assistant.gui.set_theme_color("focus"))
+        # 4. Protocol updates
         self.assistant.protocols.protocols["context_monitoring"] = True
         return "Focus Mode Engaged. I've optimized your environment for deep work."
 
@@ -24,6 +26,7 @@ class VedaModes:
         self.assistant.system.set_volume(0)
         # 2. Update HUD via assistant reference (alpha/transparency)
         self.assistant.gui.after(0, lambda: self.assistant.gui.attributes("-alpha", 0.4))
+        self.assistant.gui.after(0, lambda: self.assistant.gui.set_theme_color("stealth"))
         # 3. Disable context tracking for maximum privacy
         self.assistant.protocols.protocols["context_monitoring"] = False
         self.assistant.context.stop_monitoring()
@@ -53,7 +56,8 @@ class VedaModes:
         self.active_mode = "NORMAL"
         self.assistant.system.set_volume(50)
         self.assistant.system.set_brightness(70)
-        self.assistant.gui.after(0, lambda: self.assistant.gui.attributes("-alpha", 0.85))
+        self.assistant.gui.after(0, lambda: self.assistant.gui.attributes("-alpha", 0.95))
+        self.assistant.gui.after(0, lambda: self.assistant.gui.set_theme_color("calm"))
         self.assistant.protocols.protocols["context_monitoring"] = True
         self.assistant.context.start_monitoring()
         return "Standard protocols restored."

@@ -280,7 +280,9 @@ class VedaAssistant:
             response = self.calculator.calculate(expr)
             action_taken = True
         elif intent == "sight":
-            response = self.vision.veda_sight()
+            # Pass the latest frame from GUI to avoid camera conflicts
+            frame = getattr(self.gui, 'last_raw_frame', None)
+            response = self.vision.veda_sight(frame=frame)
             action_taken = True
         elif intent == "iot_control":
             url = params.get("url", "")

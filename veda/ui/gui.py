@@ -1,6 +1,10 @@
 import customtkinter as ctk
 import threading
 import tkinter as tk
+from PIL import Image, ImageTk
+import cv2
+import psutil
+import time
 
 class VedaGUI(ctk.CTk):
     def __init__(self, on_send_callback, on_voice_callback):
@@ -10,160 +14,317 @@ class VedaGUI(ctk.CTk):
         self.on_voice_callback = on_voice_callback
         self.protocol_callback = None
 
-        # HUD Configuration
-        self.title("VEDA HUD")
-        self.geometry("450x600+50+50") # Set to a corner by default
+        # HUD Configuration - Wide Dashboard
+        self.title("VEDA CORE INTERFACE")
+        self.geometry("1200x700")
         self.overrideredirect(True) # Remove standard title bar
         self.attributes("-topmost", True)
-        self.attributes("-alpha", 0.85) # Transparency
-        self.configure(fg_color="#010a12") # Very dark blue/black
+        self.attributes("-alpha", 0.95)
+        self.configure(fg_color="#0a0a0c") # Very dark black
 
         # Colors
         self.accent_color = "#00d4ff" # Jarvis Cyan
+        self.alert_color = "#ff4b2b"
         self.text_color = "#e0f7fa"
+        self.bg_secondary = "#121217"
 
-        # Dragging functionality for the HUD
+        # State
+        self.pulse_active = False
+        self.camera_active = True
+        self.cap = None
+        self.last_raw_frame = None
+
+        # Protocol Variables for Assistant sync
+        self.deep_search_var = tk.BooleanVar(value=False)
+        self.private_var = tk.BooleanVar(value=False)
+        self.context_var = tk.BooleanVar(value=True)
+
+        # Dragging functionality
         self.bind("<ButtonPress-1>", self.start_move)
         self.bind("<ButtonRelease-1>", self.stop_move)
         self.bind("<B1-Motion>", self.do_move)
 
-        self.grid_columnconfigure(0, weight=1)
+        self._setup_layout()
+        self._start_background_tasks()
+
+    def _setup_layout(self):
+        self.grid_columnconfigure(0, weight=1, minsize=250) # Left: Visual/Metrics
+        self.grid_columnconfigure(1, weight=2, minsize=500) # Center: Core
+        self.grid_columnconfigure(2, weight=1, minsize=350) # Right: Transcript
         self.grid_rowconfigure(1, weight=1)
 
-        # Header / Title Bar Area
-        self.header = ctk.CTkFrame(self, height=40, fg_color="#021627", corner_radius=0)
-        self.header.grid(row=0, column=0, sticky="ew")
+        # --- TOP NAVIGATION BAR ---
+        self.top_bar = ctk.CTkFrame(self, height=50, fg_color="#050507", corner_radius=0)
+        self.top_bar.grid(row=0, column=0, columnspan=3, sticky="ew")
 
-        self.title_label = ctk.CTkLabel(self.header, text="V E D A  I N T E R F A C E",
-                                        font=("Orbitron", 14, "bold"), text_color=self.accent_color)
-        self.title_label.pack(side="left", padx=20)
+        # Left side buttons
+        self.nav_frame = ctk.CTkFrame(self.top_bar, fg_color="transparent")
+        self.nav_frame.pack(side="left", padx=20)
 
-        self.close_btn = ctk.CTkButton(self.header, text="X", width=30, height=30,
-                                       fg_color="transparent", hover_color="#ff4b2b",
-                                       command=self.destroy)
-        self.close_btn.pack(side="right", padx=10)
+        self.btn_dash = self._create_nav_btn("DASHBOARD", active=True)
+        self.btn_contacts = self._create_nav_btn("CONTACTS")
+        self.btn_notes = self._create_nav_btn("NOTES")
+        self.btn_connect = self._create_nav_btn("CONNECT")
+        self.btn_phone = self._create_nav_btn("PHONE")
 
-        # Chat display area
-        self.chat_display = ctk.CTkTextbox(self, width=430, height=450,
-                                           fg_color="#01121f",
-                                           text_color=self.text_color,
-                                           font=("Consolas", 12),
-                                           border_width=1, border_color=self.accent_color)
-        self.chat_display.grid(row=1, column=0, padx=10, pady=(10, 5), sticky="nsew")
+        # Right side status
+        self.status_indicators = ctk.CTkFrame(self.top_bar, fg_color="transparent")
+        self.status_indicators.pack(side="right", padx=20)
+
+        self.online_status = ctk.CTkLabel(self.status_indicators, text="● ONLINE", text_color="#00ff7f", font=("Orbitron", 10))
+        self.online_status.pack(side="left", padx=10)
+
+        self.sys_ready = ctk.CTkLabel(self.status_indicators, text="SYSTEM READY", text_color=self.accent_color, font=("Orbitron", 10))
+        self.sys_ready.pack(side="left", padx=10)
+
+        # --- LEFT COLUMN: VISUAL & METRICS ---
+        self.left_col = ctk.CTkFrame(self, fg_color="transparent")
+        self.left_col.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
+
+        # Visual Input
+        self.vis_frame = self._create_section_frame(self.left_col, "VISUAL INPUT")
+        self.cam_label = tk.Label(self.vis_frame, bg="black")
+        self.cam_label.pack(fill="both", expand=True, padx=5, pady=5)
+        self.cam_off_label = ctk.CTkLabel(self.cam_label, text="VIDEO FEED OFFLINE", text_color="grey")
+
+        # System Metrics
+        self.metrics_frame = self._create_section_frame(self.left_col, "SYSTEM METRICS")
+
+        self.cpu_usage_frame = ctk.CTkFrame(self.metrics_frame, fg_color="transparent")
+        self.cpu_usage_frame.pack(fill="x", padx=10, pady=5)
+        self.cpu_label = ctk.CTkLabel(self.cpu_usage_frame, text="CPU LOAD", font=("Consolas", 11))
+        self.cpu_label.pack(side="left")
+        self.cpu_val = ctk.CTkLabel(self.cpu_usage_frame, text="0%", font=("Consolas", 11, "bold"), text_color=self.accent_color)
+        self.cpu_val.pack(side="right")
+        self.cpu_bar = ctk.CTkProgressBar(self.metrics_frame, progress_color=self.accent_color)
+        self.cpu_bar.set(0)
+        self.cpu_bar.pack(fill="x", padx=10, pady=(0, 10))
+
+        self.ram_usage_frame = ctk.CTkFrame(self.metrics_frame, fg_color="transparent")
+        self.ram_usage_frame.pack(fill="x", padx=10, pady=5)
+        self.ram_label = ctk.CTkLabel(self.ram_usage_frame, text="RAM USAGE", font=("Consolas", 11))
+        self.ram_label.pack(side="left")
+        self.ram_val = ctk.CTkLabel(self.ram_usage_frame, text="0%", font=("Consolas", 11, "bold"), text_color="#b000ff")
+        self.ram_val.pack(side="right")
+        self.ram_bar = ctk.CTkProgressBar(self.metrics_frame, progress_color="#b000ff")
+        self.ram_bar.set(0)
+        self.ram_bar.pack(fill="x", padx=10, pady=(0, 10))
+
+        # Top Processes
+        self.proc_frame = self._create_section_frame(self.left_col, "TOP PROCESSES")
+        self.proc_text = ctk.CTkTextbox(self.proc_frame, height=120, font=("Consolas", 10), fg_color="transparent")
+        self.proc_text.pack(fill="both", expand=True, padx=5, pady=5)
+
+        # Protocols
+        self.proto_frame = self._create_section_frame(self.left_col, "SYSTEM PROTOCOLS")
+        self.cb_research = ctk.CTkCheckBox(self.proto_frame, text="DEEP RESEARCH", variable=self.deep_search_var,
+                                           command=self._on_proto_change, font=("Orbitron", 8), text_color=self.accent_color)
+        self.cb_research.pack(anchor="w", padx=10, pady=2)
+
+        self.cb_secure = ctk.CTkCheckBox(self.proto_frame, text="SECURE MODE", variable=self.private_var,
+                                         command=self._on_proto_change, font=("Orbitron", 8), text_color=self.accent_color)
+        self.cb_secure.pack(anchor="w", padx=10, pady=2)
+
+        self.cb_context = ctk.CTkCheckBox(self.proto_frame, text="REAL-TIME CONTEXT", variable=self.context_var,
+                                          command=self._on_proto_change, font=("Orbitron", 8), text_color=self.accent_color)
+        self.cb_context.pack(anchor="w", padx=10, pady=2)
+
+        # --- CENTER COLUMN: CORE SYSTEM ---
+        self.center_col = ctk.CTkFrame(self, fg_color="#0d0d12", border_width=1, border_color="#1f1f26")
+        self.center_col.grid(row=1, column=1, padx=5, pady=10, sticky="nsew")
+
+        self.core_label = ctk.CTkLabel(self.center_col, text="(( CORE SYSTEM ))", font=("Orbitron", 12), text_color=self.accent_color)
+        self.core_label.pack(pady=10)
+
+        # Core Animation Canvas
+        self.canvas = tk.Canvas(self.center_col, width=400, height=400, bg="#0d0d12", highlightthickness=0)
+        self.canvas.pack(pady=20, expand=True)
+        self._draw_core_base()
+
+        # Center Controls
+        self.controls_frame = ctk.CTkFrame(self.center_col, fg_color="transparent")
+        self.controls_frame.pack(pady=20)
+
+        self.btn_cam_toggle = ctk.CTkButton(self.controls_frame, text="📷", width=50, fg_color="#1f1f26", command=self.toggle_camera)
+        self.btn_cam_toggle.pack(side="left", padx=10)
+
+        self.btn_end = ctk.CTkButton(self.controls_frame, text="U END", width=120, fg_color=self.alert_color, font=("Orbitron", 14, "bold"), command=self.destroy)
+        self.btn_end.pack(side="left", padx=10)
+
+        self.btn_mic = ctk.CTkButton(self.controls_frame, text="🎤", width=50, fg_color="#1f1f26", command=self.trigger_voice)
+        self.btn_mic.pack(side="left", padx=10)
+
+        # --- RIGHT COLUMN: TRANSCRIPT ---
+        self.right_col = ctk.CTkFrame(self, fg_color="transparent")
+        self.right_col.grid(row=1, column=2, padx=10, pady=10, sticky="nsew")
+
+        self.trans_frame = self._create_section_frame(self.right_col, "TRANSCRIPT")
+        self.chat_display = ctk.CTkTextbox(self.trans_frame, font=("Consolas", 12), fg_color="#08080a", text_color="#cfd8dc")
+        self.chat_display.pack(fill="both", expand=True, padx=5, pady=5)
         self.chat_display.configure(state="disabled")
 
-        # Status Bar
-        self.status_bar = ctk.CTkLabel(self, text="SYSTEM READY", font=("Consolas", 10), text_color=self.accent_color)
-        self.status_bar.grid(row=2, column=0, sticky="w", padx=15)
-
-        self.metrics_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.metrics_frame.grid(row=2, column=0, sticky="e", padx=15)
-
-        self.cpu_bar = ctk.CTkProgressBar(self.metrics_frame, width=100, height=8, progress_color=self.accent_color)
-        self.cpu_bar.set(0)
-        self.cpu_bar.pack(side="left", padx=5)
-        self.cpu_label = ctk.CTkLabel(self.metrics_frame, text="CPU", font=("Consolas", 9), text_color=self.accent_color)
-        self.cpu_label.pack(side="left")
-
-        self.ram_bar = ctk.CTkProgressBar(self.metrics_frame, width=100, height=8, progress_color="#b000ff")
-        self.ram_bar.set(0)
-        self.ram_bar.pack(side="left", padx=5)
-        self.ram_label = ctk.CTkLabel(self.metrics_frame, text="RAM", font=("Consolas", 9), text_color=self.accent_color)
-        self.ram_label.pack(side="left")
-
-        # Input area
-        self.input_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.input_frame.grid(row=3, column=0, padx=10, pady=10, sticky="ew")
-        self.input_frame.grid_columnconfigure(0, weight=1)
-
-        self.input_entry = ctk.CTkEntry(self.input_frame, placeholder_text="Enter Command...",
-                                        fg_color="#01121f", border_color=self.accent_color,
-                                        text_color=self.accent_color)
-        self.input_entry.grid(row=0, column=0, padx=(0, 10), pady=10, sticky="ew")
+        # Input Area
+        self.input_frame = ctk.CTkFrame(self.right_col, fg_color="transparent")
+        self.input_frame.pack(fill="x", pady=(10, 0))
+        self.input_entry = ctk.CTkEntry(self.input_frame, placeholder_text="Awaiting command...", height=40,
+                                        fg_color="#08080a", border_color=self.accent_color)
+        self.input_entry.pack(fill="x")
         self.input_entry.bind("<Return>", lambda e: self.send_message())
 
-        self.voice_button = ctk.CTkButton(self.input_frame, text="MIC", width=60,
-                                          fg_color="transparent", border_width=1,
-                                          border_color=self.accent_color,
-                                          text_color=self.accent_color,
-                                          hover_color="#004d61",
-                                          command=self.trigger_voice)
-        self.voice_button.grid(row=0, column=1, padx=0, pady=10)
+    def _create_nav_btn(self, text, active=False):
+        color = self.accent_color if active else "transparent"
+        btn = ctk.CTkButton(self.nav_frame, text=text, width=100, height=30,
+                             fg_color=color, text_color="white" if active else "grey",
+                             hover_color="#1f1f26", corner_radius=5, font=("Orbitron", 9))
+        btn.pack(side="left", padx=2)
+        return btn
 
-        # Protocol Toggles (New)
-        self.protocol_frame = ctk.CTkFrame(self, fg_color="#01121f", border_width=1, border_color=self.accent_color)
-        self.protocol_frame.grid(row=4, column=0, padx=10, pady=(0, 10), sticky="ew")
+    def _create_section_frame(self, parent, title):
+        frame = ctk.CTkFrame(parent, fg_color="#0d0d12", border_width=1, border_color="#1f1f26")
+        frame.pack(fill="both", expand=True, pady=5)
 
-        self.deep_search_var = tk.BooleanVar(value=False)
-        self.deep_search_cb = ctk.CTkCheckBox(self.protocol_frame, text="DEEP RESEARCH",
-                                              variable=self.deep_search_var,
-                                              command=lambda: self.on_protocol_toggle("deep_research"),
-                                              font=("Consolas", 10), text_color=self.accent_color,
-                                              fg_color=self.accent_color, hover_color="#004d61")
-        self.deep_search_cb.pack(side="left", padx=10, pady=5)
+        label_frame = ctk.CTkFrame(frame, height=25, fg_color="#16161d", corner_radius=0)
+        label_frame.pack(fill="x")
 
-        self.private_var = tk.BooleanVar(value=False)
-        self.private_cb = ctk.CTkCheckBox(self.protocol_frame, text="SECURE MODE",
-                                          variable=self.private_var,
-                                          command=lambda: self.on_protocol_toggle("private_mode"),
-                                          font=("Consolas", 10), text_color=self.accent_color,
-                                          fg_color=self.accent_color, hover_color="#004d61")
-        self.private_cb.pack(side="left", padx=10, pady=5)
+        title_lbl = ctk.CTkLabel(label_frame, text=f"■ {title}", font=("Orbitron", 10, "bold"), text_color=self.accent_color)
+        title_lbl.pack(side="left", padx=10)
 
-        self.context_var = tk.BooleanVar(value=True)
-        self.context_cb = ctk.CTkCheckBox(self.protocol_frame, text="REAL-TIME CONTEXT",
-                                          variable=self.context_var,
-                                          command=lambda: self.on_protocol_toggle("context_monitoring"),
-                                          font=("Consolas", 10), text_color=self.accent_color,
-                                          fg_color=self.accent_color, hover_color="#004d61")
-        self.context_cb.pack(side="left", padx=10, pady=5)
+        return frame
 
-        # Suggestions area
-        self.suggestion_label = ctk.CTkLabel(self, text="", font=("Consolas", 11, "italic"), text_color="#ffff00")
-        self.suggestion_label.grid(row=5, column=0, padx=15, pady=(0, 5), sticky="w")
+    def _draw_core_base(self):
+        """Draws the initial core UI with multiple rings and particles."""
+        self.canvas.delete("all")
+        # Rings for rotation effect
+        self.ring1 = self.canvas.create_oval(30, 30, 370, 370, outline="#1f1f26", width=1, dash=(5, 10))
+        self.ring2 = self.canvas.create_oval(60, 60, 340, 340, outline="#00d4ff", width=1, dash=(2, 4))
+        self.ring3 = self.canvas.create_oval(80, 80, 320, 320, outline="#1f1f26", width=2)
 
-        # Voice Pulse Indicator
-        self.pulse_canvas = tk.Canvas(self, width=450, height=20, bg="#010a12", highlightthickness=0)
-        self.pulse_canvas.grid(row=6, column=0, sticky="ew")
-        self.pulse_line = self.pulse_canvas.create_line(0, 10, 450, 10, fill=self.accent_color, width=2)
-        self.pulse_active = False
+        # Inner glowing orb (to be animated)
+        self.core_orb = self.canvas.create_oval(120, 120, 280, 280, fill="#002b36", outline=self.accent_color, width=2)
 
-        self.update_chat("Veda", "HUD Initialized. Connection established.")
-        self.pulse_status()
-        self.update_metrics()
-
-    def update_metrics(self):
-        """Periodically updates hardware metrics on the HUD."""
-        try:
-            import psutil
-            cpu = psutil.cpu_percent()
-            ram = psutil.virtual_memory().percent
-            self.cpu_bar.set(cpu / 100)
-            self.ram_bar.set(ram / 100)
-        except Exception as e:
-            print(f"Metrics update error: {e}")
-        finally:
-            self.after(5000, self.update_metrics)
-
-    def animate_pulse(self):
-        """Animates the voice waveform line."""
-        if not self.pulse_active:
-            self.pulse_canvas.coords(self.pulse_line, 0, 10, 450, 10)
-            return
-
+        # Particle placeholders
+        self.particles = []
         import random
-        points = [0, 10]
-        for x in range(10, 450, 10):
-            h = 10 + random.randint(-8, 8)
-            points.extend([x, h])
-        points.extend([450, 10])
-        self.pulse_canvas.coords(self.pulse_line, *points)
-        self.after(100, self.animate_pulse)
+        for _ in range(80):
+            x = random.randint(150, 250)
+            y = random.randint(150, 250)
+            p = self.canvas.create_oval(x, y, x+2, y+2, fill=self.accent_color, outline="")
+            self.particles.append({'id': p, 'speed': random.uniform(0.5, 2.0), 'angle': random.uniform(0, 6.28)})
 
-    def set_voice_active(self, active):
-        self.pulse_active = active
-        if active:
-            self.animate_pulse()
+    def _start_background_tasks(self):
+        threading.Thread(target=self._update_metrics_loop, daemon=True).start()
+        threading.Thread(target=self._update_camera_loop, daemon=True).start()
+        self._animate_core_loop()
+
+    def _update_metrics_loop(self):
+        while True:
+            try:
+                cpu = psutil.cpu_percent()
+                ram = psutil.virtual_memory().percent
+
+                # Check internet connectivity
+                import requests
+                try:
+                    requests.get("https://www.google.com", timeout=1)
+                    online = True
+                except:
+                    online = False
+
+                # Get top processes
+                processes = sorted(psutil.process_iter(['name', 'cpu_percent']),
+                                  key=lambda p: p.info['cpu_percent'], reverse=True)[:5]
+                proc_str = "APP NAME          CPU\n" + "-"*25 + "\n"
+                for p in processes:
+                    proc_str += f"{p.info['name'][:15]:<16} {p.info['cpu_percent']:>5}%\n"
+
+                self.after(0, lambda: self._update_metrics_ui(cpu, ram, proc_str, online))
+            except:
+                pass
+            time.sleep(2)
+
+    def _update_metrics_ui(self, cpu, ram, proc_str, online):
+        self.cpu_bar.set(cpu/100)
+        self.cpu_val.configure(text=f"{cpu}%")
+        self.ram_bar.set(ram/100)
+
+        if online:
+            self.online_status.configure(text="● ONLINE", text_color="#00ff7f")
+        else:
+            self.online_status.configure(text="○ OFFLINE", text_color=self.alert_color)
+
+        self.ram_val.configure(text=f"{ram}%")
+        self.proc_text.configure(state="normal")
+        self.proc_text.delete("1.0", "end")
+        self.proc_text.insert("1.0", proc_str)
+        self.proc_text.configure(state="disabled")
+
+    def _update_camera_loop(self):
+        self.cap = cv2.VideoCapture(0)
+        while True:
+            if self.camera_active and self.cap.isOpened():
+                ret, frame = self.cap.read()
+                if ret:
+                    self.last_raw_frame = frame.copy()
+                    # Resize to fit the label
+                    frame = cv2.resize(frame, (240, 160))
+                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    img = Image.fromarray(frame)
+                    img_tk = ImageTk.PhotoImage(image=img)
+                    self.after(0, lambda: self._update_cam_ui(img_tk))
+            else:
+                self.after(0, lambda: self.cam_label.configure(image=""))
+            time.sleep(0.05)
+
+    def _update_cam_ui(self, img_tk):
+        self.cam_label.img_tk = img_tk
+        self.cam_label.configure(image=img_tk)
+        self.cam_off_label.pack_forget()
+
+    def _animate_core_loop(self):
+        """Animates the central core with rotation, pulsing, and particle movement."""
+        import math
+        import random
+
+        t = time.time()
+
+        # Rotation logic for rings (visual only via dash shift if possible, or just skip for now)
+        # Pulse intensity increases when Veda is speaking
+        speed_mult = 5 if self.pulse_active else 2
+        pulse = (math.sin(t * speed_mult) + 1) / 2
+
+        size_base = 120
+        size_adj = pulse * (20 if self.pulse_active else 8)
+        self.canvas.coords(self.core_orb,
+                           200 - (size_base + size_adj), 200 - (size_base + size_adj),
+                           200 + (size_base + size_adj), 200 + (size_base + size_adj))
+
+        # Color shift
+        if self.pulse_active:
+            self.canvas.itemconfig(self.core_orb, fill="#005d7a", outline="#ffffff")
+        else:
+            self.canvas.itemconfig(self.core_orb, fill="#001a21", outline=self.accent_color)
+
+        # Move particles in circular patterns
+        for p_data in self.particles:
+            p = p_data['id']
+            p_data['angle'] += 0.05 * p_data['speed']
+            dist = 60 + pulse * 40
+            x = 200 + math.cos(p_data['angle']) * dist
+            y = 200 + math.sin(p_data['angle']) * dist
+            self.canvas.coords(p, x-1, y-1, x+1, y+1)
+
+            # Random twinkle
+            if random.random() > 0.9:
+                self.canvas.itemconfig(p, fill="white" if self.pulse_active else self.accent_color)
+
+        self.after(40, self._animate_core_loop)
+
+    def toggle_camera(self):
+        self.camera_active = not self.camera_active
+        if not self.camera_active:
+            self.cam_off_label.pack(expand=True)
+        else:
+            self.cam_off_label.pack_forget()
 
     def set_theme_color(self, mood="calm"):
         """Changes the HUD accent color based on Veda's 'mood' or system state."""
@@ -178,40 +339,33 @@ class VedaGUI(ctk.CTk):
         self.accent_color = color
 
         # Update UI elements
-        self.title_label.configure(text_color=color)
-        self.chat_display.configure(border_color=color)
-        self.status_bar.configure(text_color=color)
-        # Correcting based on latest UI
-        self.cpu_label.configure(text_color=color)
-        self.ram_label.configure(text_color=color)
-        self.input_entry.configure(border_color=color, text_color=color)
-        self.voice_button.configure(border_color=color, text_color=color)
-        self.protocol_frame.configure(border_color=color)
-        self.pulse_canvas.itemconfig(self.pulse_line, fill=color)
+        self.sys_ready.configure(text_color=color)
+        self.cpu_val.configure(text_color=color)
+        self.cpu_bar.configure(progress_color=color)
+        self.input_entry.configure(border_color=color)
+        self.btn_mic.configure(fg_color=color if self.pulse_active else "#1f1f26")
 
-        # Checkboxes
-        self.deep_search_cb.configure(text_color=color, fg_color=color)
-        self.private_cb.configure(text_color=color, fg_color=color)
-        self.context_cb.configure(text_color=color, fg_color=color)
+        # Update checkbox colors
+        self.cb_research.configure(text_color=color)
+        self.cb_secure.configure(text_color=color)
+        self.cb_context.configure(text_color=color)
 
-    def pulse_status(self):
-        """Adds a subtle glowing animation to the status bar."""
-        current_text = self.status_bar.cget("text")
-        if "READY" in current_text:
-            colors = [self.accent_color, "#006d82", self.accent_color]
-            def animate(idx=0):
-                if "READY" in self.status_bar.cget("text"):
-                    self.status_bar.configure(text_color=colors[idx % len(colors)])
-                    self.after(1000, animate, idx + 1)
-            animate()
+    def set_voice_active(self, active):
+        self.pulse_active = active
+        if active:
+            self.btn_mic.configure(fg_color=self.accent_color)
+        else:
+            self.btn_mic.configure(fg_color="#1f1f26")
 
     def update_chat(self, sender, message):
-        """Thread-safe way to update the chat display."""
         self.after(0, self._update_chat_ui, sender, message)
 
     def _update_chat_ui(self, sender, message):
         self.chat_display.configure(state="normal")
-        self.chat_display.insert("end", f"[{sender.upper()}]: {message}\n\n")
+        color = self.accent_color if sender.lower() == "veda" else "#ffffff"
+        self.chat_display.insert("end", f"{sender.upper()}: ", ("sender",))
+        self.chat_display.insert("end", f"{message}\n\n")
+        self.chat_display.tag_config("sender", foreground=color, font=("Consolas", 12, "bold"))
         self.chat_display.configure(state="disabled")
         self.chat_display.see("end")
 
@@ -220,40 +374,34 @@ class VedaGUI(ctk.CTk):
         if message:
             self.update_chat("User", message)
             self.input_entry.delete(0, "end")
-            self.status_bar.configure(text="PROCESSING...")
             threading.Thread(target=self.on_send_callback, args=(message,), daemon=True).start()
 
-    def show_suggestion(self, text):
-        """Displays a proactive suggestion on the HUD."""
-        self.after(0, lambda: self.suggestion_label.configure(text=f"VEDA TIP: {text}"))
-
-    def on_protocol_toggle(self, name):
-        """Notifies the assistant when a protocol is toggled."""
-        self.status_bar.configure(text=f"PROTOCOL {name.upper()} UPDATED")
-        if self.protocol_callback:
-            self.protocol_callback()
-
     def trigger_voice(self):
-        self.voice_button.configure(text="...", border_color="#ff4b2b", text_color="#ff4b2b")
-        self.status_bar.configure(text="LISTENING...")
+        self.sys_ready.configure(text="LISTENING...", text_color=self.alert_color)
         threading.Thread(target=self.on_voice_callback, daemon=True).start()
 
     def reset_voice_button(self):
-        self.after(0, self._reset_voice_ui)
+        self.after(0, lambda: self.sys_ready.configure(text="SYSTEM READY", text_color=self.accent_color))
 
-    def _reset_voice_ui(self):
-        self.voice_button.configure(text="MIC", border_color=self.accent_color, text_color=self.accent_color)
-        self.status_bar.configure(text="SYSTEM READY")
+    def show_suggestion(self, text):
+        # We can show this in the transcript or a dedicated tooltip
+        self.update_chat("System", f"Suggestion: {text}")
 
-    # Movement Logic
+    def _on_proto_change(self):
+        if self.protocol_callback:
+            self.protocol_callback()
+
+    def on_protocol_toggle(self, name):
+        """Called externally to update UI state if protocol changes via voice."""
+        self._on_proto_change()
+
+    # Window movement
     def start_move(self, event):
         self.x = event.x
         self.y = event.y
-
     def stop_move(self, event):
         self.x = None
         self.y = None
-
     def do_move(self, event):
         deltax = event.x - self.x
         deltay = event.y - self.y
