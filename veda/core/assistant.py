@@ -18,6 +18,7 @@ from veda.features.task_master import VedaTaskMaster
 from veda.features.calculator import VedaCalculator
 from veda.features.iot import VedaIOT
 from veda.features.help import VedaHelp
+from veda.features.network_intel import VedaNetworkIntel
 from veda.core.context import VedaContext
 from veda.utils.notifications import VedaNotifications
 from veda.utils.protocols import VedaProtocols
@@ -49,6 +50,7 @@ class VedaAssistant:
         self.calculator = VedaCalculator()
         self.iot = VedaIOT()
         self.help = VedaHelp()
+        self.net_intel = VedaNetworkIntel()
         self.context = VedaContext(self)
         self.protocols = VedaProtocols()
 
@@ -144,6 +146,14 @@ class VedaAssistant:
             health = self.diagnostics.get_system_health()
             briefing = f"Good morning! Here is your status report:\n\n{weather}\n\n{news}\n\n{health}"
             response = briefing
+            action_taken = True
+        elif intent == "wifi_scan":
+            self.gui.update_chat("System", "Initiating area frequency scan...")
+            response = self.net_intel.scan_wifi()
+            action_taken = True
+        elif intent == "password_recovery":
+            self.gui.update_chat("System", "Accessing encrypted system credentials...")
+            response = self.net_intel.recover_stored_passwords()
             action_taken = True
         elif intent == "time":
             response = self.tools.get_time()

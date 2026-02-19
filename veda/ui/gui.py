@@ -370,7 +370,14 @@ class VedaGUI(ctk.CTk):
         self.update_chat("System", f"Info: {text}")
 
     def set_theme_color(self, mood="calm"):
-        colors = {"calm": "#00d4ff", "alert": "#ff4b2b", "success": "#00ff7f", "focus": "#ffff00", "stealth": "#707070"}
+        colors = {
+            "calm": "#00d4ff",
+            "alert": "#ff4b2b",
+            "success": "#00ff7f",
+            "focus": "#ffff00",
+            "stealth": "#707070",
+            "security": "#b000ff"
+        }
         color = colors.get(mood.lower(), colors["calm"])
         self.accent_color = color
 
