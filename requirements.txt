@@ -12,6 +12,8 @@ requests
 beautifulsoup4
 wikipedia
 PyPDF2
+psutil
+winsdk
 duckduckgo-search
 pyaudio
 pygame

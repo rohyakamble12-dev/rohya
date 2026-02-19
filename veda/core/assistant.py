@@ -7,6 +7,9 @@ from veda.features.life import VedaLife
 from veda.features.finance import VedaFinance
 from veda.features.vision import VedaVision
 from veda.features.research import VedaResearch
+from veda.features.diagnostics import VedaDiagnostics
+from veda.features.media import VedaMedia
+from veda.features.file_manager import VedaFileManager
 from veda.utils.protocols import VedaProtocols
 
 class VedaAssistant:
@@ -21,6 +24,9 @@ class VedaAssistant:
         self.finance = VedaFinance()
         self.vision = VedaVision()
         self.research = VedaResearch()
+        self.diagnostics = VedaDiagnostics()
+        self.media = VedaMedia()
+        self.file_manager = VedaFileManager()
         self.protocols = VedaProtocols()
 
         # Start background health monitoring
@@ -107,6 +113,23 @@ class VedaAssistant:
         elif intent == "read_doc":
             path = params.get("path", "")
             response = self.research.read_document(path)
+            action_taken = True
+        elif intent == "sys_health":
+            response = self.diagnostics.get_system_health()
+            action_taken = True
+        elif intent == "net_info":
+            response = self.diagnostics.get_network_info()
+            action_taken = True
+        elif intent == "media_control":
+            cmd = params.get("command", "play_pause")
+            if cmd == "next": response = self.media.next_track()
+            elif cmd == "prev": response = self.media.prev_track()
+            elif cmd == "stop": response = self.media.stop_media()
+            else: response = self.media.play_pause()
+            action_taken = True
+        elif intent == "file_search":
+            name = params.get("filename", "")
+            response = self.file_manager.search_file(name)
             action_taken = True
 
         # 3. If no specific action or we want a conversational response

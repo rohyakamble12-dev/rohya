@@ -49,10 +49,13 @@ class VedaLLM:
             "Respond ONLY with a JSON object containing 'intent' and 'params'. "
             "Intents: 'open_app', 'close_app', 'set_volume', 'set_brightness', 'web_search', 'weather', "
             "'screenshot', 'lock_pc', 'time', 'date', 'note', 'stock_price', 'crypto_price', "
-            "'remember_fact', 'vision_analyze', 'motivation', 'deep_research', 'read_doc', 'none'.\n"
+            "'remember_fact', 'vision_analyze', 'motivation', 'deep_research', 'read_doc', "
+            "'sys_health', 'net_info', 'media_control', 'file_search', 'none'.\n"
             "Examples for params:\n"
             "- 'remember_fact': {'key': 'user_birthday', 'value': 'January 5th'}\n"
             "- 'stock_price': {'symbol': 'AAPL'}\n"
+            "- 'media_control': {'command': 'next'}\n"
+            "- 'file_search': {'filename': 'report.pdf'}\n"
             f"User input: \"{user_input}\""
         )
 

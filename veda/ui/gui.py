@@ -55,6 +55,9 @@ class VedaGUI(ctk.CTk):
         self.status_bar = ctk.CTkLabel(self, text="SYSTEM READY", font=("Consolas", 10), text_color=self.accent_color)
         self.status_bar.grid(row=2, column=0, sticky="w", padx=15)
 
+        self.metrics_label = ctk.CTkLabel(self, text="CPU: 0% | RAM: 0%", font=("Consolas", 10), text_color=self.accent_color)
+        self.metrics_label.grid(row=2, column=0, sticky="e", padx=15)
+
         # Input area
         self.input_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.input_frame.grid(row=3, column=0, padx=10, pady=10, sticky="ew")
@@ -96,6 +99,15 @@ class VedaGUI(ctk.CTk):
 
         self.update_chat("Veda", "HUD Initialized. Connection established.")
         self.pulse_status()
+        self.update_metrics()
+
+    def update_metrics(self):
+        """Periodically updates hardware metrics on the HUD."""
+        import psutil
+        cpu = psutil.cpu_percent()
+        ram = psutil.virtual_memory().percent
+        self.metrics_label.configure(text=f"CPU: {cpu}% | RAM: {ram}%")
+        self.after(5000, self.update_metrics)
 
     def pulse_status(self):
         """Adds a subtle glowing animation to the status bar."""

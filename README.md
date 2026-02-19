@@ -1,43 +1,60 @@
-# Veda: The All-Knowing AI Companion
+# Veda: The Ultimate Windows 11 AI HUD
 
-Veda is the most advanced, Jarvis/Friday-inspired AI assistant for Windows 11. She now possesses **Total Knowledge** capabilities, including deep research, document learning, and secure investigation protocols.
+Veda is the most advanced, Jarvis/Friday-inspired AI assistant for Windows 11. She combines total system control, deep research, long-term memory, and health monitoring into a single, futuristic HUD interface.
 
-## 🚀 The All-Knowing Edition
+## 🚀 The Ultimate Feature Set
 
-### 📚 Deep Research & Knowledge
-- **Encyclopedia Integration**: Veda can perform deep research using Wikipedia and other broad knowledge bases.
-- **Document Ingestion**: Veda can "read" your local files (PDFs and Text documents) to learn specific information you provide.
-- **All-Subject Access**: When **Restricted Protocols** are active, Veda can provide information on complex, legal, and technical subjects without standard filters.
+### 🧠 Intelligence & Knowledge
+- **Total Knowledge**: Deep research integration with Wikipedia and broad knowledge bases.
+- **Document Learning**: Veda can "read" your local PDFs and text files to learn from your data.
+- **Long-Term Memory**: Remembers personal facts, preferences, and context across sessions via a local SQLite database.
+- **Protocol Gating**: Securely manage access to deep research and private modes via HUD toggles.
 
-### 🛡️ Security & Privacy Protocols
-- **Protocol Gating**: Sensitive features like Deep Research and Secure Mode are disabled by default and require explicit user activation via the HUD.
-- **Secure Mode**: When active, Veda prioritizes privacy and secure information gathering.
-- **Private Data**: Your local memory and documents stay on your machine—Veda is built for privacy.
+### 🖥️ System & File Mastery
+- **Hardware Diagnostics**: Real-time HUD monitoring of CPU, RAM, and Battery. Ask for full health reports.
+- **Universal Media Control**: Voice-controlled Play/Pause, Skip, and Previous for any background media.
+- **File Intelligence**: Deep search for files across Documents, Downloads, and Desktop.
+- **App Management**: Intelligent app launching with smart web-fallback (e.g., local Word -> Word Online).
+- **System Control**: Native control over Volume, Brightness, PC Locking, and Screenshots.
+
+### 🏥 Life & Well-being
+- **Digital Vision**: Screen awareness to identify active windows and provide context-aware help.
+- **Health Routine**: Background monitoring for hydration, posture, and eye-break reminders.
+- **Financial Intelligence**: Real-time tracking of Stock and Crypto prices.
 
 ---
 
-## 🖥️ HUD Interface Controls
+## 🎮 HUD Interface Controls
 
-- **DEEP RESEARCH Toggle**: Enable this to allow Veda to use advanced search engines for complex topics.
-- **SECURE MODE Toggle**: Enable this for enhanced privacy during sensitive research.
-- **MIC Button**: Click or say "Hey Veda" to interact.
-- **Drag HUD**: Click and drag any dark area to move the interface.
+- **DRAG**: Click and drag any dark area of the HUD to reposition it.
+- **MIC**: Say "Hey Veda" or click the MIC button to start listening.
+- **DEEP RESEARCH**: Toggle advanced encyclopedia and search protocols.
+- **SECURE MODE**: Activate for high-privacy research and secure connectivity.
+- **METRICS**: Live CPU and RAM usage display at the bottom of the HUD.
 
 ---
 
 ## 🛠️ Installation & Setup
 
-1.  **Dependencies**: `pip install -r requirements.txt`
-2.  **Model**: `ollama pull llama3.2:3b`
-3.  **Run**: `python main.py`
+1.  **Dependencies**:
+    ```bash
+    pip install -r requirements.txt
+    ```
+2.  **Ollama Brain**:
+    *   Download [Ollama](https://ollama.ai/)
+    *   Run: `ollama pull llama3.2:3b`
+3.  **Launch**:
+    ```bash
+    python main.py
+    ```
 
-*Tip: For the full experience, ensure you have the 'Orbitron' font installed.*
+*Note: For the best experience, install the 'Orbitron' font.*
 
 ---
 
-## ⚠️ Disclaimer
-Veda is a research and productivity tool. Users are responsible for their own actions and how they use the information provided by the assistant, especially when exploring restricted or legal topics.
+## 🛡️ Security & Privacy
+Veda is built for privacy. Your memory database, notes, and document analysis stay entirely local on your machine. All system commands are sanitized to prevent unauthorized execution.
 
 ---
 
-*Veda - Knowledge is Power.*
+*Veda - Built for the future of human-AI collaboration.*
