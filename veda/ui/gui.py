@@ -317,13 +317,15 @@ class VedaGUI(ctk.CTk):
 
     def trigger_upload(self):
         from tkinter import filedialog
-        file_path = filedialog.askopenfilename(
-            title="Select File for Veda to Process",
-            filetypes=[("Documents", "*.pdf *.txt *.docx *.csv *.json"), ("All Files", "*.*")]
+        file_paths = filedialog.askopenfilenames(
+            title="Select File(s) for Veda to Process",
+            filetypes=[("Documents", "*.pdf *.txt *.docx *.csv *.json *.zip"), ("All Files", "*.*")]
         )
-        if file_path and self.on_upload_callback:
-            self.update_chat("System", f"Uploading file: {file_path}")
-            threading.Thread(target=self.on_upload_callback, args=(file_path,), daemon=True).start()
+        if file_paths and self.on_upload_callback:
+            count = len(file_paths)
+            msg = f"Processing {count} file(s)..." if count > 1 else f"Processing file: {file_paths[0]}"
+            self.update_chat("System", msg)
+            threading.Thread(target=self.on_upload_callback, args=(file_paths,), daemon=True).start()
 
     def _on_proto_change(self):
         if self.protocol_callback: self.protocol_callback()

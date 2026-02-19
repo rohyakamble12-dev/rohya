@@ -338,31 +338,48 @@ class VedaAssistant:
         tip = suggestions.get(app_name, f"I'm ready to assist with {app_name}.")
         self.gui.show_suggestion(tip)
 
-    def process_file(self, file_path):
-        """Ingests a file, summarizes it, and adds it to the active context."""
-        filename = os.path.basename(file_path)
-        self.gui.update_chat("System", f"Analyzing document: {filename}...")
+    def process_file(self, file_input):
+        """Ingests single or multiple files, summarizes them, and adds to context."""
+        # Normalize to list
+        files = [file_input] if isinstance(file_input, str) else list(file_input)
 
-        content = self.research.read_document(file_path)
-        if "Error" in content or "Processing error" in content:
-            self.gui.update_chat("Veda", f"I encountered an issue while accessing {filename}. {content}")
-            return
+        if len(files) > 1:
+            self.gui.update_chat("System", f"Initiating batch analysis for {len(files)} items...")
+            combined_summary_prompt = "I have uploaded multiple files. Here is the data from each:\n\n"
 
-        # Prepare prompt for summarization
-        prompt = (
-            f"I have uploaded a file named '{filename}'. "
-            f"Here is a snippet of its content:\n\n{content}\n\n"
-            "Please provide a high-level summary of this document and let me know if there are any key actions or information I should be aware of."
-        )
+            for path in files:
+                name = os.path.basename(path)
+                content = self.research.read_document(path)
+                combined_summary_prompt += f"--- FILE: {name} ---\n{content[:1500]}\n\n"
+                # Store individual facts
+                self.llm.memory.store_fact(f"content of {name}", content[:1000])
 
-        # Get response from LLM
-        response = self.llm.chat(prompt)
+            combined_summary_prompt += "Please provide a comprehensive summary of all these documents and tell me how they relate to each other."
 
-        # Store in long-term context/memory for future questions
-        self.llm.memory.store_fact(f"content of {filename}", content[:1000])
+            response = self.llm.chat(combined_summary_prompt)
+            self.gui.update_chat("Veda", response)
+            self.voice.speak(f"Batch analysis of {len(files)} files complete.")
 
-        self.gui.update_chat("Veda", response)
-        self.voice.speak(f"Analysis of {filename} is complete. {response[:100]}")
+        elif len(files) == 1:
+            file_path = files[0]
+            filename = os.path.basename(file_path)
+            self.gui.update_chat("System", f"Analyzing document: {filename}...")
+
+            content = self.research.read_document(file_path)
+            if "Error" in content or "Processing error" in content:
+                self.gui.update_chat("Veda", f"I encountered an issue while accessing {filename}. {content}")
+                return
+
+            prompt = (
+                f"I have uploaded a file named '{filename}'. "
+                f"Here is its content:\n\n{content}\n\n"
+                "Please provide a detailed summary of this document."
+            )
+
+            response = self.llm.chat(prompt)
+            self.llm.memory.store_fact(f"content of {filename}", content[:1000])
+            self.gui.update_chat("Veda", response)
+            self.voice.speak(f"Analysis of {filename} is complete.")
 
     def listen_and_process(self):
         """Listens for voice input and processes it."""

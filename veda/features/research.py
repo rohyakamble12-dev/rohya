@@ -4,6 +4,9 @@ import os
 import json
 import pandas as pd
 from docx import Document
+import zipfile
+import tempfile
+import shutil
 
 class VedaResearch:
     @staticmethod
@@ -27,7 +30,7 @@ class VedaResearch:
 
     @staticmethod
     def read_document(file_path):
-        """Reads text from various local file formats (PDF, TXT, DOCX, CSV, JSON)."""
+        """Reads text from various local file formats (PDF, TXT, DOCX, CSV, JSON, ZIP)."""
         if not os.path.exists(file_path):
             return "Error: File path does not exist."
 
@@ -41,12 +44,50 @@ class VedaResearch:
                 return VedaResearch._read_csv(file_path)
             elif ext == '.json':
                 return VedaResearch._read_json(file_path)
+            elif ext == '.zip':
+                return VedaResearch._read_zip(file_path)
             else:
-                # Default to plain text
-                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                    return f.read(3000)
+                # Optimized plain text reading for large files
+                return VedaResearch._read_text_optimized(file_path)
         except Exception as e:
             return f"Processing error for {ext.upper()}: {str(e)}"
+
+    @staticmethod
+    def _read_text_optimized(path):
+        file_size = os.path.getsize(path)
+        max_read = 5000
+        if file_size <= max_read:
+            with open(path, 'r', encoding='utf-8', errors='ignore') as f:
+                return f.read()
+        else:
+            # Sample start and end for large files
+            with open(path, 'r', encoding='utf-8', errors='ignore') as f:
+                start = f.read(2500)
+                f.seek(file_size - 2500)
+                end = f.read(2500)
+                return f"[Large File Sample - Start]:\n{start}\n\n[... content truncated ...]\n\n[Sample - End]:\n{end}"
+
+    @staticmethod
+    def _read_zip(path):
+        summary = f"ZIP Archive: {os.path.basename(path)}\n"
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with zipfile.ZipFile(path, 'r') as zip_ref:
+                # Get list of files
+                file_list = zip_ref.namelist()
+                summary += f"Contains {len(file_list)} items.\n\n"
+
+                # Filter for interesting documents
+                interesting = [f for f in file_list if f.lower().endswith(('.pdf', '.txt', '.docx', '.csv', '.json'))]
+
+                for f_name in interesting[:5]: # Process first 5 docs to avoid overload
+                    zip_ref.extract(f_name, tmpdir)
+                    extracted_path = os.path.join(tmpdir, f_name)
+                    content = VedaResearch.read_document(extracted_path)
+                    summary += f"--- Content of {f_name} ---\n{content[:1000]}\n\n"
+
+                if len(interesting) > 5:
+                    summary += f"... and {len(interesting) - 5} more documents found in archive."
+        return summary
 
     @staticmethod
     def _read_pdf(path):
