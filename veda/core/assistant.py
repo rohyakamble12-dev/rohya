@@ -84,8 +84,9 @@ class VedaAssistant:
 
     def process_command(self, user_input):
         """Processes a user command, determines intent, and executes actions."""
-        self.gui.set_voice_active(True)
+        self.gui.set_state("thinking")
         if not user_input or user_input == "None":
+            self.gui.set_state("idle")
             return
 
         # Ensure protocols are synced before processing
@@ -129,6 +130,20 @@ class VedaAssistant:
             action_taken = True
         elif intent == "lock_pc":
             response = self.system.lock_pc()
+            action_taken = True
+        elif intent == "sleep":
+            response = self.system.system_sleep()
+            action_taken = True
+        elif intent == "mute_toggle":
+            response = self.system.toggle_mute()
+            action_taken = True
+        elif intent == "morning_briefing":
+            self.gui.update_chat("Veda", "Preparing your morning briefing, sir...")
+            weather = self.web.get_weather()
+            news = self.web.get_news()
+            health = self.diagnostics.get_system_health()
+            briefing = f"Good morning! Here is your status report:\n\n{weather}\n\n{news}\n\n{health}"
+            response = briefing
             action_taken = True
         elif intent == "time":
             response = self.tools.get_time()
@@ -312,13 +327,14 @@ class VedaAssistant:
 
         # 4. Update UI and Speak
         self.gui.update_chat("Veda", response)
+        self.gui.set_state("speaking")
         try:
             self.voice.speak(response)
         except Exception as e:
             print(f"Speech error: {e}")
             self.gui.update_chat("System", "Voice module encountered an error, but I am still processing your requests.")
         finally:
-            self.gui.set_voice_active(False)
+            self.gui.set_state("idle")
 
     def system_alert(self, message):
         """Used for background routine alerts."""

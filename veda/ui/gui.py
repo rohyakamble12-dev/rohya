@@ -26,12 +26,15 @@ class VedaGUI(ctk.CTk):
         self.configure(fg_color="#08080a")
 
         # Colors
-        self.accent_color = "#00d4ff"
-        self.alert_color = "#ff4b2b"
+        self.accent_color = "#00d4ff" # Cyan (Idle)
+        self.think_color = "#ffcc00"  # Gold (Thinking)
+        self.speak_color = "#00ff7f"  # Green (Speaking)
+        self.alert_color = "#ff4b2b"  # Red (Alert)
         self.text_color = "#e0f7fa"
         self.border_color = "#1a1a20"
 
         # State
+        self.state = "idle" # idle, thinking, speaking, alert
         self.pulse_active = False
         self.camera_active = False
         self.cap = None
@@ -61,7 +64,7 @@ class VedaGUI(ctk.CTk):
         self.top_bar.bind("<ButtonPress-1>", self._on_drag_start)
         self.top_bar.bind("<B1-Motion>", self._on_drag_motion)
 
-        self.title_lbl = ctk.CTkLabel(self.top_bar, text="V E D A  -  C O R E  O S",
+        self.title_lbl = ctk.CTkLabel(self.top_bar, text="V E D A  -  G L O B A L  I N T E L",
                                       font=("Orbitron", 12, "bold"), text_color=self.accent_color)
         self.title_lbl.pack(side="left", padx=20)
 
@@ -74,41 +77,36 @@ class VedaGUI(ctk.CTk):
         self.sys_ready = ctk.CTkLabel(self.status_indicators, text="SYSTEM READY", text_color=self.accent_color, font=("Orbitron", 9))
         self.sys_ready.pack(side="left", padx=10)
 
-        # --- LEFT PANEL: VISUALS & TELEMETRY ---
+        # --- LEFT PANEL ---
         self.left_panel = ctk.CTkFrame(self, fg_color="transparent")
         self.left_panel.grid(row=1, column=0, padx=15, pady=15, sticky="nsew")
 
-        # Visual Input (Fixed aspect ratio)
         self.vis_frame = self._create_panel(self.left_panel, "OPTICAL FEED")
         self.cam_label = tk.Label(self.vis_frame, bg="#050507")
         self.cam_label.pack(fill="both", expand=True, padx=2, pady=2)
 
-        # Performance
         self.perf_frame = self._create_panel(self.left_panel, "TELEMETRY")
         self._add_metric(self.perf_frame, "CPU", "cpu_bar", "cpu_val", self.accent_color)
         self._add_metric(self.perf_frame, "RAM", "ram_bar", "ram_val", "#b000ff")
 
-        # Protocols (Vertical checklist)
         self.proto_frame = self._create_panel(self.left_panel, "PROTOCOLS")
         self._add_proto_cb(self.proto_frame, "DEEP RESEARCH", self.deep_search_var)
         self._add_proto_cb(self.proto_frame, "SECURE MODE", self.private_var)
         self._add_proto_cb(self.proto_frame, "REAL-TIME CONTEXT", self.context_var)
 
-        # --- CENTER PANEL: THE CORE ---
+        # --- CENTER PANEL: THE EARTH CORE ---
         self.center_panel = ctk.CTkFrame(self, fg_color="#0d0d12", border_width=1, border_color=self.border_color)
         self.center_panel.grid(row=1, column=1, pady=15, sticky="nsew")
 
         self.canvas = tk.Canvas(self.center_panel, width=400, height=400, bg="#0d0d12", highlightthickness=0)
         self.canvas.pack(pady=20, expand=True)
-        self._init_core_animation()
+        self._init_earth_animation()
 
         self.ctrl_frame = ctk.CTkFrame(self.center_panel, fg_color="transparent")
         self.ctrl_frame.pack(pady=20)
 
         self.btn_cam = self._create_icon_btn(self.ctrl_frame, "📷 OFF", self.toggle_camera)
-        self.btn_cam.configure(width=80) # Slightly wider for text
-        if self.camera_active:
-            self.btn_cam.configure(fg_color=self.accent_color, border_color="#ffffff", text="📷 ON")
+        self.btn_cam.configure(width=80)
 
         self.btn_upload = self._create_icon_btn(self.ctrl_frame, "📁", self.trigger_upload)
 
@@ -116,9 +114,10 @@ class VedaGUI(ctk.CTk):
                                      fg_color="#201010", border_width=1, border_color=self.alert_color,
                                      hover_color=self.alert_color, font=("Orbitron", 11, "bold"), command=self.destroy)
         self.btn_end.pack(side="left", padx=10)
+
         self.btn_mic = self._create_icon_btn(self.ctrl_frame, "🎤", self.trigger_voice)
 
-        # --- RIGHT PANEL: COMMS ---
+        # --- RIGHT PANEL ---
         self.right_panel = ctk.CTkFrame(self, fg_color="transparent")
         self.right_panel.grid(row=1, column=2, padx=15, pady=15, sticky="nsew")
 
@@ -163,18 +162,28 @@ class VedaGUI(ctk.CTk):
         btn.pack(side="left", padx=5)
         return btn
 
-    def _init_core_animation(self):
+    def _init_earth_animation(self):
+        """Initializes 3D points for the rotating earth globe."""
         self.canvas.delete("all")
-        # Static rings
-        self.canvas.create_oval(50, 50, 350, 350, outline="#121217", width=1)
-        self.canvas.create_oval(80, 80, 320, 320, outline="#1a1a20", width=1)
-        # Pulsing Core
-        self.core_orb = self.canvas.create_oval(130, 130, 270, 270, fill="#001a21", outline=self.accent_color, width=2)
-        # Particles (Optimized count)
-        self.particles = []
-        for _ in range(30):
-            p = self.canvas.create_oval(0, 0, 2, 2, fill=self.accent_color, outline="")
-            self.particles.append({'id': p, 'speed': random.uniform(0.3, 1.2), 'angle': random.uniform(0, 6.28), 'dist': random.randint(80, 140)})
+        self.points = []
+        self.radius = 120
+        self.angle_y = 0
+
+        # Generate points on a sphere (Fibonacci lattice)
+        num_points = 120
+        phi = math.pi * (3. - math.sqrt(5.)) # golden angle
+
+        for i in range(num_points):
+            y = 1 - (i / float(num_points - 1)) * 2 # y from 1 to -1
+            radius_at_y = math.sqrt(1 - y * y)
+            theta = phi * i
+
+            x = math.cos(theta) * radius_at_y
+            z = math.sin(theta) * radius_at_y
+
+            # Create dot on canvas
+            dot = self.canvas.create_oval(0, 0, 0, 0, fill=self.accent_color, outline="")
+            self.points.append({'id': dot, 'x': x, 'y': y, 'z': z})
 
     def _start_background_tasks(self):
         threading.Thread(target=self._metrics_worker, daemon=True).start()
@@ -218,7 +227,6 @@ class VedaGUI(ctk.CTk):
         while True:
             try:
                 if self.camera_active:
-                    # Open camera if not already open
                     if self.cap is None or not self.cap.isOpened():
                         self.cap = cv2.VideoCapture(0)
 
@@ -226,54 +234,72 @@ class VedaGUI(ctk.CTk):
                         ret, frame = self.cap.read()
                         if ret:
                             self.last_raw_frame = frame
-                            # Efficiently process frame for UI
                             small_frame = cv2.resize(frame, (250, 150))
                             rgb_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
                             img = Image.fromarray(rgb_frame)
                             self.after(0, lambda i=img: self._update_cam_ui(i))
                 else:
-                    # Explicitly release camera when inactive
                     if self.cap is not None:
-                        if self.cap.isOpened():
-                            self.cap.release()
+                        if self.cap.isOpened(): self.cap.release()
                         self.cap = None
                         self.last_raw_frame = None
             except Exception as e:
                 print(f"Camera Worker Error: {e}")
-
-            time.sleep(0.1) # 10 FPS for stability
+            time.sleep(0.1)
 
     def _update_cam_ui(self, pil_img):
         if self.camera_active:
-            # Create PhotoImage in main thread
             img_tk = ImageTk.PhotoImage(image=pil_img)
             self.cam_label.img_tk = img_tk
             self.cam_label.configure(image=img_tk, text="")
 
     def _animate_loop(self):
+        """Main animation loop for the rotating globe."""
         t = time.time()
-        # Smoother pulse
-        speed = 4 if self.pulse_active else 1.5
-        pulse = (math.sin(t * speed) + 1) / 2
 
-        # Scale core
-        s_base = 135
-        s_adj = pulse * (15 if self.pulse_active else 5)
-        self.canvas.coords(self.core_orb, 200-(s_base+s_adj), 200-(s_base+s_adj), 200+(s_base+s_adj), 200+(s_base+s_adj))
+        # State-based parameters
+        if self.state == "thinking":
+            color = self.think_color
+            rotation_speed = 0.15
+            pulse = (math.sin(t * 10) + 1) / 2 # Fast pulse
+        elif self.state == "speaking":
+            color = self.speak_color
+            rotation_speed = 0.1
+            pulse = (math.sin(t * 5) + 1) / 2 # Medium pulse
+        elif self.state == "alert":
+            color = self.alert_color
+            rotation_speed = 0.2
+            pulse = (math.sin(t * 15) + 1) / 2 # Rapid pulse
+        else: # idle
+            color = self.accent_color
+            rotation_speed = 0.03
+            pulse = (math.sin(t * 2) + 1) / 2 # Slow pulse
 
-        if self.pulse_active:
-            self.canvas.itemconfig(self.core_orb, fill="#004d61")
-        else:
-            self.canvas.itemconfig(self.core_orb, fill="#001015")
+        self.angle_y += rotation_speed
 
-        # Particles
-        for p in self.particles:
-            p['angle'] += 0.03 * p['speed'] * (2 if self.pulse_active else 1)
-            x = 200 + math.cos(p['angle']) * p['dist']
-            y = 200 + math.sin(p['angle']) * p['dist']
-            self.canvas.coords(p['id'], x-1, y-1, x+1, y+1)
+        for p in self.points:
+            # Rotate around Y axis
+            x = p['x'] * math.cos(self.angle_y) - p['z'] * math.sin(self.angle_y)
+            z = p['x'] * math.sin(self.angle_y) + p['z'] * math.cos(self.angle_y)
+            y = p['y']
 
-        self.after(50, self._animate_loop)
+            # Project to 2D
+            scale = (z + 2) / 3 # depth factor 0.33 to 1.0
+            x_2d = 200 + x * self.radius * scale
+            y_2d = 200 + y * self.radius * scale
+
+            # Dot size and brightness
+            d_size = 1 + scale * 2 + (pulse * 2 if self.state != "idle" else 0)
+
+            # Update canvas item
+            self.canvas.coords(p['id'], x_2d - d_size, y_2d - d_size, x_2d + d_size, y_2d + d_size)
+            self.canvas.itemconfig(p['id'], fill=color if scale > 0.5 else self.border_color)
+
+        self.after(40, self._animate_loop)
+
+    def set_state(self, state):
+        """Updates Veda's current activity state."""
+        self.state = state.lower()
 
     def toggle_camera(self):
         self.camera_active = not self.camera_active
@@ -290,10 +316,16 @@ class VedaGUI(ctk.CTk):
 
     def reset_voice_button(self):
         self.after(0, lambda: self.sys_ready.configure(text="SYSTEM READY", text_color=self.accent_color))
+        self.set_state("idle")
 
     def set_voice_active(self, active):
         self.pulse_active = active
-        self.btn_mic.configure(fg_color=self.accent_color if active else "#121217")
+        if active:
+            self.set_state("speaking")
+            self.btn_mic.configure(fg_color=self.speak_color)
+        else:
+            self.set_state("idle")
+            self.btn_mic.configure(fg_color="#121217")
 
     def update_chat(self, sender, message):
         self.after(0, lambda: self._update_chat_ui(sender, message))
@@ -340,13 +372,15 @@ class VedaGUI(ctk.CTk):
         colors = {"calm": "#00d4ff", "alert": "#ff4b2b", "success": "#00ff7f", "focus": "#ffff00", "stealth": "#707070"}
         color = colors.get(mood.lower(), colors["calm"])
         self.accent_color = color
+
+        if mood == "alert": self.set_state("alert")
+        else: self.set_state("idle")
+
         self.title_lbl.configure(text_color=color)
         self.sys_ready.configure(text_color=color)
         self.cpu_val.configure(text_color=color)
         self.cpu_bar.configure(progress_color=color)
         self.input_entry.configure(border_color=color)
-        self.canvas.itemconfig(self.core_orb, outline=color)
-        for p in self.particles: self.canvas.itemconfig(p['id'], fill=color)
 
     # Window Dragging
     def _on_drag_start(self, event):

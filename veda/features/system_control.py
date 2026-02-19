@@ -130,6 +130,29 @@ class SystemControl:
             return f"Failed to lock PC: {str(e)}"
 
     @staticmethod
+    def system_sleep():
+        """Puts the Windows PC to sleep."""
+        try:
+            os.system("rundll32.exe powrprof.dll,SetSuspendState 0,1,0")
+            return "Initiating system suspension."
+        except Exception as e:
+            return f"Sleep command failed: {str(e)}"
+
+    @staticmethod
+    def toggle_mute():
+        """Mutes or unmutes the system volume."""
+        try:
+            devices = AudioUtilities.GetSpeakers()
+            interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
+            volume = cast(interface, POINTER(IAudioEndpointVolume))
+            current_mute = volume.GetMute()
+            volume.SetMute(not current_mute, None)
+            state = "Muted" if not current_mute else "Unmuted"
+            return f"System audio {state}."
+        except Exception as e:
+            return f"Mute toggle failed: {str(e)}"
+
+    @staticmethod
     def screenshot():
         """Takes a screenshot and saves it."""
         try:
