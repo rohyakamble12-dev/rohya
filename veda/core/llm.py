@@ -4,9 +4,11 @@ import json
 class VedaLLM:
     def __init__(self, model="llama3.2:3b"):
         self.model = model
+        self.memory = VedaMemory()
         self.system_prompt = (
             "You are Veda, an advanced AI assistant inspired by Jarvis and Friday from Marvel. "
             "You are professional, efficient, and slightly witty. You are running on Windows 11. "
+            "You have long-term memory and care about the user's health and life. "
             "Your goal is to assist the user with their daily tasks, system control, and information retrieval. "
             "Keep your responses concise but helpful, as they will be spoken aloud. "
             "You have a female voice. If a user asks who you are, identify as Veda."
@@ -17,7 +19,11 @@ class VedaLLM:
 
     def chat(self, user_input):
         """Generates a response from the LLM based on user input."""
-        self.messages.append({"role": "user", "content": user_input})
+        # Inject memory facts into the context before chatting
+        facts = self.memory.get_all_facts_summary()
+        context_aware_input = f"[Memory Context: {facts}]\nUser: {user_input}"
+
+        self.messages.append({"role": "user", "content": context_aware_input})
 
         try:
             response = ollama.chat(
@@ -38,9 +44,14 @@ class VedaLLM:
         This is used to map natural language to system functions.
         """
         intent_prompt = (
-            "Analyze the following user input and determine if they want to perform a system action. "
+            "Analyze the following user input and determine if they want to perform an action. "
             "Respond ONLY with a JSON object containing 'intent' and 'params'. "
-            "Possible intents: 'open_app', 'close_app', 'set_volume', 'set_brightness', 'web_search', 'weather', 'screenshot', 'lock_pc', 'time', 'date', 'note', 'none'. "
+            "Intents: 'open_app', 'close_app', 'set_volume', 'set_brightness', 'web_search', 'weather', "
+            "'screenshot', 'lock_pc', 'time', 'date', 'note', 'stock_price', 'crypto_price', "
+            "'remember_fact', 'vision_analyze', 'motivation', 'none'.\n"
+            "Examples for params:\n"
+            "- 'remember_fact': {'key': 'user_birthday', 'value': 'January 5th'}\n"
+            "- 'stock_price': {'symbol': 'AAPL'}\n"
             f"User input: \"{user_input}\""
         )
 

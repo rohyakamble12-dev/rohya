@@ -1,53 +1,41 @@
-# Veda: Advanced AI HUD Assistant
+# Veda: The Ultimate Life-Companion HUD
 
-Veda is an advanced, Jarvis/Friday-inspired AI assistant specifically designed for Windows 11. Now featuring a **futuristic HUD interface** and **intelligent web-fallback** capabilities.
+Veda is now a full-spectrum AI companion for Windows 11, inspired by Friday and Jarvis. She doesn't just control your computer; she understands your life.
 
-## 🌟 New in this Version: HUD Edition
+## 🚀 The Ultimate AI Experience
 
-### 🖥️ Marvel-Inspired HUD
-- **Transparent Interface**: A sleek, semi-transparent overlay that sits on top of your work.
-- **Draggable Design**: Click and drag anywhere on the HUD to reposition it on your screen.
-- **Minimalist Controls**: No clunky title bars. Close Veda with the integrated 'X' or manage her via the streamlined status bar.
-- **Futuristic Cyan Theme**: Optimized for a high-tech aesthetic. (Tip: For the full HUD look, install the **'Orbitron'** font on your system).
+### 🧠 Long-Term Memory (Veda Brain)
+- **Personal Connection**: Veda remembers facts you tell her—your birthday, preferences, or important notes—and uses them in future conversations.
+- **Natural Retrieval**: No need to ask her to "look up"; she simply knows.
 
-### 🌐 Smart Web-Fallback
-- **Intelligent App Launching**: If you ask Veda to open an app you don't have installed, she won't just fail.
-- **Automatic Alternatives**: She intelligently maps local apps to web versions (e.g., "Open Word" -> opens Word Online if local Word is missing).
-- **Global Search Fallback**: If an app is completely unknown, she'll initiate a smart web search to help you find it.
+### 👁️ Digital Vision
+- **Screen Awareness**: Ask Veda "What am I looking at?" and she'll analyze your active windows to give you context-aware assistance.
+
+### 🏥 Health & Life Routine
+- **Well-being Monitor**: Veda runs a silent background monitor to remind you to hydrate, fix your posture, and take eye breaks.
+- **Motivation**: Ask her for a spark of inspiration whenever you need a boost.
+
+### 📈 Financial Intelligence
+- **Real-time Markets**: Check stock prices and cryptocurrency values instantly via natural language.
 
 ---
 
 ## 🛠️ Key Features
 
-- **Local LLM**: Powered by `llama3.2:3b` via Ollama.
-- **High-Quality Voice**: Microsoft Edge TTS (`AvaNeural`) with offline fallback.
-- **System Control**: Volume, Brightness, Lock PC, Screenshots, and App Management.
-- **Productivity**: Web search, Weather, News, Notes, Time/Date.
+- **HUD Interface**: A futuristic, transparent, draggable overlay.
+- **Local LLM**: Privacy-first intelligence via `llama3.2:3b`.
+- **Smart Web-Fallback**: Automatically switches to web apps if local ones are missing.
+- **Voice Mastery**: Edge TTS online and offline fallback.
+- **Full Windows Control**: Apps, volume, brightness, screenshots, and more.
 
 ---
 
-## 🚀 Installation & Setup
+## 🚀 Setup & Run
 
-1.  **Clone the project**.
-2.  **Install dependencies**:
-    ```bash
-    pip install -r requirements.txt
-    ```
-3.  **Ensure Ollama is running** with the `llama3.2:3b` model.
-4.  **Run Veda**:
-    ```bash
-    python main.py
-    ```
+1.  **Dependencies**: `pip install -r requirements.txt`
+2.  **Model**: `ollama pull llama3.2:3b`
+3.  **Launch**: `python main.py`
 
 ---
 
-## ⌨️ How to Use the HUD
-
-- **Move**: Click and drag any dark area of the HUD to move it.
-- **Speak**: Say "Hey Veda" or click the **MIC** button to start voice recognition.
-- **Type**: Use the integrated command entry for quick text-based requests.
-- **Close**: Use the red 'X' in the top right corner of the HUD.
-
----
-
-*Veda - Your Personal Friday for Windows 11.*
+*Veda - For your life, for your system, for you.*

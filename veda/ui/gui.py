@@ -75,6 +75,18 @@ class VedaGUI(ctk.CTk):
         self.voice_button.grid(row=0, column=1, padx=0, pady=10)
 
         self.update_chat("Veda", "HUD Initialized. Connection established.")
+        self.pulse_status()
+
+    def pulse_status(self):
+        """Adds a subtle glowing animation to the status bar."""
+        current_text = self.status_bar.cget("text")
+        if "READY" in current_text:
+            colors = [self.accent_color, "#006d82", self.accent_color]
+            def animate(idx=0):
+                if "READY" in self.status_bar.cget("text"):
+                    self.status_bar.configure(text_color=colors[idx % len(colors)])
+                    self.after(1000, animate, idx + 1)
+            animate()
 
     def update_chat(self, sender, message):
         """Thread-safe way to update the chat display."""

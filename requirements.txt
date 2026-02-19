@@ -6,6 +6,8 @@ customtkinter
 pyautogui
 pycaw
 screen-brightness-control
+PyGetWindow
+Pillow
 requests
 beautifulsoup4
 duckduckgo-search
