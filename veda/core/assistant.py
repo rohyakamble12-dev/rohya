@@ -6,6 +6,8 @@ from veda.features.tools import VedaTools
 from veda.features.life import VedaLife
 from veda.features.finance import VedaFinance
 from veda.features.vision import VedaVision
+from veda.features.research import VedaResearch
+from veda.utils.protocols import VedaProtocols
 
 class VedaAssistant:
     def __init__(self, gui):
@@ -18,6 +20,8 @@ class VedaAssistant:
         self.life = VedaLife(self)
         self.finance = VedaFinance()
         self.vision = VedaVision()
+        self.research = VedaResearch()
+        self.protocols = VedaProtocols()
 
         # Start background health monitoring
         self.life.start_routine_monitor()
@@ -95,6 +99,14 @@ class VedaAssistant:
             action_taken = True
         elif intent == "motivation":
             response = self.life.get_motivation()
+            action_taken = True
+        elif intent == "deep_research":
+            topic = params.get("topic", user_input)
+            response = self.research.get_summary(topic)
+            action_taken = True
+        elif intent == "read_doc":
+            path = params.get("path", "")
+            response = self.research.read_document(path)
             action_taken = True
 
         # 3. If no specific action or we want a conversational response

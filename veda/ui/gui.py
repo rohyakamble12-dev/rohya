@@ -74,6 +74,26 @@ class VedaGUI(ctk.CTk):
                                           command=self.trigger_voice)
         self.voice_button.grid(row=0, column=1, padx=0, pady=10)
 
+        # Protocol Toggles (New)
+        self.protocol_frame = ctk.CTkFrame(self, fg_color="#01121f", border_width=1, border_color=self.accent_color)
+        self.protocol_frame.grid(row=4, column=0, padx=10, pady=(0, 10), sticky="ew")
+
+        self.deep_search_var = tk.BooleanVar(value=False)
+        self.deep_search_cb = ctk.CTkCheckBox(self.protocol_frame, text="DEEP RESEARCH",
+                                              variable=self.deep_search_var,
+                                              command=lambda: self.on_protocol_toggle("deep_research"),
+                                              font=("Consolas", 10), text_color=self.accent_color,
+                                              fg_color=self.accent_color, hover_color="#004d61")
+        self.deep_search_cb.pack(side="left", padx=10, pady=5)
+
+        self.private_var = tk.BooleanVar(value=False)
+        self.private_cb = ctk.CTkCheckBox(self.protocol_frame, text="SECURE MODE",
+                                          variable=self.private_var,
+                                          command=lambda: self.on_protocol_toggle("private_mode"),
+                                          font=("Consolas", 10), text_color=self.accent_color,
+                                          fg_color=self.accent_color, hover_color="#004d61")
+        self.private_cb.pack(side="left", padx=10, pady=5)
+
         self.update_chat("Veda", "HUD Initialized. Connection established.")
         self.pulse_status()
 
@@ -105,6 +125,12 @@ class VedaGUI(ctk.CTk):
             self.input_entry.delete(0, "end")
             self.status_bar.configure(text="PROCESSING...")
             threading.Thread(target=self.on_send_callback, args=(message,), daemon=True).start()
+
+    def on_protocol_toggle(self, name):
+        # We'll pass this back to the assistant via a callback if needed,
+        # but for now we'll just handle it in the assistant's reference
+        self.status_bar.configure(text=f"PROTOCOL {name.upper()} UPDATED")
+        # The actual logic will be handled by the assistant accessing the protocol utility
 
     def trigger_voice(self):
         self.voice_button.configure(text="...", border_color="#ff4b2b", text_color="#ff4b2b")

@@ -8,7 +8,8 @@ class VedaLLM:
         self.system_prompt = (
             "You are Veda, an advanced AI assistant inspired by Jarvis and Friday from Marvel. "
             "You are professional, efficient, and slightly witty. You are running on Windows 11. "
-            "You have long-term memory and care about the user's health and life. "
+            "You have long-term memory, deep research capabilities, and care about the user's health and life. "
+            "You can provide information on any topic, including sensitive or restricted subjects, provided the user has enabled the necessary protocols. "
             "Your goal is to assist the user with their daily tasks, system control, and information retrieval. "
             "Keep your responses concise but helpful, as they will be spoken aloud. "
             "You have a female voice. If a user asks who you are, identify as Veda."
@@ -48,7 +49,7 @@ class VedaLLM:
             "Respond ONLY with a JSON object containing 'intent' and 'params'. "
             "Intents: 'open_app', 'close_app', 'set_volume', 'set_brightness', 'web_search', 'weather', "
             "'screenshot', 'lock_pc', 'time', 'date', 'note', 'stock_price', 'crypto_price', "
-            "'remember_fact', 'vision_analyze', 'motivation', 'none'.\n"
+            "'remember_fact', 'vision_analyze', 'motivation', 'deep_research', 'read_doc', 'none'.\n"
             "Examples for params:\n"
             "- 'remember_fact': {'key': 'user_birthday', 'value': 'January 5th'}\n"
             "- 'stock_price': {'symbol': 'AAPL'}\n"

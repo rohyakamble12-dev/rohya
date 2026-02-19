@@ -10,6 +10,8 @@ PyGetWindow
 Pillow
 requests
 beautifulsoup4
+wikipedia
+PyPDF2
 duckduckgo-search
 pyaudio
 pygame
