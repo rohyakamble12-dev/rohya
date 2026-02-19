@@ -34,7 +34,7 @@ class VedaGUI(ctk.CTk):
         self.border_color = "#1a1a20"
 
         # State
-        self.state = "idle" # idle, thinking, speaking, alert
+        self.veda_state = "idle" # idle, thinking, speaking, alert
         self.pulse_active = False
         self.camera_active = False
         self.cap = None
@@ -50,7 +50,8 @@ class VedaGUI(ctk.CTk):
         self._drag_data = {"x": 0, "y": 0}
 
         self._setup_layout()
-        self._start_background_tasks()
+        # Delay background tasks until main loop is ready
+        self.after(1000, self._start_background_tasks)
 
     def _setup_layout(self):
         self.grid_columnconfigure(0, weight=1, minsize=260)
@@ -258,15 +259,15 @@ class VedaGUI(ctk.CTk):
         t = time.time()
 
         # State-based parameters
-        if self.state == "thinking":
+        if self.veda_state == "thinking":
             color = self.think_color
             rotation_speed = 0.15
             pulse = (math.sin(t * 10) + 1) / 2 # Fast pulse
-        elif self.state == "speaking":
+        elif self.veda_state == "speaking":
             color = self.speak_color
             rotation_speed = 0.1
             pulse = (math.sin(t * 5) + 1) / 2 # Medium pulse
-        elif self.state == "alert":
+        elif self.veda_state == "alert":
             color = self.alert_color
             rotation_speed = 0.2
             pulse = (math.sin(t * 15) + 1) / 2 # Rapid pulse
@@ -289,7 +290,7 @@ class VedaGUI(ctk.CTk):
             y_2d = 200 + y * self.radius * scale
 
             # Dot size and brightness
-            d_size = 1 + scale * 2 + (pulse * 2 if self.state != "idle" else 0)
+            d_size = 1 + scale * 2 + (pulse * 2 if self.veda_state != "idle" else 0)
 
             # Update canvas item
             self.canvas.coords(p['id'], x_2d - d_size, y_2d - d_size, x_2d + d_size, y_2d + d_size)
@@ -299,7 +300,7 @@ class VedaGUI(ctk.CTk):
 
     def set_state(self, state):
         """Updates Veda's current activity state."""
-        self.state = state.lower()
+        self.veda_state = state.lower()
 
     def toggle_camera(self):
         self.camera_active = not self.camera_active
@@ -335,7 +336,7 @@ class VedaGUI(ctk.CTk):
         tag = "veda" if sender.lower() == "veda" else "user"
         self.chat_display.insert("end", f"{sender.upper()}: ", tag)
         self.chat_display.insert("end", f"{message}\n\n")
-        self.chat_display.tag_config("veda", foreground=self.accent_color, font=("Consolas", 11, "bold"))
+        self.chat_display.tag_config("veda", foreground=self.accent_color)
         self.chat_display.tag_config("user", foreground="#ffffff")
         self.chat_display.configure(state="disabled")
         self.chat_display.see("end")
