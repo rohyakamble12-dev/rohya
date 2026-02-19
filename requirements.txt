@@ -1,0 +1,13 @@
+ollama
+edge-tts
+pyttsx3
+SpeechRecognition
+customtkinter
+pyautogui
+pycaw
+screen-brightness-control
+requests
+beautifulsoup4
+duckduckgo-search
+pyaudio
+pygame
