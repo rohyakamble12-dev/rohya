@@ -104,7 +104,8 @@ class VedaGUI(ctk.CTk):
         self.ctrl_frame = ctk.CTkFrame(self.center_panel, fg_color="transparent")
         self.ctrl_frame.pack(pady=20)
 
-        self.btn_cam = self._create_icon_btn(self.ctrl_frame, "📷", self.toggle_camera)
+        self.btn_cam = self._create_icon_btn(self.ctrl_frame, "📷 ON", self.toggle_camera)
+        self.btn_cam.configure(width=80) # Slightly wider for text
         if self.camera_active:
             self.btn_cam.configure(fg_color=self.accent_color, border_color="#ffffff")
 
@@ -216,7 +217,7 @@ class VedaGUI(ctk.CTk):
                 if not self.cap or not self.cap.isOpened():
                     self.cap = cv2.VideoCapture(0)
 
-                if self.cap.isOpened():
+                if self.cap and self.cap.isOpened():
                     ret, frame = self.cap.read()
                     if ret:
                         self.last_raw_frame = frame
@@ -224,8 +225,8 @@ class VedaGUI(ctk.CTk):
                         small_frame = cv2.resize(frame, (250, 150))
                         rgb_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
                         img = Image.fromarray(rgb_frame)
-                        img_tk = ImageTk.PhotoImage(image=img)
-                        self.after(0, lambda i=img_tk: self._update_cam_ui(i))
+                        # Pass PIL image to main thread; PhotoImage must be created there
+                        self.after(0, lambda i=img: self._update_cam_ui(i))
             else:
                 if self.cap and self.cap.isOpened():
                     self.cap.release()
@@ -233,8 +234,10 @@ class VedaGUI(ctk.CTk):
 
             time.sleep(0.1) # 10 FPS for stability
 
-    def _update_cam_ui(self, img_tk):
+    def _update_cam_ui(self, pil_img):
         if self.camera_active:
+            # Create PhotoImage in main thread
+            img_tk = ImageTk.PhotoImage(image=pil_img)
             self.cam_label.img_tk = img_tk
             self.cam_label.configure(image=img_tk, text="")
 
@@ -267,10 +270,10 @@ class VedaGUI(ctk.CTk):
         self.camera_active = not self.camera_active
         if not self.camera_active:
             self.cam_label.configure(image="", text="FEED PAUSED", fg="grey")
-            self.btn_cam.configure(fg_color="#121217", border_color=self.border_color)
+            self.btn_cam.configure(fg_color="#121217", border_color=self.border_color, text="📷 OFF")
         else:
             self.cam_label.configure(text="INITIALIZING...")
-            self.btn_cam.configure(fg_color=self.accent_color, border_color="#ffffff")
+            self.btn_cam.configure(fg_color=self.accent_color, border_color="#ffffff", text="📷 ON")
 
     def trigger_voice(self):
         self.sys_ready.configure(text="LISTENING...", text_color=self.alert_color)

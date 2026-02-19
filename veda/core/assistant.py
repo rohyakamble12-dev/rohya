@@ -280,9 +280,12 @@ class VedaAssistant:
             response = self.calculator.calculate(expr)
             action_taken = True
         elif intent == "sight":
-            # Pass the latest frame from GUI to avoid camera conflicts
-            frame = getattr(self.gui, 'last_raw_frame', None)
-            response = self.vision.veda_sight(frame=frame)
+            if not getattr(self.gui, 'camera_active', False):
+                response = "My optical feed is currently disabled. Please enable it on the dashboard first."
+            else:
+                # Pass the latest frame from GUI to avoid camera conflicts
+                frame = getattr(self.gui, 'last_raw_frame', None)
+                response = self.vision.veda_sight(frame=frame)
             action_taken = True
         elif intent == "iot_control":
             url = params.get("url", "")
