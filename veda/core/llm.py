@@ -57,13 +57,14 @@ class VedaLLM:
             "User: 'translate this to french' -> {'intent': 'translate', 'params': {'language': 'fr'}}\n"
             "User: 'search for cats' -> {'intent': 'web_search', 'params': {'query': 'cats'}}\n"
             "User: 'take a note: buy milk' -> {'intent': 'note', 'params': {'text': 'buy milk'}}\n"
-            "User: 'who are you?' -> {'intent': 'none', 'params': {}}\n\n"
+            "User: 'who are you?' -> {'intent': 'none', 'params': {}}\n"
+            "User: 'test sound' -> {'intent': 'test_sound', 'params': {}}\n\n"
             "Supported intents: open_app, close_app, set_volume, set_brightness, web_search, weather, "
             "screenshot, lock_pc, time, date, note, stock_price, crypto_price, remember_fact, "
             "vision_analyze, motivation, deep_research, read_doc, sys_health, net_info, storage_info, "
             "media_control, play_music, file_search, file_info, set_mode, translate, "
             "start_recording, stop_recording, play_macro, ingest_web, todo_add, todo_list, "
-            "todo_complete, pomodoro, define_protocol, run_protocol, none.\n\n"
+            "todo_complete, pomodoro, define_protocol, run_protocol, test_sound, none.\n\n"
             f"User Input: '{user_input}'"
         )
 

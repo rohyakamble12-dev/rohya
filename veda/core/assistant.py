@@ -261,6 +261,12 @@ class VedaAssistant:
             else:
                 response = f"Protocol '{name}' not found."
             action_taken = True
+        elif intent == "test_sound":
+            self.gui.update_chat("System", "Initiating sound diagnostic...")
+            self.voice.speak("Testing online high-quality voice.")
+            self.voice.speak_offline("Testing offline local voice fallback.")
+            response = "Sound diagnostic complete. Did you hear both voices?"
+            action_taken = True
 
         # 3. If no specific action or we want a conversational response
         if not action_taken or "none" in intent:

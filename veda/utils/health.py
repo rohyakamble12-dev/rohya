@@ -56,4 +56,19 @@ class VedaHealth:
         if not ollama_ok:
             report.append(ollama_msg)
 
+        audio_ok, audio_msg = VedaHealth.check_audio()
+        if not audio_ok:
+            report.append(audio_msg)
+
         return report
+
+    @staticmethod
+    def check_audio():
+        """Checks if audio output is working."""
+        try:
+            import pygame
+            if not pygame.mixer.get_init():
+                pygame.mixer.init()
+            return True, "Audio hardware detected."
+        except Exception as e:
+            return False, f"Audio hardware issue: {e}"

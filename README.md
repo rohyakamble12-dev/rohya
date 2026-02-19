@@ -51,6 +51,15 @@ Veda is no longer just an assistant; she is a **Digital Partner**. This **Partne
 
 ---
 
+## 🔊 Troubleshooting Sound
+If Veda is not speaking, try the following:
+1.  **Run Sound Test**: Type or say "test sound" in the HUD. She will attempt to play both online and offline voices.
+2.  **Check Volume**: Ensure your system volume is up and Veda isn't in **Stealth Mode** (which mutes her).
+3.  **Check Internet**: Edge TTS requires an active connection. If offline, she should automatically use the local Windows voice.
+4.  **Log File**: Check `veda.log` in the project root for detailed error reports.
+
+---
+
 ## 🛡️ Security & Partner Ethics
 The Partner Edition maintains Veda's core security philosophy. Macro data and web ingestion content remain local. Automation requires explicit user triggers, ensuring you remain in control of your system.
 

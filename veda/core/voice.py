@@ -13,7 +13,10 @@ class VedaVoice:
         self.setup_offline_voice()
         self.recognizer = sr.Recognizer()
         if not pygame.mixer.get_init():
-            pygame.mixer.init()
+            try:
+                pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=512)
+            except Exception as e:
+                print(f"Pygame mixer init error: {e}")
 
     def setup_offline_voice(self):
         """Sets the offline engine to a female voice if available."""
@@ -46,12 +49,20 @@ class VedaVoice:
 
     def speak(self, text):
         """Main speak method that tries online TTS first, then falls back to offline."""
+        if not text: return
+
         try:
-            # edge-tts is async, so we run it in a new event loop or the current one
-            asyncio.run(self.speak_online(text))
+            # Try online first
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            loop.run_until_complete(self.speak_online(text))
+            loop.close()
         except Exception as e:
-            print(f"Online TTS failed, falling back to offline: {e}")
-            self.speak_offline(text)
+            print(f"Online TTS failed ({e}), falling back to offline.")
+            try:
+                self.speak_offline(text)
+            except Exception as e2:
+                print(f"Offline TTS also failed: {e2}")
 
     def listen(self):
         """Listens for user input via microphone."""
