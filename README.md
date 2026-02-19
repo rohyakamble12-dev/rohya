@@ -49,3 +49,18 @@ Veda remains 100% local. Your webcam data, screen captures, and macro recordings
 ---
 
 *Veda - Inspired by Legends. Built for Reality.*
+
+## ⌨️ Quick Command Cheat Sheet
+
+| Category | Commands |
+| :--- | :--- |
+| **System** | `Open [App]`, `Close [App]`, `Set Volume [0-100]`, `System Health`, `Screenshot` |
+| **Media** | `Play [Song Name]`, `Pause`, `Next`, `Translate to [Language]` |
+| **Intel** | `Search for [Topic]`, `Deep research on [Topic]`, `Summarize URL [Link]`, `Calculate [Math]` |
+| **Life** | `Add to todo [Task]`, `Show todo list`, `Start Pomodoro [Mins]`, `Weather in [City]` |
+| **Sensors** | `What am I looking at?`, `Look through the camera` |
+| **Special** | `Run protocol [Name]`, `Focus Mode`, `Gaming Mode`, `Test sound` |
+
+---
+
+*Veda - Your personal JARVIS for Windows 11.*

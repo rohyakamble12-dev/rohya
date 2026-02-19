@@ -57,6 +57,7 @@ class VedaLLM:
             "User: 'search for cats' -> {'intent': 'web_search', 'params': {'query': 'cats'}}\n"
             "User: 'take a note: buy milk' -> {'intent': 'note', 'params': {'text': 'buy milk'}}\n"
             "User: 'who are you?' -> {'intent': 'none', 'params': {}}\n"
+            "User: 'help' or 'commands' -> {'intent': 'help', 'params': {}}\n"
             "User: 'test sound' -> {'intent': 'test_sound', 'params': {}}\n"
             "User: 'what is 2 + 2?' -> {'intent': 'calculate', 'params': {'expression': '2 + 2'}}\n"
             "User: 'look through camera' -> {'intent': 'sight', 'params': {}}\n\n"
@@ -66,7 +67,7 @@ class VedaLLM:
             "media_control, play_music, file_search, file_info, set_mode, translate, "
             "start_recording, stop_recording, play_macro, ingest_web, todo_add, todo_list, "
             "todo_complete, pomodoro, define_protocol, run_protocol, calculate, sight, "
-            "iot_control, test_sound, none.\n\n"
+            "iot_control, help, test_sound, none.\n\n"
             f"User Input: '{user_input}'"
         )
 

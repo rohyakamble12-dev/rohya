@@ -17,6 +17,7 @@ from veda.features.scraper import VedaScraper
 from veda.features.task_master import VedaTaskMaster
 from veda.features.calculator import VedaCalculator
 from veda.features.iot import VedaIOT
+from veda.features.help import VedaHelp
 from veda.core.context import VedaContext
 from veda.utils.notifications import VedaNotifications
 from veda.utils.protocols import VedaProtocols
@@ -46,6 +47,7 @@ class VedaAssistant:
         self.task_master = VedaTaskMaster(self)
         self.calculator = VedaCalculator()
         self.iot = VedaIOT()
+        self.help = VedaHelp()
         self.context = VedaContext(self)
         self.protocols = VedaProtocols()
 
@@ -284,6 +286,9 @@ class VedaAssistant:
             url = params.get("url", "")
             data = params.get("data", {})
             response = self.iot.trigger_webhook(url, data=data)
+            action_taken = True
+        elif intent == "help":
+            response = self.help.get_command_list()
             action_taken = True
         elif intent == "test_sound":
             self.gui.update_chat("System", "Initiating sound diagnostic...")
