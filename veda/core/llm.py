@@ -55,13 +55,17 @@ class VedaLLM:
             "Intents: 'open_app', 'close_app', 'set_volume', 'set_brightness', 'web_search', 'weather', "
             "'screenshot', 'lock_pc', 'time', 'date', 'note', 'stock_price', 'crypto_price', "
             "'remember_fact', 'vision_analyze', 'motivation', 'deep_research', 'read_doc', "
-            "'sys_health', 'net_info', 'media_control', 'file_search', 'set_mode', 'translate', 'none'.\n"
+            "'sys_health', 'net_info', 'media_control', 'file_search', 'set_mode', 'translate', "
+            "'start_recording', 'stop_recording', 'play_macro', 'ingest_web', 'todo_add', "
+            "'todo_list', 'pomodoro', 'define_protocol', 'run_protocol', 'none'.\n"
             "Examples for params:\n"
             "- 'remember_fact': {'key': 'user_birthday', 'value': 'January 5th'}\n"
             "- 'stock_price': {'symbol': 'AAPL'}\n"
             "- 'media_control': {'command': 'next'}\n"
             "- 'file_search': {'filename': 'report.pdf'}\n"
             "- 'translate': {'text': 'Hello world', 'language': 'es'}\n"
+            "- 'ingest_web': {'url': 'https://example.com'}\n"
+            "- 'define_protocol': {'name': 'Work Mode', 'commands': ['open Chrome', 'set volume 20']}\n"
             f"User input: \"{user_input}\""
         )
 

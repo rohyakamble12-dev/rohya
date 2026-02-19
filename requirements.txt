@@ -19,3 +19,4 @@ deep-translator
 duckduckgo-search
 pyaudio
 pygame
+pynput

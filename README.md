@@ -1,34 +1,41 @@
-# Veda: The Masterwork AI HUD
+# Veda: The Absolute Ultimate AI Partner
 
-Veda is the pinnacle of Jarvis/Friday-inspired AI for Windows 11. This **Masterwork Edition** introduces visual voice pulses, hardware monitoring graphs, native Windows notifications, and multilingual mastery.
+Veda is no longer just an assistant; she is a **Digital Partner**. This **Partner Edition** introduces macro automation, emotional HUD intelligence, web ingestion, and full lifecycle task management.
 
-## 🌟 Masterwork Edition Upgrades
+## 🌟 Absolute Ultimate Upgrades
 
-### 🎨 Visual & Immersive HUD
-- **Animated Voice Pulse**: A real-time, glowing waveform on the HUD that reacts as Veda speaks or listens.
-- **Hardware Graphs**: Live visual progress bars for CPU and RAM usage, giving you an instant overview of system performance.
-- **Dynamic Opacity**: HUD transparency automatically adjusts based on your current mode (e.g., Stealth or Gaming).
+### 🤖 Veda Automation (The Macro Brain)
+- **Action Learning**: Veda can now "watch" your repetitive tasks. Record a sequence of keyboard and mouse actions and ask her to replay them at any time.
+- **JARVIS Macros**: Automate complex workflows by teaching Veda exactly how you work.
 
-### 🔔 Native Windows Integration
-- **Toast Notifications**: Veda now delivers health reminders, system alerts, and proactive tips directly to the **Windows 11 Notification Center**.
-- **Always-on-Top Proactivity**: Even if the HUD is minimized, Veda can reach you through native system alerts.
+### 🎭 Emotion HUD Intelligence
+- **Dynamic Personality**: Veda's HUD now has visual "feelings." The accent color shifts dynamically based on her current state:
+    - **Calm Blue**: Standard operation.
+    - **Alert Red**: System warnings or urgent tasks.
+    - **Success Green**: Task completion and success.
+    - **Focus Yellow**: Focus and Pomodoro sessions active.
+    - **Stealth Grey**: Stealth and privacy modes.
 
-### 🎮 Gaming & Performance
-- **Gaming Mode**: A specialized protocol that clears memory awareness, maximizes brightness, and puts Veda into a high-transparency "DND" state for uninterrupted play.
-- **Resource Monitoring**: Live tracking of high-memory background tasks.
+### 📜 Custom Protocols (User Macros)
+- **Command Chaining**: Define your own complex protocols. "When I say 'Start Work', open Chrome, set volume to 20%, and start a 25-minute Pomodoro."
+- **Persistent Logic**: Your custom protocols are saved in her long-term memory for permanent use.
 
-### 🌍 Global Multilingual Mastery
-- **Instant Translation**: Veda can translate phrases or entire sentences into dozens of languages (Spanish, French, Hindi, Japanese, etc.) via natural voice commands.
-- **Cross-Language Knowledge**: Access global research and information in your preferred language.
+### 🌐 Web Ingestion & Analysis
+- **Direct Web Reading**: Provide Veda with any URL, and she will scrape, summarize, and remember the key information from that page.
+- **Enhanced Research**: Beyond Wikipedia, she can now learn from specific web articles and documentation.
+
+### 📋 Veda Task Master
+- **Life Management**: An integrated Todo system and Pomodoro timer help you stay productive throughout your day.
+- **Native Notifications**: Task reminders and Pomodoro alerts are delivered via the Windows 11 Notification Center.
 
 ---
 
-## 🛠️ Complete Feature Set
+## 🎮 Absolute Ultimate Feature Set
 
-- **Proactive Intelligence**: Real-time context awareness with a built-in privacy shield.
-- **Cognition**: Long-term SQLite memory and deep Wikipedia research.
-- **System Mastery**: Full control over apps, files, media, volume, and brightness.
-- **Well-being**: Native hydration and eye-break reminders.
+- **Proactive Intelligence**: Real-time context awareness and "Data Shield" privacy protection.
+- **Full Immersion**: Animated voice pulse and live hardware progress bars.
+- **OS Integration**: Native Windows Toast notifications and deep system control.
+- **Cognition**: SQLite-based long-term memory and multilingual translation.
 
 ---
 
@@ -38,13 +45,13 @@ Veda is the pinnacle of Jarvis/Friday-inspired AI for Windows 11. This **Masterw
 2.  **Ollama Brain**: `ollama pull llama3.2:3b`
 3.  **Launch**: `python main.py`
 
-*Note: Install the 'Orbitron' font for the intended HUD aesthetic.*
+*Tip: Install the 'Orbitron' font for the intended HUD aesthetic.*
 
 ---
 
-## 🛡️ Privacy & Security
-Masterwork Veda maintains all previous security protocols, including input sanitization, the Privacy Shield for sensitive apps, and local-only data storage for memory and notes.
+## 🛡️ Security & Partner Ethics
+The Partner Edition maintains Veda's core security philosophy. Macro data and web ingestion content remain local. Automation requires explicit user triggers, ensuring you remain in control of your system.
 
 ---
 
-*Veda - Experience the Masterwork.*
+*Veda - The Ultimate Partner for Human-AI Collaboration.*

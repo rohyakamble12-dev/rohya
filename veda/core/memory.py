@@ -28,6 +28,15 @@ class VedaMemory:
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         ''')
+        # Table for custom user protocols/macros
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS custom_protocols (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                protocol_name TEXT UNIQUE,
+                commands TEXT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
         conn.commit()
         conn.close()
 
@@ -63,6 +72,33 @@ class VedaMemory:
         if not rows:
             return "No personal facts known yet."
         return "\n".join([f"{row[0]}: {row[1]}" for row in rows])
+
+    def store_custom_protocol(self, name, commands):
+        """Stores a custom sequence of commands."""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        try:
+            cursor.execute('''
+                INSERT OR REPLACE INTO custom_protocols (protocol_name, commands)
+                VALUES (?, ?)
+            ''', (name.lower(), json.dumps(commands) if isinstance(commands, list) else commands))
+            conn.commit()
+        finally:
+            conn.close()
+
+    def get_custom_protocol(self, name):
+        """Retrieves a custom protocol's commands."""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute('SELECT commands FROM custom_protocols WHERE protocol_name = ?', (name.lower(),))
+        result = cursor.fetchone()
+        conn.close()
+        if result:
+            try:
+                return json.loads(result[0])
+            except:
+                return result[0]
+        return None
 
     def clear_memory(self):
         """Clears all stored data."""

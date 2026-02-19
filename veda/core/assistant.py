@@ -12,6 +12,9 @@ from veda.features.media import VedaMedia
 from veda.features.file_manager import VedaFileManager
 from veda.features.modes import VedaModes
 from veda.features.translator import VedaTranslator
+from veda.features.automation import VedaAutomation
+from veda.features.scraper import VedaScraper
+from veda.features.task_master import VedaTaskMaster
 from veda.core.context import VedaContext
 from veda.utils.notifications import VedaNotifications
 from veda.utils.protocols import VedaProtocols
@@ -33,6 +36,9 @@ class VedaAssistant:
         self.file_manager = VedaFileManager()
         self.modes = VedaModes(self)
         self.translator = VedaTranslator()
+        self.automation = VedaAutomation()
+        self.scraper = VedaScraper()
+        self.task_master = VedaTaskMaster(self)
         self.context = VedaContext(self)
         self.protocols = VedaProtocols()
 
@@ -172,6 +178,56 @@ class VedaAssistant:
             text = params.get("text", user_input)
             lang = params.get("language", "en")
             response = self.translator.translate_text(text, target_lang=lang)
+            action_taken = True
+        elif intent == "start_recording":
+            response = self.automation.start_recording()
+            action_taken = True
+        elif intent == "stop_recording":
+            name = params.get("name", "default")
+            response = self.automation.stop_recording(name)
+            action_taken = True
+        elif intent == "play_macro":
+            name = params.get("name", "default")
+            response = self.automation.play_macro(name)
+            action_taken = True
+        elif intent == "ingest_web":
+            url = params.get("url", "")
+            if url:
+                raw_text = self.scraper.ingest_url(url)
+                response = self.llm.chat(f"Summarize this web content: {raw_text}")
+            else:
+                response = "Please provide a valid URL."
+            action_taken = True
+        elif intent == "todo_add":
+            task = params.get("task", user_input)
+            response = self.task_master.add_todo(task)
+            action_taken = True
+        elif intent == "todo_list":
+            response = self.task_master.get_todos()
+            action_taken = True
+        elif intent == "pomodoro":
+            mins = params.get("minutes", 25)
+            response = self.task_master.start_pomodoro(mins)
+            action_taken = True
+        elif intent == "define_protocol":
+            name = params.get("name", "")
+            cmds = params.get("commands", [])
+            if name and cmds:
+                self.llm.memory.store_custom_protocol(name, cmds)
+                response = f"Custom protocol '{name}' established."
+            else:
+                response = "Protocol definition failed. Need name and commands."
+            action_taken = True
+        elif intent == "run_protocol":
+            name = params.get("name", "")
+            cmds = self.llm.memory.get_custom_protocol(name)
+            if cmds:
+                self.gui.update_chat("Veda", f"Executing protocol: {name}")
+                for cmd in cmds:
+                    self.process_command(cmd)
+                response = f"Protocol '{name}' execution complete."
+            else:
+                response = f"Protocol '{name}' not found."
             action_taken = True
 
         # 3. If no specific action or we want a conversational response

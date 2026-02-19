@@ -161,6 +161,35 @@ class VedaGUI(ctk.CTk):
         if active:
             self.animate_pulse()
 
+    def set_theme_color(self, mood="calm"):
+        """Changes the HUD accent color based on Veda's 'mood' or system state."""
+        moods = {
+            "calm": "#00d4ff",     # Jarvis Cyan
+            "alert": "#ff4b2b",    # Alert Red
+            "success": "#00ff7f",  # Success Green
+            "focus": "#ffff00",    # Focus Yellow
+            "stealth": "#707070"   # Stealth Grey
+        }
+        color = moods.get(mood.lower(), moods["calm"])
+        self.accent_color = color
+
+        # Update UI elements
+        self.title_label.configure(text_color=color)
+        self.chat_display.configure(border_color=color)
+        self.status_bar.configure(text_color=color)
+        # Correcting based on latest UI
+        self.cpu_label.configure(text_color=color)
+        self.ram_label.configure(text_color=color)
+        self.input_entry.configure(border_color=color, text_color=color)
+        self.voice_button.configure(border_color=color, text_color=color)
+        self.protocol_frame.configure(border_color=color)
+        self.pulse_canvas.itemconfig(self.pulse_line, fill=color)
+
+        # Checkboxes
+        self.deep_search_cb.configure(text_color=color, fg_color=color)
+        self.private_cb.configure(text_color=color, fg_color=color)
+        self.context_cb.configure(text_color=color, fg_color=color)
+
     def pulse_status(self):
         """Adds a subtle glowing animation to the status bar."""
         current_text = self.status_bar.cget("text")
