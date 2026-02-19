@@ -15,6 +15,9 @@ class VedaAssistant:
 
     def process_command(self, user_input):
         """Processes a user command, determines intent, and executes actions."""
+        if not user_input or user_input == "None":
+            return
+
         # 1. Extract Intent
         intent_data = self.llm.extract_intent(user_input)
         intent = intent_data.get("intent", "none")
@@ -71,7 +74,11 @@ class VedaAssistant:
 
         # 4. Update UI and Speak
         self.gui.update_chat("Veda", response)
-        self.voice.speak(response)
+        try:
+            self.voice.speak(response)
+        except Exception as e:
+            print(f"Speech error: {e}")
+            self.gui.update_chat("System", "Voice module encountered an error, but I am still processing your requests.")
 
     def listen_and_process(self):
         """Listens for voice input and processes it."""

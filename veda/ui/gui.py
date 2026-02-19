@@ -1,5 +1,6 @@
 import customtkinter as ctk
 import threading
+import tkinter as tk
 
 class VedaGUI(ctk.CTk):
     def __init__(self, on_send_callback, on_voice_callback):
@@ -8,35 +9,72 @@ class VedaGUI(ctk.CTk):
         self.on_send_callback = on_send_callback
         self.on_voice_callback = on_voice_callback
 
-        self.title("VEDA - Advanced Assistant")
-        self.geometry("600x700")
-        ctk.set_appearance_mode("dark")
-        ctk.set_default_color_theme("blue")
+        # HUD Configuration
+        self.title("VEDA HUD")
+        self.geometry("450x600+50+50") # Set to a corner by default
+        self.overrideredirect(True) # Remove standard title bar
+        self.attributes("-topmost", True)
+        self.attributes("-alpha", 0.85) # Transparency
+        self.configure(fg_color="#010a12") # Very dark blue/black
+
+        # Colors
+        self.accent_color = "#00d4ff" # Jarvis Cyan
+        self.text_color = "#e0f7fa"
+
+        # Dragging functionality for the HUD
+        self.bind("<ButtonPress-1>", self.start_move)
+        self.bind("<ButtonRelease-1>", self.stop_move)
+        self.bind("<B1-Motion>", self.do_move)
 
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
 
-        # Chat display
-        self.chat_display = ctk.CTkTextbox(self, width=580, height=500)
-        self.chat_display.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+        # Header / Title Bar Area
+        self.header = ctk.CTkFrame(self, height=40, fg_color="#021627", corner_radius=0)
+        self.header.grid(row=0, column=0, sticky="ew")
+
+        self.title_label = ctk.CTkLabel(self.header, text="V E D A  I N T E R F A C E",
+                                        font=("Orbitron", 14, "bold"), text_color=self.accent_color)
+        self.title_label.pack(side="left", padx=20)
+
+        self.close_btn = ctk.CTkButton(self.header, text="X", width=30, height=30,
+                                       fg_color="transparent", hover_color="#ff4b2b",
+                                       command=self.destroy)
+        self.close_btn.pack(side="right", padx=10)
+
+        # Chat display area
+        self.chat_display = ctk.CTkTextbox(self, width=430, height=450,
+                                           fg_color="#01121f",
+                                           text_color=self.text_color,
+                                           font=("Consolas", 12),
+                                           border_width=1, border_color=self.accent_color)
+        self.chat_display.grid(row=1, column=0, padx=10, pady=(10, 5), sticky="nsew")
         self.chat_display.configure(state="disabled")
 
-        # Input frame
-        self.input_frame = ctk.CTkFrame(self)
-        self.input_frame.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
+        # Status Bar
+        self.status_bar = ctk.CTkLabel(self, text="SYSTEM READY", font=("Consolas", 10), text_color=self.accent_color)
+        self.status_bar.grid(row=2, column=0, sticky="w", padx=15)
+
+        # Input area
+        self.input_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self.input_frame.grid(row=3, column=0, padx=10, pady=10, sticky="ew")
         self.input_frame.grid_columnconfigure(0, weight=1)
 
-        self.input_entry = ctk.CTkEntry(self.input_frame, placeholder_text="Type a command...")
+        self.input_entry = ctk.CTkEntry(self.input_frame, placeholder_text="Enter Command...",
+                                        fg_color="#01121f", border_color=self.accent_color,
+                                        text_color=self.accent_color)
         self.input_entry.grid(row=0, column=0, padx=(0, 10), pady=10, sticky="ew")
         self.input_entry.bind("<Return>", lambda e: self.send_message())
 
-        self.send_button = ctk.CTkButton(self.input_frame, text="Send", command=self.send_message)
-        self.send_button.grid(row=0, column=1, padx=5, pady=10)
+        self.voice_button = ctk.CTkButton(self.input_frame, text="MIC", width=60,
+                                          fg_color="transparent", border_width=1,
+                                          border_color=self.accent_color,
+                                          text_color=self.accent_color,
+                                          hover_color="#004d61",
+                                          command=self.trigger_voice)
+        self.voice_button.grid(row=0, column=1, padx=0, pady=10)
 
-        self.voice_button = ctk.CTkButton(self.input_frame, text="Voice", command=self.trigger_voice, fg_color="green")
-        self.voice_button.grid(row=0, column=2, padx=5, pady=10)
-
-        self.update_chat("Veda", "System Online. Ready to assist.")
+        self.update_chat("Veda", "HUD Initialized. Connection established.")
 
     def update_chat(self, sender, message):
         """Thread-safe way to update the chat display."""
@@ -44,21 +82,42 @@ class VedaGUI(ctk.CTk):
 
     def _update_chat_ui(self, sender, message):
         self.chat_display.configure(state="normal")
-        self.chat_display.insert("end", f"{sender}: {message}\n\n")
+        self.chat_display.insert("end", f"[{sender.upper()}]: {message}\n\n")
         self.chat_display.configure(state="disabled")
         self.chat_display.see("end")
 
     def send_message(self):
         message = self.input_entry.get()
         if message:
-            self.update_chat("You", message)
+            self.update_chat("User", message)
             self.input_entry.delete(0, "end")
-            # Run the callback in a separate thread to keep UI responsive
+            self.status_bar.configure(text="PROCESSING...")
             threading.Thread(target=self.on_send_callback, args=(message,), daemon=True).start()
 
     def trigger_voice(self):
-        self.voice_button.configure(text="Listening...", fg_color="red")
+        self.voice_button.configure(text="...", border_color="#ff4b2b", text_color="#ff4b2b")
+        self.status_bar.configure(text="LISTENING...")
         threading.Thread(target=self.on_voice_callback, daemon=True).start()
 
     def reset_voice_button(self):
-        self.after(0, lambda: self.voice_button.configure(text="Voice", fg_color="green"))
+        self.after(0, self._reset_voice_ui)
+
+    def _reset_voice_ui(self):
+        self.voice_button.configure(text="MIC", border_color=self.accent_color, text_color=self.accent_color)
+        self.status_bar.configure(text="SYSTEM READY")
+
+    # Movement Logic
+    def start_move(self, event):
+        self.x = event.x
+        self.y = event.y
+
+    def stop_move(self, event):
+        self.x = None
+        self.y = None
+
+    def do_move(self, event):
+        deltax = event.x - self.x
+        deltay = event.y - self.y
+        x = self.winfo_x() + deltax
+        y = self.winfo_y() + deltay
+        self.geometry(f"+{x}+{y}")

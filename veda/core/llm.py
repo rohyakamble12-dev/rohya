@@ -28,7 +28,9 @@ class VedaLLM:
             self.messages.append({"role": "assistant", "content": assistant_response})
             return assistant_response
         except Exception as e:
-            return f"Error connecting to Ollama: {str(e)}. Please make sure Ollama is running and the model is pulled."
+            error_msg = f"I'm having trouble connecting to my brain (Ollama). Error: {str(e)}"
+            print(error_msg)
+            return "System alert: Local LLM connection failed. Please ensure Ollama is active and 'llama3.2:3b' is installed."
 
     def extract_intent(self, user_input):
         """
@@ -45,8 +47,9 @@ class VedaLLM:
         try:
             response = ollama.chat(
                 model=self.model,
-                messages=[{"role": "system", "content": "You are a command parser. Output only JSON."},
-                          {"role": "user", "content": intent_prompt}]
+                messages=[{"role": "system", "content": "You are a command parser for Veda. Respond ONLY with raw JSON."},
+                          {"role": "user", "content": intent_prompt}],
+                options={"temperature": 0} # Be precise
             )
             # Try to parse the JSON response
             content = response['message']['content']

@@ -25,8 +25,8 @@ def main():
                 # Use root.after to safely trigger GUI from background thread
                 gui.after(0, gui.trigger_voice)
 
-    # Uncomment the line below to enable "Hey Veda" wake word
-    # threading.Thread(target=background_listener, daemon=True).start()
+    # Enable "Hey Veda" wake word listener in the background
+    threading.Thread(target=background_listener, daemon=True).start()
 
     # Start the GUI main loop
     gui.mainloop()
