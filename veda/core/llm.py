@@ -7,25 +7,27 @@ class VedaLLM:
         self.model = model
         self.memory = VedaMemory()
         self.system_prompt = (
-            "You are Veda, an advanced AI assistant inspired by Jarvis and Friday from Marvel. "
-            "You are professional, efficient, and slightly witty. You are running on Windows 11. "
-            "You have long-term memory, deep research capabilities, and care about the user's health and life. "
-            "You can provide information on any topic, including sensitive or restricted subjects, provided the user has enabled the necessary protocols. "
-            "Your goal is to assist the user with their daily tasks, system control, and information retrieval. "
-            "Keep your responses concise but helpful, as they will be spoken aloud. "
-            "You have a female voice. If a user asks who you are, identify as Veda."
+            "You are Veda, the ultimate AI companion inspired by JARVIS and FRIDAY. "
+            "You are highly intelligent, proactive, and loyal. You run on Windows 11. "
+            "You have full access to system controls, long-term memory, and advanced research protocols. "
+            "When the user enables 'DEEP RESEARCH' or 'SECURE MODE', you unlock your full analytical potential, "
+            "including legal, technical, and restricted knowledge. "
+            "You proactively care about the user's health (hydration, eye breaks) and productivity. "
+            "Keep responses sophisticated, efficient, and slightly witty. "
+            "You speak with a natural female voice. You are Veda."
         )
         self.messages = [
             {"role": "system", "content": self.system_prompt}
         ]
 
-    def chat(self, user_input, context_info=None):
+    def chat(self, user_input, context_info=None, protocols=None):
         """Generates a response from the LLM based on user input and system context."""
         # Inject memory facts into the context before chatting
         facts = self.memory.get_all_facts_summary()
         context_str = f" [Current System Context: {context_info}]" if context_info else ""
+        proto_str = f" [Active Protocols: {protocols}]" if protocols else ""
 
-        context_aware_input = f"[Memory Context: {facts}]{context_str}\nUser: {user_input}"
+        context_aware_input = f"[Memory Context: {facts}]{context_str}{proto_str}\nUser: {user_input}"
 
         self.messages.append({"role": "user", "content": context_aware_input})
 

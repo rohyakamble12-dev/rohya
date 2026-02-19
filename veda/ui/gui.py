@@ -8,6 +8,7 @@ class VedaGUI(ctk.CTk):
 
         self.on_send_callback = on_send_callback
         self.on_voice_callback = on_voice_callback
+        self.protocol_callback = None
 
         # HUD Configuration
         self.title("VEDA HUD")
@@ -194,9 +195,10 @@ class VedaGUI(ctk.CTk):
         self.after(0, lambda: self.suggestion_label.configure(text=f"VEDA TIP: {text}"))
 
     def on_protocol_toggle(self, name):
-        # We'll pass this back to the assistant via a callback if needed,
-        # but for now we'll just handle it in the assistant's reference
+        """Notifies the assistant when a protocol is toggled."""
         self.status_bar.configure(text=f"PROTOCOL {name.upper()} UPDATED")
+        if self.protocol_callback:
+            self.protocol_callback()
 
     def trigger_voice(self):
         self.voice_button.configure(text="...", border_color="#ff4b2b", text_color="#ff4b2b")

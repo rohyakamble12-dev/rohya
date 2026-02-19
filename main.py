@@ -17,6 +17,9 @@ def main():
     global assistant
     assistant = VedaAssistant(gui)
 
+    # Link GUI protocol changes to assistant
+    gui.protocol_callback = assistant.sync_protocols
+
     # Optional: Start background wake-word listener
     import threading
     def background_listener():

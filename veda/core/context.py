@@ -49,8 +49,7 @@ class VedaContext:
                             self.active_app = title.split(' - ')[-1] if ' - ' in title else title
 
                             # Proactively notify assistant if it's a significant change
-                            # (e.g. user switched from browser to VS Code)
-                            # self.assistant.on_context_change(self.active_app)
+                            self.assistant.on_context_change(self.active_app)
 
             except Exception as e:
                 print(f"Context Monitor Error: {e}")

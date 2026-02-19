@@ -41,22 +41,25 @@ class VedaAssistant:
         # Start background context monitoring
         self.context.start_monitoring()
 
+    def sync_protocols(self):
+        """Syncs local protocol state with GUI toggles."""
+        self.protocols.protocols["deep_research"] = self.gui.deep_search_var.get()
+        self.protocols.protocols["private_mode"] = self.gui.private_var.get()
+        self.protocols.protocols["context_monitoring"] = self.gui.context_var.get()
+
+        if self.protocols.protocols["context_monitoring"]:
+            self.context.start_monitoring()
+        else:
+            self.context.stop_monitoring()
+
     def process_command(self, user_input):
         """Processes a user command, determines intent, and executes actions."""
         self.gui.set_voice_active(True)
         if not user_input or user_input == "None":
             return
 
-        # Sync protocols with GUI state
-        self.protocols.protocols["deep_research"] = self.gui.deep_search_var.get()
-        self.protocols.protocols["private_mode"] = self.gui.private_var.get()
-        self.protocols.protocols["context_monitoring"] = self.gui.context_var.get()
-
-        # Update monitor state based on toggle
-        if self.protocols.protocols["context_monitoring"]:
-            self.context.start_monitoring()
-        else:
-            self.context.stop_monitoring()
+        # Ensure protocols are synced before processing
+        self.sync_protocols()
 
         # 1. Extract Intent
         intent_data = self.llm.extract_intent(user_input)
@@ -128,12 +131,18 @@ class VedaAssistant:
             response = self.life.get_motivation()
             action_taken = True
         elif intent == "deep_research":
-            topic = params.get("topic", user_input)
-            response = self.research.get_summary(topic)
+            if self.protocols.is_allowed("deep_research"):
+                topic = params.get("topic", user_input)
+                response = self.research.get_summary(topic)
+            else:
+                response = "Protocol Error: DEEP RESEARCH is currently offline. Please enable it on the HUD."
             action_taken = True
         elif intent == "read_doc":
-            path = params.get("path", "")
-            response = self.research.read_document(path)
+            if self.protocols.is_allowed("document_learning"):
+                path = params.get("path", "")
+                response = self.research.read_document(path)
+            else:
+                response = "Protocol Error: DOCUMENT LEARNING is restricted."
             action_taken = True
         elif intent == "sys_health":
             response = self.diagnostics.get_system_health()
@@ -168,7 +177,9 @@ class VedaAssistant:
         # 3. If no specific action or we want a conversational response
         if not action_taken or "none" in intent:
             current_context = self.context.get_current_context() if self.protocols.protocols["context_monitoring"] else None
-            response = self.llm.chat(user_input, context_info=current_context)
+            # Pass protocol status to LLM
+            protocol_status = self.protocols.get_status()
+            response = self.llm.chat(user_input, context_info=current_context, protocols=protocol_status)
 
         # 4. Update UI and Speak
         self.gui.update_chat("Veda", response)
@@ -185,6 +196,18 @@ class VedaAssistant:
         VedaNotifications.send_toast("Veda System Alert", message)
         self.gui.update_chat("System", message)
         self.voice.speak(message)
+
+    def on_context_change(self, app_name):
+        """Called when the user switches applications."""
+        suggestions = {
+            "Visual Studio Code": "Need documentation or a quick code review?",
+            "Chrome": "I can help with web research or summaries.",
+            "Notepad": "Shall I save this as a permanent note for you?",
+            "Word": "I can help you draft or research content.",
+            "Spotify": "Music control is active. You can say 'Next track' or 'Pause'."
+        }
+        tip = suggestions.get(app_name, f"I'm ready to assist with {app_name}.")
+        self.gui.show_suggestion(tip)
 
     def listen_and_process(self):
         """Listens for voice input and processes it."""
