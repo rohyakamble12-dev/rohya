@@ -25,3 +25,5 @@ pygame
 pynput
 opencv-python
 wolframalpha
+python-docx
+pandas

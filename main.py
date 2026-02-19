@@ -19,9 +19,16 @@ def main():
             logging.error(f"Error in voice interaction: {e}")
             gui.reset_voice_button()
 
+    def on_upload(file_path):
+        try:
+            assistant.process_file(file_path)
+        except Exception as e:
+            logging.error(f"Error processing file: {e}")
+            gui.update_chat("System", f"File Processing Error: {e}")
+
     # Create GUI
     try:
-        gui = VedaGUI(on_send_callback=on_send, on_voice_callback=on_voice)
+        gui = VedaGUI(on_send_callback=on_send, on_voice_callback=on_voice, on_upload_callback=on_upload)
     except Exception as e:
         print(f"CRITICAL: Failed to create GUI: {e}")
         return

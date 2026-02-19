@@ -23,6 +23,7 @@ from veda.utils.notifications import VedaNotifications
 from veda.utils.protocols import VedaProtocols
 from veda.utils.health import VedaHealth
 import logging
+import os
 
 class VedaAssistant:
     def __init__(self, gui):
@@ -336,6 +337,32 @@ class VedaAssistant:
         }
         tip = suggestions.get(app_name, f"I'm ready to assist with {app_name}.")
         self.gui.show_suggestion(tip)
+
+    def process_file(self, file_path):
+        """Ingests a file, summarizes it, and adds it to the active context."""
+        filename = os.path.basename(file_path)
+        self.gui.update_chat("System", f"Analyzing document: {filename}...")
+
+        content = self.research.read_document(file_path)
+        if "Error" in content or "Processing error" in content:
+            self.gui.update_chat("Veda", f"I encountered an issue while accessing {filename}. {content}")
+            return
+
+        # Prepare prompt for summarization
+        prompt = (
+            f"I have uploaded a file named '{filename}'. "
+            f"Here is a snippet of its content:\n\n{content}\n\n"
+            "Please provide a high-level summary of this document and let me know if there are any key actions or information I should be aware of."
+        )
+
+        # Get response from LLM
+        response = self.llm.chat(prompt)
+
+        # Store in long-term context/memory for future questions
+        self.llm.memory.store_fact(f"content of {filename}", content[:1000])
+
+        self.gui.update_chat("Veda", response)
+        self.voice.speak(f"Analysis of {filename} is complete. {response[:100]}")
 
     def listen_and_process(self):
         """Listens for voice input and processes it."""

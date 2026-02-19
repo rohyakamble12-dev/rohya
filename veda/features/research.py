@@ -1,6 +1,9 @@
 import wikipedia
 import PyPDF2
 import os
+import json
+import pandas as pd
+from docx import Document
 
 class VedaResearch:
     @staticmethod
@@ -24,21 +27,49 @@ class VedaResearch:
 
     @staticmethod
     def read_document(file_path):
-        """Reads text from a local PDF or text file."""
+        """Reads text from various local file formats (PDF, TXT, DOCX, CSV, JSON)."""
         if not os.path.exists(file_path):
-            return "File not found."
+            return "Error: File path does not exist."
 
+        ext = os.path.splitext(file_path)[1].lower()
         try:
-            if file_path.endswith('.pdf'):
-                with open(file_path, 'rb') as f:
-                    reader = PyPDF2.PdfReader(f)
-                    text = ""
-                    # Read first 5 pages to avoid overloading
-                    for i in range(min(len(reader.pages), 5)):
-                        text += reader.pages[i].extract_text()
-                    return text[:2000] # Return first 2000 chars
+            if ext == '.pdf':
+                return VedaResearch._read_pdf(file_path)
+            elif ext == '.docx':
+                return VedaResearch._read_docx(file_path)
+            elif ext == '.csv':
+                return VedaResearch._read_csv(file_path)
+            elif ext == '.json':
+                return VedaResearch._read_json(file_path)
             else:
+                # Default to plain text
                 with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                    return f.read(2000)
+                    return f.read(3000)
         except Exception as e:
-            return f"Failed to read document: {str(e)}"
+            return f"Processing error for {ext.upper()}: {str(e)}"
+
+    @staticmethod
+    def _read_pdf(path):
+        with open(path, 'rb') as f:
+            reader = PyPDF2.PdfReader(f)
+            text = ""
+            for i in range(min(len(reader.pages), 10)):
+                text += reader.pages[i].extract_text() + "\n"
+            return text[:4000]
+
+    @staticmethod
+    def _read_docx(path):
+        doc = Document(path)
+        text = "\n".join([para.text for para in doc.paragraphs])
+        return text[:4000]
+
+    @staticmethod
+    def _read_csv(path):
+        df = pd.read_csv(path, nrows=20)
+        return "CSV Data Snippet (Top 20 rows):\n" + df.to_string()
+
+    @staticmethod
+    def _read_json(path):
+        with open(path, 'r') as f:
+            data = json.load(f)
+            return "JSON Content Snippet:\n" + json.dumps(data, indent=2)[:3000]

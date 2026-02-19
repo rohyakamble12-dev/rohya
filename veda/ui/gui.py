@@ -9,11 +9,12 @@ import math
 import random
 
 class VedaGUI(ctk.CTk):
-    def __init__(self, on_send_callback, on_voice_callback):
+    def __init__(self, on_send_callback, on_voice_callback, on_upload_callback=None):
         super().__init__()
 
         self.on_send_callback = on_send_callback
         self.on_voice_callback = on_voice_callback
+        self.on_upload_callback = on_upload_callback
         self.protocol_callback = None
 
         # HUD Configuration
@@ -109,10 +110,12 @@ class VedaGUI(ctk.CTk):
         if self.camera_active:
             self.btn_cam.configure(fg_color=self.accent_color, border_color="#ffffff", text="📷 ON")
 
-        self.btn_end = ctk.CTkButton(self.ctrl_frame, text="U N L O A D", width=120, height=35,
+        self.btn_upload = self._create_icon_btn(self.ctrl_frame, "📁", self.trigger_upload)
+
+        self.btn_end = ctk.CTkButton(self.ctrl_frame, text="U N L O A D", width=100, height=35,
                                      fg_color="#201010", border_width=1, border_color=self.alert_color,
                                      hover_color=self.alert_color, font=("Orbitron", 11, "bold"), command=self.destroy)
-        self.btn_end.pack(side="left", padx=15)
+        self.btn_end.pack(side="left", padx=10)
         self.btn_mic = self._create_icon_btn(self.ctrl_frame, "🎤", self.trigger_voice)
 
         # --- RIGHT PANEL: COMMS ---
@@ -311,6 +314,16 @@ class VedaGUI(ctk.CTk):
             self.update_chat("User", msg)
             self.input_entry.delete(0, "end")
             threading.Thread(target=self.on_send_callback, args=(msg,), daemon=True).start()
+
+    def trigger_upload(self):
+        from tkinter import filedialog
+        file_path = filedialog.askopenfilename(
+            title="Select File for Veda to Process",
+            filetypes=[("Documents", "*.pdf *.txt *.docx *.csv *.json"), ("All Files", "*.*")]
+        )
+        if file_path and self.on_upload_callback:
+            self.update_chat("System", f"Uploading file: {file_path}")
+            threading.Thread(target=self.on_upload_callback, args=(file_path,), daemon=True).start()
 
     def _on_proto_change(self):
         if self.protocol_callback: self.protocol_callback()
