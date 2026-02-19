@@ -5,6 +5,7 @@ SpeechRecognition
 customtkinter
 pyautogui
 pycaw
+comtypes
 screen-brightness-control
 PyGetWindow
 Pillow
@@ -13,8 +14,9 @@ beautifulsoup4
 wikipedia
 PyPDF2
 psutil
-winsdk
 winrt-Windows.UI.Notifications
+winrt-Windows.Data.Xml.Dom
+winrt-Windows.Foundation
 deep-translator
 duckduckgo-search
 pyaudio

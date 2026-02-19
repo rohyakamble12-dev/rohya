@@ -1,12 +1,22 @@
 import os
-import asyncio
-from winrt.windows.ui.notifications import ToastNotificationManager, ToastNotification
-from winrt.windows.data.xml.dom import XmlDocument
+
+# Robust import for Windows Toast notifications
+try:
+    from winrt.windows.ui.notifications import ToastNotificationManager, ToastNotification
+    from winrt.windows.data.xml.dom import XmlDocument
+    WINRT_AVAILABLE = True
+except ImportError:
+    WINRT_AVAILABLE = False
+    print("Warning: Windows Toast notifications (winrt) not found. Falling back to console alerts.")
 
 class VedaNotifications:
     @staticmethod
     def send_toast(title, message):
         """Sends a native Windows 11 Toast notification."""
+        if not WINRT_AVAILABLE:
+            print(f"[TOAST FALLBACK] {title}: {message}")
+            return
+
         try:
             # Create the toast XML template
             toast_xml = f"""
