@@ -156,6 +156,10 @@ class VedaAssistant:
         elif intent == "net_info":
             response = self.diagnostics.get_network_info()
             action_taken = True
+        elif intent == "play_music":
+            song = params.get("song_name", user_input)
+            response = self.media.play_song(song)
+            action_taken = True
         elif intent == "media_control":
             cmd = params.get("command", "play_pause")
             if cmd == "next": response = self.media.next_track()
