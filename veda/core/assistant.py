@@ -156,6 +156,9 @@ class VedaAssistant:
         elif intent == "net_info":
             response = self.diagnostics.get_network_info()
             action_taken = True
+        elif intent == "storage_info":
+            response = self.diagnostics.get_storage_info()
+            action_taken = True
         elif intent == "play_music":
             song = params.get("song_name", user_input)
             response = self.media.play_song(song)
@@ -170,6 +173,10 @@ class VedaAssistant:
         elif intent == "file_search":
             name = params.get("filename", "")
             response = self.file_manager.search_file(name)
+            action_taken = True
+        elif intent == "file_info":
+            path = params.get("path", "")
+            response = self.file_manager.get_file_info(path)
             action_taken = True
         elif intent == "set_mode":
             mode = params.get("mode", "normal")
@@ -208,6 +215,10 @@ class VedaAssistant:
             action_taken = True
         elif intent == "todo_list":
             response = self.task_master.get_todos()
+            action_taken = True
+        elif intent == "todo_complete":
+            idx = params.get("index", 1)
+            response = self.task_master.complete_todo(idx)
             action_taken = True
         elif intent == "pomodoro":
             mins = params.get("minutes", 25)

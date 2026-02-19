@@ -134,12 +134,16 @@ class VedaGUI(ctk.CTk):
 
     def update_metrics(self):
         """Periodically updates hardware metrics on the HUD."""
-        import psutil
-        cpu = psutil.cpu_percent()
-        ram = psutil.virtual_memory().percent
-        self.cpu_bar.set(cpu / 100)
-        self.ram_bar.set(ram / 100)
-        self.after(5000, self.update_metrics)
+        try:
+            import psutil
+            cpu = psutil.cpu_percent()
+            ram = psutil.virtual_memory().percent
+            self.cpu_bar.set(cpu / 100)
+            self.ram_bar.set(ram / 100)
+        except Exception as e:
+            print(f"Metrics update error: {e}")
+        finally:
+            self.after(5000, self.update_metrics)
 
     def animate_pulse(self):
         """Animates the voice waveform line."""

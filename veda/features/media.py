@@ -11,7 +11,8 @@ class VedaMedia:
         try:
             query = urllib.parse.quote(song_name)
             url = f"https://www.youtube.com/results?search_query={query}"
-            response = requests.get(url)
+            headers = {'User-Agent': 'Mozilla/5.0'}
+            response = requests.get(url, headers=headers)
 
             # Simple regex to find the first video ID
             video_ids = re.findall(r"watch\?v=(\S{11})", response.text)

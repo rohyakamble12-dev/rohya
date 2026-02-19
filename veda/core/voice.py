@@ -12,7 +12,8 @@ class VedaVoice:
         self.offline_engine = pyttsx3.init()
         self.setup_offline_voice()
         self.recognizer = sr.Recognizer()
-        pygame.mixer.init()
+        if not pygame.mixer.get_init():
+            pygame.mixer.init()
 
     def setup_offline_voice(self):
         """Sets the offline engine to a female voice if available."""

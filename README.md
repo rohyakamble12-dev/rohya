@@ -34,8 +34,10 @@ Veda is no longer just an assistant; she is a **Digital Partner**. This **Partne
 
 - **Proactive Intelligence**: Real-time context awareness and "Data Shield" privacy protection.
 - **Full Immersion**: Animated voice pulse and live hardware progress bars.
-- **OS Integration**: Native Windows Toast notifications and deep system control.
-- **Cognition**: SQLite-based long-term memory and multilingual translation.
+- **OS Integration**: Native Windows Toast notifications and deep system control (Volume, Brightness, Apps).
+- **Cognition**: SQLite-based long-term memory, Wikipedia research, and multilingual translation.
+- **Media Mastery**: YouTube playback and universal system media control.
+- **Diagnostics**: Live CPU, RAM, and storage tracking.
 
 ---
 

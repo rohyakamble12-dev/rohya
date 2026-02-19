@@ -17,7 +17,7 @@ class VedaVision:
         """Returns info about the currently active window."""
         try:
             window = gw.getActiveWindow()
-            if window:
+            if window and window.title:
                 return {
                     "title": window.title,
                     "box": (window.left, window.top, window.width, window.height)
