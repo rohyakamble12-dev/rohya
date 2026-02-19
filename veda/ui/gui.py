@@ -55,8 +55,20 @@ class VedaGUI(ctk.CTk):
         self.status_bar = ctk.CTkLabel(self, text="SYSTEM READY", font=("Consolas", 10), text_color=self.accent_color)
         self.status_bar.grid(row=2, column=0, sticky="w", padx=15)
 
-        self.metrics_label = ctk.CTkLabel(self, text="CPU: 0% | RAM: 0%", font=("Consolas", 10), text_color=self.accent_color)
-        self.metrics_label.grid(row=2, column=0, sticky="e", padx=15)
+        self.metrics_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self.metrics_frame.grid(row=2, column=0, sticky="e", padx=15)
+
+        self.cpu_bar = ctk.CTkProgressBar(self.metrics_frame, width=100, height=8, progress_color=self.accent_color)
+        self.cpu_bar.set(0)
+        self.cpu_bar.pack(side="left", padx=5)
+        self.cpu_label = ctk.CTkLabel(self.metrics_frame, text="CPU", font=("Consolas", 9), text_color=self.accent_color)
+        self.cpu_label.pack(side="left")
+
+        self.ram_bar = ctk.CTkProgressBar(self.metrics_frame, width=100, height=8, progress_color="#b000ff")
+        self.ram_bar.set(0)
+        self.ram_bar.pack(side="left", padx=5)
+        self.ram_label = ctk.CTkLabel(self.metrics_frame, text="RAM", font=("Consolas", 9), text_color=self.accent_color)
+        self.ram_label.pack(side="left")
 
         # Input area
         self.input_frame = ctk.CTkFrame(self, fg_color="transparent")
@@ -109,6 +121,12 @@ class VedaGUI(ctk.CTk):
         self.suggestion_label = ctk.CTkLabel(self, text="", font=("Consolas", 11, "italic"), text_color="#ffff00")
         self.suggestion_label.grid(row=5, column=0, padx=15, pady=(0, 5), sticky="w")
 
+        # Voice Pulse Indicator
+        self.pulse_canvas = tk.Canvas(self, width=450, height=20, bg="#010a12", highlightthickness=0)
+        self.pulse_canvas.grid(row=6, column=0, sticky="ew")
+        self.pulse_line = self.pulse_canvas.create_line(0, 10, 450, 10, fill=self.accent_color, width=2)
+        self.pulse_active = False
+
         self.update_chat("Veda", "HUD Initialized. Connection established.")
         self.pulse_status()
         self.update_metrics()
@@ -118,8 +136,29 @@ class VedaGUI(ctk.CTk):
         import psutil
         cpu = psutil.cpu_percent()
         ram = psutil.virtual_memory().percent
-        self.metrics_label.configure(text=f"CPU: {cpu}% | RAM: {ram}%")
+        self.cpu_bar.set(cpu / 100)
+        self.ram_bar.set(ram / 100)
         self.after(5000, self.update_metrics)
+
+    def animate_pulse(self):
+        """Animates the voice waveform line."""
+        if not self.pulse_active:
+            self.pulse_canvas.coords(self.pulse_line, 0, 10, 450, 10)
+            return
+
+        import random
+        points = [0, 10]
+        for x in range(10, 450, 10):
+            h = 10 + random.randint(-8, 8)
+            points.extend([x, h])
+        points.extend([450, 10])
+        self.pulse_canvas.coords(self.pulse_line, *points)
+        self.after(100, self.animate_pulse)
+
+    def set_voice_active(self, active):
+        self.pulse_active = active
+        if active:
+            self.animate_pulse()
 
     def pulse_status(self):
         """Adds a subtle glowing animation to the status bar."""

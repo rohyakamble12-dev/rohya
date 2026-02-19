@@ -14,6 +14,8 @@ wikipedia
 PyPDF2
 psutil
 winsdk
+winrt-Windows.UI.Notifications
+deep-translator
 duckduckgo-search
 pyaudio
 pygame

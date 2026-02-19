@@ -11,7 +11,9 @@ from veda.features.diagnostics import VedaDiagnostics
 from veda.features.media import VedaMedia
 from veda.features.file_manager import VedaFileManager
 from veda.features.modes import VedaModes
+from veda.features.translator import VedaTranslator
 from veda.core.context import VedaContext
+from veda.utils.notifications import VedaNotifications
 from veda.utils.protocols import VedaProtocols
 
 class VedaAssistant:
@@ -30,6 +32,7 @@ class VedaAssistant:
         self.media = VedaMedia()
         self.file_manager = VedaFileManager()
         self.modes = VedaModes(self)
+        self.translator = VedaTranslator()
         self.context = VedaContext(self)
         self.protocols = VedaProtocols()
 
@@ -40,6 +43,7 @@ class VedaAssistant:
 
     def process_command(self, user_input):
         """Processes a user command, determines intent, and executes actions."""
+        self.gui.set_voice_active(True)
         if not user_input or user_input == "None":
             return
 
@@ -152,7 +156,13 @@ class VedaAssistant:
             mode = params.get("mode", "normal")
             if mode == "focus": response = self.modes.focus_mode()
             elif mode == "stealth": response = self.modes.stealth_mode()
+            elif mode == "gaming": response = self.modes.gaming_mode()
             else: response = self.modes.normal_mode()
+            action_taken = True
+        elif intent == "translate":
+            text = params.get("text", user_input)
+            lang = params.get("language", "en")
+            response = self.translator.translate_text(text, target_lang=lang)
             action_taken = True
 
         # 3. If no specific action or we want a conversational response
@@ -167,9 +177,12 @@ class VedaAssistant:
         except Exception as e:
             print(f"Speech error: {e}")
             self.gui.update_chat("System", "Voice module encountered an error, but I am still processing your requests.")
+        finally:
+            self.gui.set_voice_active(False)
 
     def system_alert(self, message):
         """Used for background routine alerts."""
+        VedaNotifications.send_toast("Veda System Alert", message)
         self.gui.update_chat("System", message)
         self.voice.speak(message)
 

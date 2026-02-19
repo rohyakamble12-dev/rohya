@@ -1,51 +1,50 @@
-# Veda: The Ultimate Proactive AI HUD
+# Veda: The Masterwork AI HUD
 
-Veda is an advanced, Jarvis/Friday-inspired AI assistant for Windows 11. This edition introduces **Real-Time Context Awareness** and **System Productivity Modes**, making her more proactive while keeping your privacy secured.
+Veda is the pinnacle of Jarvis/Friday-inspired AI for Windows 11. This **Masterwork Edition** introduces visual voice pulses, hardware monitoring graphs, native Windows notifications, and multilingual mastery.
 
-## 🚀 Proactive Intelligence
+## 🌟 Masterwork Edition Upgrades
 
-### 👁️ Real-Time Context
-- **Environmental Awareness**: Veda monitors your active application to provide proactive help. If you're coding, she can suggest documentation; if you're writing, she can offer research tips.
-- **Privacy Shield**: Veda automatically engages a "Data Shield" when you use sensitive applications (banking, password managers, private windows). She ignores all context from these sources to keep your data safe.
+### 🎨 Visual & Immersive HUD
+- **Animated Voice Pulse**: A real-time, glowing waveform on the HUD that reacts as Veda speaks or listens.
+- **Hardware Graphs**: Live visual progress bars for CPU and RAM usage, giving you an instant overview of system performance.
+- **Dynamic Opacity**: HUD transparency automatically adjusts based on your current mode (e.g., Stealth or Gaming).
 
-### ⚙️ System Productivity Modes
-- **Focus Mode**: Optimizes your environment for deep work by lowering volume, adjusting brightness, and focusing on contextual assistance.
-- **Stealth Mode**: Veda enters the shadows. HUD transparency is increased, voice is muted, and context tracking is disabled for maximum privacy.
-- **Normal Mode**: Standard JARVIS-level protocols.
+### 🔔 Native Windows Integration
+- **Toast Notifications**: Veda now delivers health reminders, system alerts, and proactive tips directly to the **Windows 11 Notification Center**.
+- **Always-on-Top Proactivity**: Even if the HUD is minimized, Veda can reach you through native system alerts.
 
----
+### 🎮 Gaming & Performance
+- **Gaming Mode**: A specialized protocol that clears memory awareness, maximizes brightness, and puts Veda into a high-transparency "DND" state for uninterrupted play.
+- **Resource Monitoring**: Live tracking of high-memory background tasks.
 
-## 🛠️ Integrated Feature Set
-
-- **HUD Interface**: Futuristic, transparent, draggable, always-on-top overlay with live hardware metrics.
-- **Cognition**: Long-term SQLite memory, Wikipedia research, and PDF/Text document learning.
-- **Full Windows Control**: Apps, volume, brightness, screenshots, and universal media keys.
-- **Well-being**: Background monitoring for hydration and eye-break reminders.
-
----
-
-## 🎮 HUD Interface Controls
-
-- **REAL-TIME CONTEXT Toggle**: Enable/Disable Veda's ability to see your active app.
-- **DEEP RESEARCH Toggle**: Enable advanced encyclopedia and search protocols.
-- **SECURE MODE Toggle**: Activate for high-privacy research.
-- **DRAG HUD**: Reposition the interface anywhere on your screen.
+### 🌍 Global Multilingual Mastery
+- **Instant Translation**: Veda can translate phrases or entire sentences into dozens of languages (Spanish, French, Hindi, Japanese, etc.) via natural voice commands.
+- **Cross-Language Knowledge**: Access global research and information in your preferred language.
 
 ---
 
-## 🛠️ Installation & Setup
+## 🛠️ Complete Feature Set
+
+- **Proactive Intelligence**: Real-time context awareness with a built-in privacy shield.
+- **Cognition**: Long-term SQLite memory and deep Wikipedia research.
+- **System Mastery**: Full control over apps, files, media, volume, and brightness.
+- **Well-being**: Native hydration and eye-break reminders.
+
+---
+
+## 🚀 Setup & Run
 
 1.  **Dependencies**: `pip install -r requirements.txt`
 2.  **Ollama Brain**: `ollama pull llama3.2:3b`
 3.  **Launch**: `python main.py`
 
-*Note: For the best experience, install the 'Orbitron' font.*
+*Note: Install the 'Orbitron' font for the intended HUD aesthetic.*
 
 ---
 
-## 🛡️ Privacy First
-Veda's proactive features are built with multiple security layers. Sensitive apps are blacklisted by default, context monitoring is entirely local, and you have a manual kill-switch (Real-Time Context toggle) directly on the HUD.
+## 🛡️ Privacy & Security
+Masterwork Veda maintains all previous security protocols, including input sanitization, the Privacy Shield for sensitive apps, and local-only data storage for memory and notes.
 
 ---
 
-*Veda - The Proactive Future of Human-AI Collaboration.*
+*Veda - Experience the Masterwork.*
