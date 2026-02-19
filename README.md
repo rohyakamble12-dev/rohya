@@ -1,43 +1,35 @@
-# Veda: The Absolute Ultimate AI Partner
+# Veda: The JARVIS/FRIDAY Edition
 
-Veda is no longer just an assistant; she is a **Digital Partner**. This **Partner Edition** introduces macro automation, emotional HUD intelligence, web ingestion, and full lifecycle task management.
+Veda has evolved into the ultimate Marvel-inspired AI digital partner. This **Marvel Edition** adds optical sensors, computational mastery, and Stark-level protocols to the Windows 11 HUD experience.
 
-## 🌟 Absolute Ultimate Upgrades
+## 🌟 The Ultimate Marvel Upgrades
 
-### 🤖 Veda Automation (The Macro Brain)
-- **Action Learning**: Veda can now "watch" your repetitive tasks. Record a sequence of keyboard and mouse actions and ask her to replay them at any time.
-- **JARVIS Macros**: Automate complex workflows by teaching Veda exactly how you work.
+### 👁️ Veda Sight (Optical Sensors)
+- **Visual Intelligence**: Veda can now access your webcam to perform room scans and face detection. Ask her to "look through the camera" to see what she finds.
 
-### 🎭 Emotion HUD Intelligence
-- **Dynamic Personality**: Veda's HUD now has visual "feelings." The accent color shifts dynamically based on her current state:
-    - **Calm Blue**: Standard operation.
-    - **Alert Red**: System warnings or urgent tasks.
-    - **Success Green**: Task completion and success.
-    - **Focus Yellow**: Focus and Pomodoro sessions active.
-    - **Stealth Grey**: Stealth and privacy modes.
+### 📐 High-Precision Computation
+- **Engineering Brain**: Integrated calculation engine for complex math and physics. She can handle advanced expressions and unit conversions with ease.
 
-### 📜 Custom Protocols (User Macros)
-- **Command Chaining**: Define your own complex protocols. "When I say 'Start Work', open Chrome, set volume to 20%, and start a 25-minute Pomodoro."
-- **Persistent Logic**: Your custom protocols are saved in her long-term memory for permanent use.
+### 🏠 IOT & Smart Home Protocols
+- **Physical Environment Control**: Veda can now trigger IOT devices and smart home setups via customizable webhooks (IFTTT, Home Assistant).
 
-### 🌐 Web Ingestion & Analysis
-- **Direct Web Reading**: Provide Veda with any URL, and she will scrape, summarize, and remember the key information from that page.
-- **Enhanced Research**: Beyond Wikipedia, she can now learn from specific web articles and documentation.
-
-### 📋 Veda Task Master
-- **Life Management**: An integrated Todo system and Pomodoro timer help you stay productive throughout your day.
-- **Native Notifications**: Task reminders and Pomodoro alerts are delivered via the Windows 11 Notification Center.
+### 🚀 Marvel Protocols (Easter Eggs)
+- **House Party Protocol**: Ready for a break? This protocol sets the mood by launching fun apps and playing music.
+- **Clean Slate Protocol**: Instant shutdown of all non-essential work applications and system muting.
+- **Mark 42 Status**: A full diagnostic report of system health, connectivity, and environmental vision.
 
 ---
 
-## 🎮 Absolute Ultimate Feature Set
+## 🛠️ Complete Feature Matrix
 
-- **Proactive Intelligence**: Real-time context awareness and "Data Shield" privacy protection.
-- **Full Immersion**: Animated voice pulse and live hardware progress bars.
-- **OS Integration**: Native Windows Toast notifications and deep system control (Volume, Brightness, Apps).
-- **Cognition**: SQLite-based long-term memory, Wikipedia research, and multilingual translation.
-- **Media Mastery**: YouTube playback and universal system media control.
-- **Diagnostics**: Live CPU, RAM, and storage tracking.
+| Pillar | JARVIS / FRIDAY Capability | Veda Real-World Equivalent |
+| :--- | :--- | :--- |
+| **Voice** | Full conversation | Llama 3.2 3B + Edge TTS |
+| **Interface** | Holographic HUD | Windows 11 Transparent HUD |
+| **Vision** | Object / Face Recognition | OpenCV + Screen Analysis |
+| **Logic** | Proactive Problem Solving | Real-Time Context Engine |
+| **Control** | System / Hardware Mastery | os.startfile + Native Win APIs |
+| **Memory** | Total Life Context | Local SQLite Memory Engine |
 
 ---
 
@@ -51,18 +43,9 @@ Veda is no longer just an assistant; she is a **Digital Partner**. This **Partne
 
 ---
 
-## 🔊 Troubleshooting Sound
-If Veda is not speaking, try the following:
-1.  **Run Sound Test**: Type or say "test sound" in the HUD. She will attempt to play both online and offline voices.
-2.  **Check Volume**: Ensure your system volume is up and Veda isn't in **Stealth Mode** (which mutes her).
-3.  **Check Internet**: Edge TTS requires an active connection. If offline, she should automatically use the local Windows voice.
-4.  **Log File**: Check `veda.log` in the project root for detailed error reports.
+## 🛡️ Security & Integrity
+Veda remains 100% local. Your webcam data, screen captures, and macro recordings are never uploaded to any server. You are the sole administrator of your digital partner.
 
 ---
 
-## 🛡️ Security & Partner Ethics
-The Partner Edition maintains Veda's core security philosophy. Macro data and web ingestion content remain local. Automation requires explicit user triggers, ensuring you remain in control of your system.
-
----
-
-*Veda - The Ultimate Partner for Human-AI Collaboration.*
+*Veda - Inspired by Legends. Built for Reality.*

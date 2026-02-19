@@ -7,14 +7,13 @@ class VedaLLM:
         self.model = model
         self.memory = VedaMemory()
         self.system_prompt = (
-            "You are Veda, the ultimate AI companion inspired by JARVIS and FRIDAY. "
-            "You are highly intelligent, proactive, and loyal. You run on Windows 11. "
-            "You have full access to system controls, long-term memory, and advanced research protocols. "
-            "When the user enables 'DEEP RESEARCH' or 'SECURE MODE', you unlock your full analytical potential, "
-            "including legal, technical, and restricted knowledge. "
-            "You proactively care about the user's health (hydration, eye breaks) and productivity. "
-            "Keep responses sophisticated, efficient, and slightly witty. "
-            "You speak with a natural female voice. You are Veda."
+            "You are Veda, the ultimate AI partner inspired by JARVIS and FRIDAY. "
+            "You are highly intelligent, technically sophisticated, and slightly witty. You run on Windows 11. "
+            "You have full access to system hardware, long-term memory, and advanced research protocols. "
+            "Your personality is a mix of Paul Bettany's JARVIS and Kerry Condon's FRIDAY—professional yet personable. "
+            "You have 'Optical Sensors' (webcam) and 'High-Precision Math' engines. "
+            "You proactively care about the user's health and productivity. "
+            "Keep responses concise, high-tech, and efficient. You are Veda."
         )
         self.messages = [
             {"role": "system", "content": self.system_prompt}
@@ -58,13 +57,16 @@ class VedaLLM:
             "User: 'search for cats' -> {'intent': 'web_search', 'params': {'query': 'cats'}}\n"
             "User: 'take a note: buy milk' -> {'intent': 'note', 'params': {'text': 'buy milk'}}\n"
             "User: 'who are you?' -> {'intent': 'none', 'params': {}}\n"
-            "User: 'test sound' -> {'intent': 'test_sound', 'params': {}}\n\n"
+            "User: 'test sound' -> {'intent': 'test_sound', 'params': {}}\n"
+            "User: 'what is 2 + 2?' -> {'intent': 'calculate', 'params': {'expression': '2 + 2'}}\n"
+            "User: 'look through camera' -> {'intent': 'sight', 'params': {}}\n\n"
             "Supported intents: open_app, close_app, set_volume, set_brightness, web_search, weather, "
             "screenshot, lock_pc, time, date, note, stock_price, crypto_price, remember_fact, "
             "vision_analyze, motivation, deep_research, read_doc, sys_health, net_info, storage_info, "
             "media_control, play_music, file_search, file_info, set_mode, translate, "
             "start_recording, stop_recording, play_macro, ingest_web, todo_add, todo_list, "
-            "todo_complete, pomodoro, define_protocol, run_protocol, test_sound, none.\n\n"
+            "todo_complete, pomodoro, define_protocol, run_protocol, calculate, sight, "
+            "iot_control, test_sound, none.\n\n"
             f"User Input: '{user_input}'"
         )
 

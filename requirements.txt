@@ -23,3 +23,5 @@ duckduckgo-search
 pyaudio
 pygame
 pynput
+opencv-python
+wolframalpha

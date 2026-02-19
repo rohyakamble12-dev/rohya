@@ -15,6 +15,8 @@ from veda.features.translator import VedaTranslator
 from veda.features.automation import VedaAutomation
 from veda.features.scraper import VedaScraper
 from veda.features.task_master import VedaTaskMaster
+from veda.features.calculator import VedaCalculator
+from veda.features.iot import VedaIOT
 from veda.core.context import VedaContext
 from veda.utils.notifications import VedaNotifications
 from veda.utils.protocols import VedaProtocols
@@ -42,6 +44,8 @@ class VedaAssistant:
         self.automation = VedaAutomation()
         self.scraper = VedaScraper()
         self.task_master = VedaTaskMaster(self)
+        self.calculator = VedaCalculator()
+        self.iot = VedaIOT()
         self.context = VedaContext(self)
         self.protocols = VedaProtocols()
 
@@ -251,15 +255,35 @@ class VedaAssistant:
                 response = "Protocol definition failed. Need name and commands."
             action_taken = True
         elif intent == "run_protocol":
-            name = params.get("name", "")
-            cmds = self.llm.memory.get_custom_protocol(name)
+            name = params.get("name", "").lower()
+            # Marvel Easter Egg Protocols
+            marvel_protocols = {
+                "house party": ["open browser", "play Daft Punk", "set brightness 100", "set volume 80"],
+                "clean slate": ["close chrome", "close notepad", "set volume 0", "set brightness 30"],
+                "mark 42": ["sys_health", "net_info", "vision_analyze"]
+            }
+
+            cmds = self.llm.memory.get_custom_protocol(name) or marvel_protocols.get(name)
+
             if cmds:
-                self.gui.update_chat("Veda", f"Executing protocol: {name}")
+                self.gui.update_chat("Veda", f"Executing protocol: {name.upper()}")
                 for cmd in cmds:
                     self.process_command(cmd)
                 response = f"Protocol '{name}' execution complete."
             else:
                 response = f"Protocol '{name}' not found."
+            action_taken = True
+        elif intent == "calculate":
+            expr = params.get("expression", "")
+            response = self.calculator.calculate(expr)
+            action_taken = True
+        elif intent == "sight":
+            response = self.vision.veda_sight()
+            action_taken = True
+        elif intent == "iot_control":
+            url = params.get("url", "")
+            data = params.get("data", {})
+            response = self.iot.trigger_webhook(url, data=data)
             action_taken = True
         elif intent == "test_sound":
             self.gui.update_chat("System", "Initiating sound diagnostic...")
