@@ -97,6 +97,18 @@ class VedaGUI(ctk.CTk):
                                           fg_color=self.accent_color, hover_color="#004d61")
         self.private_cb.pack(side="left", padx=10, pady=5)
 
+        self.context_var = tk.BooleanVar(value=True)
+        self.context_cb = ctk.CTkCheckBox(self.protocol_frame, text="REAL-TIME CONTEXT",
+                                          variable=self.context_var,
+                                          command=lambda: self.on_protocol_toggle("context_monitoring"),
+                                          font=("Consolas", 10), text_color=self.accent_color,
+                                          fg_color=self.accent_color, hover_color="#004d61")
+        self.context_cb.pack(side="left", padx=10, pady=5)
+
+        # Suggestions area
+        self.suggestion_label = ctk.CTkLabel(self, text="", font=("Consolas", 11, "italic"), text_color="#ffff00")
+        self.suggestion_label.grid(row=5, column=0, padx=15, pady=(0, 5), sticky="w")
+
         self.update_chat("Veda", "HUD Initialized. Connection established.")
         self.pulse_status()
         self.update_metrics()
@@ -138,11 +150,14 @@ class VedaGUI(ctk.CTk):
             self.status_bar.configure(text="PROCESSING...")
             threading.Thread(target=self.on_send_callback, args=(message,), daemon=True).start()
 
+    def show_suggestion(self, text):
+        """Displays a proactive suggestion on the HUD."""
+        self.after(0, lambda: self.suggestion_label.configure(text=f"VEDA TIP: {text}"))
+
     def on_protocol_toggle(self, name):
         # We'll pass this back to the assistant via a callback if needed,
         # but for now we'll just handle it in the assistant's reference
         self.status_bar.configure(text=f"PROTOCOL {name.upper()} UPDATED")
-        # The actual logic will be handled by the assistant accessing the protocol utility
 
     def trigger_voice(self):
         self.voice_button.configure(text="...", border_color="#ff4b2b", text_color="#ff4b2b")

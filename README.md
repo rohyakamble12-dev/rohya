@@ -1,60 +1,51 @@
-# Veda: The Ultimate Windows 11 AI HUD
+# Veda: The Ultimate Proactive AI HUD
 
-Veda is the most advanced, Jarvis/Friday-inspired AI assistant for Windows 11. She combines total system control, deep research, long-term memory, and health monitoring into a single, futuristic HUD interface.
+Veda is an advanced, Jarvis/Friday-inspired AI assistant for Windows 11. This edition introduces **Real-Time Context Awareness** and **System Productivity Modes**, making her more proactive while keeping your privacy secured.
 
-## 🚀 The Ultimate Feature Set
+## 🚀 Proactive Intelligence
 
-### 🧠 Intelligence & Knowledge
-- **Total Knowledge**: Deep research integration with Wikipedia and broad knowledge bases.
-- **Document Learning**: Veda can "read" your local PDFs and text files to learn from your data.
-- **Long-Term Memory**: Remembers personal facts, preferences, and context across sessions via a local SQLite database.
-- **Protocol Gating**: Securely manage access to deep research and private modes via HUD toggles.
+### 👁️ Real-Time Context
+- **Environmental Awareness**: Veda monitors your active application to provide proactive help. If you're coding, she can suggest documentation; if you're writing, she can offer research tips.
+- **Privacy Shield**: Veda automatically engages a "Data Shield" when you use sensitive applications (banking, password managers, private windows). She ignores all context from these sources to keep your data safe.
 
-### 🖥️ System & File Mastery
-- **Hardware Diagnostics**: Real-time HUD monitoring of CPU, RAM, and Battery. Ask for full health reports.
-- **Universal Media Control**: Voice-controlled Play/Pause, Skip, and Previous for any background media.
-- **File Intelligence**: Deep search for files across Documents, Downloads, and Desktop.
-- **App Management**: Intelligent app launching with smart web-fallback (e.g., local Word -> Word Online).
-- **System Control**: Native control over Volume, Brightness, PC Locking, and Screenshots.
+### ⚙️ System Productivity Modes
+- **Focus Mode**: Optimizes your environment for deep work by lowering volume, adjusting brightness, and focusing on contextual assistance.
+- **Stealth Mode**: Veda enters the shadows. HUD transparency is increased, voice is muted, and context tracking is disabled for maximum privacy.
+- **Normal Mode**: Standard JARVIS-level protocols.
 
-### 🏥 Life & Well-being
-- **Digital Vision**: Screen awareness to identify active windows and provide context-aware help.
-- **Health Routine**: Background monitoring for hydration, posture, and eye-break reminders.
-- **Financial Intelligence**: Real-time tracking of Stock and Crypto prices.
+---
+
+## 🛠️ Integrated Feature Set
+
+- **HUD Interface**: Futuristic, transparent, draggable, always-on-top overlay with live hardware metrics.
+- **Cognition**: Long-term SQLite memory, Wikipedia research, and PDF/Text document learning.
+- **Full Windows Control**: Apps, volume, brightness, screenshots, and universal media keys.
+- **Well-being**: Background monitoring for hydration and eye-break reminders.
 
 ---
 
 ## 🎮 HUD Interface Controls
 
-- **DRAG**: Click and drag any dark area of the HUD to reposition it.
-- **MIC**: Say "Hey Veda" or click the MIC button to start listening.
-- **DEEP RESEARCH**: Toggle advanced encyclopedia and search protocols.
-- **SECURE MODE**: Activate for high-privacy research and secure connectivity.
-- **METRICS**: Live CPU and RAM usage display at the bottom of the HUD.
+- **REAL-TIME CONTEXT Toggle**: Enable/Disable Veda's ability to see your active app.
+- **DEEP RESEARCH Toggle**: Enable advanced encyclopedia and search protocols.
+- **SECURE MODE Toggle**: Activate for high-privacy research.
+- **DRAG HUD**: Reposition the interface anywhere on your screen.
 
 ---
 
 ## 🛠️ Installation & Setup
 
-1.  **Dependencies**:
-    ```bash
-    pip install -r requirements.txt
-    ```
-2.  **Ollama Brain**:
-    *   Download [Ollama](https://ollama.ai/)
-    *   Run: `ollama pull llama3.2:3b`
-3.  **Launch**:
-    ```bash
-    python main.py
-    ```
+1.  **Dependencies**: `pip install -r requirements.txt`
+2.  **Ollama Brain**: `ollama pull llama3.2:3b`
+3.  **Launch**: `python main.py`
 
 *Note: For the best experience, install the 'Orbitron' font.*
 
 ---
 
-## 🛡️ Security & Privacy
-Veda is built for privacy. Your memory database, notes, and document analysis stay entirely local on your machine. All system commands are sanitized to prevent unauthorized execution.
+## 🛡️ Privacy First
+Veda's proactive features are built with multiple security layers. Sensitive apps are blacklisted by default, context monitoring is entirely local, and you have a manual kill-switch (Real-Time Context toggle) directly on the HUD.
 
 ---
 
-*Veda - Built for the future of human-AI collaboration.*
+*Veda - The Proactive Future of Human-AI Collaboration.*

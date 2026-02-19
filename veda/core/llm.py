@@ -18,11 +18,13 @@ class VedaLLM:
             {"role": "system", "content": self.system_prompt}
         ]
 
-    def chat(self, user_input):
-        """Generates a response from the LLM based on user input."""
+    def chat(self, user_input, context_info=None):
+        """Generates a response from the LLM based on user input and system context."""
         # Inject memory facts into the context before chatting
         facts = self.memory.get_all_facts_summary()
-        context_aware_input = f"[Memory Context: {facts}]\nUser: {user_input}"
+        context_str = f" [Current System Context: {context_info}]" if context_info else ""
+
+        context_aware_input = f"[Memory Context: {facts}]{context_str}\nUser: {user_input}"
 
         self.messages.append({"role": "user", "content": context_aware_input})
 
@@ -50,7 +52,7 @@ class VedaLLM:
             "Intents: 'open_app', 'close_app', 'set_volume', 'set_brightness', 'web_search', 'weather', "
             "'screenshot', 'lock_pc', 'time', 'date', 'note', 'stock_price', 'crypto_price', "
             "'remember_fact', 'vision_analyze', 'motivation', 'deep_research', 'read_doc', "
-            "'sys_health', 'net_info', 'media_control', 'file_search', 'none'.\n"
+            "'sys_health', 'net_info', 'media_control', 'file_search', 'set_mode', 'none'.\n"
             "Examples for params:\n"
             "- 'remember_fact': {'key': 'user_birthday', 'value': 'January 5th'}\n"
             "- 'stock_price': {'symbol': 'AAPL'}\n"

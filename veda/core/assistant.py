@@ -10,6 +10,8 @@ from veda.features.research import VedaResearch
 from veda.features.diagnostics import VedaDiagnostics
 from veda.features.media import VedaMedia
 from veda.features.file_manager import VedaFileManager
+from veda.features.modes import VedaModes
+from veda.core.context import VedaContext
 from veda.utils.protocols import VedaProtocols
 
 class VedaAssistant:
@@ -27,15 +29,30 @@ class VedaAssistant:
         self.diagnostics = VedaDiagnostics()
         self.media = VedaMedia()
         self.file_manager = VedaFileManager()
+        self.modes = VedaModes(self)
+        self.context = VedaContext(self)
         self.protocols = VedaProtocols()
 
         # Start background health monitoring
         self.life.start_routine_monitor()
+        # Start background context monitoring
+        self.context.start_monitoring()
 
     def process_command(self, user_input):
         """Processes a user command, determines intent, and executes actions."""
         if not user_input or user_input == "None":
             return
+
+        # Sync protocols with GUI state
+        self.protocols.protocols["deep_research"] = self.gui.deep_search_var.get()
+        self.protocols.protocols["private_mode"] = self.gui.private_var.get()
+        self.protocols.protocols["context_monitoring"] = self.gui.context_var.get()
+
+        # Update monitor state based on toggle
+        if self.protocols.protocols["context_monitoring"]:
+            self.context.start_monitoring()
+        else:
+            self.context.stop_monitoring()
 
         # 1. Extract Intent
         intent_data = self.llm.extract_intent(user_input)
@@ -131,10 +148,17 @@ class VedaAssistant:
             name = params.get("filename", "")
             response = self.file_manager.search_file(name)
             action_taken = True
+        elif intent == "set_mode":
+            mode = params.get("mode", "normal")
+            if mode == "focus": response = self.modes.focus_mode()
+            elif mode == "stealth": response = self.modes.stealth_mode()
+            else: response = self.modes.normal_mode()
+            action_taken = True
 
         # 3. If no specific action or we want a conversational response
         if not action_taken or "none" in intent:
-            response = self.llm.chat(user_input)
+            current_context = self.context.get_current_context() if self.protocols.protocols["context_monitoring"] else None
+            response = self.llm.chat(user_input, context_info=current_context)
 
         # 4. Update UI and Speak
         self.gui.update_chat("Veda", response)
