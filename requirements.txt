@@ -17,6 +17,7 @@ psutil
 winrt-Windows.UI.Notifications
 winrt-Windows.Data.Xml.Dom
 winrt-Windows.Foundation
+win10toast
 deep-translator
 duckduckgo-search
 pyaudio

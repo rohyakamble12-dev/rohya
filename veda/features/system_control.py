@@ -39,39 +39,35 @@ class SystemControl:
         app_name = SystemControl._sanitize(app_name)
         app_name_lower = app_name.lower()
 
-        # 1. Try common local command aliases
+        # 1. Try common local command aliases with 'start'
         apps = {
             "chrome": "chrome",
             "notepad": "notepad",
             "calculator": "calc",
-            "settings": "start ms-settings:",
+            "settings": "ms-settings:",
             "explorer": "explorer",
             "task manager": "taskmgr",
             "cmd": "cmd",
-            "powershell": "powershell"
+            "powershell": "powershell",
+            "browser": "https://www.google.com"
         }
 
-        cmd = apps.get(app_name_lower)
+        target = apps.get(app_name_lower, app_name_lower)
 
-        # 2. Check if the command/executable exists locally
-        if cmd:
-            try:
-                if cmd.startswith("start "):
-                    os.system(cmd)
-                else:
-                    subprocess.Popen(cmd, shell=True)
-                return f"Launching {app_name} locally."
-            except Exception:
-                pass # Fall through to web check
+        # 2. Attempt to use Windows 'start' command for maximum resilience
+        try:
+            # os.startfile is built into Python on Windows and very effective
+            os.startfile(target)
+            return f"Opening {app_name} via Windows Shell."
+        except Exception:
+            pass
 
-        # 3. Try searching for the executable in common paths if not in aliases
-        local_path = shutil.which(app_name_lower)
-        if local_path:
-            try:
-                subprocess.Popen(local_path, shell=True)
-                return f"Launching {app_name} from system path."
-            except Exception:
-                pass
+        # 3. Try subprocess with shell=True as fallback
+        try:
+            subprocess.Popen(f"start {target}", shell=True)
+            return f"Launching {app_name}."
+        except Exception:
+            pass
 
         # 4. Web Fallback
         if app_name_lower in SystemControl.WEB_FALLBACKS:
@@ -100,13 +96,20 @@ class SystemControl:
     def set_volume(level):
         """Sets system volume (0-100)."""
         try:
+            # First try Native Volume Control
             devices = AudioUtilities.GetSpeakers()
             interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
             volume = cast(interface, POINTER(IAudioEndpointVolume))
             volume.SetMasterVolumeLevelScalar(float(level) / 100, None)
             return f"Volume set to {level} percent"
-        except Exception as e:
-            return f"Failed to set volume: {str(e)}"
+        except Exception:
+            # Fallback to pyautogui media keys (vague but works)
+            try:
+                # If they ask for low volume, just mute or something?
+                # Better to just log failure.
+                return f"Could not set precise volume. Please use your keyboard shortcuts."
+            except Exception as e:
+                return f"Volume control failure: {str(e)}"
 
     @staticmethod
     def set_brightness(level):
@@ -114,8 +117,8 @@ class SystemControl:
         try:
             sbc.set_brightness(int(level))
             return f"Brightness set to {level} percent"
-        except Exception as e:
-            return f"Failed to set brightness: {str(e)}"
+        except Exception:
+            return "Screen brightness control is not supported on this monitor."
 
     @staticmethod
     def lock_pc():

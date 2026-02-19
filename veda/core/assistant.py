@@ -18,10 +18,13 @@ from veda.features.task_master import VedaTaskMaster
 from veda.core.context import VedaContext
 from veda.utils.notifications import VedaNotifications
 from veda.utils.protocols import VedaProtocols
+from veda.utils.health import VedaHealth
+import logging
 
 class VedaAssistant:
     def __init__(self, gui):
         self.gui = gui
+        logging.info("Initializing Veda Assistant...")
         self.llm = VedaLLM()
         self.voice = VedaVoice()
         self.system = SystemControl()
@@ -46,6 +49,20 @@ class VedaAssistant:
         self.life.start_routine_monitor()
         # Start background context monitoring
         self.context.start_monitoring()
+
+        # Perform Startup Health Check
+        self.verify_startup()
+
+    def verify_startup(self):
+        """Verifies that all core systems are ready."""
+        report = VedaHealth.full_report()
+        if report:
+            for issue in report:
+                logging.warning(f"Startup Warning: {issue}")
+                self.gui.update_chat("System", f"⚠️ {issue}")
+        else:
+            logging.info("Startup check passed.")
+            self.gui.update_chat("Veda", "All systems nominal. How can I help you today?")
 
     def sync_protocols(self):
         """Syncs local protocol state with GUI toggles."""
