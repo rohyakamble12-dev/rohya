@@ -32,7 +32,7 @@ class VedaGUI(ctk.CTk):
 
         # State
         self.pulse_active = False
-        self.camera_active = True
+        self.camera_active = False
         self.cap = None
         self.last_raw_frame = None
         self.online = True
@@ -104,10 +104,10 @@ class VedaGUI(ctk.CTk):
         self.ctrl_frame = ctk.CTkFrame(self.center_panel, fg_color="transparent")
         self.ctrl_frame.pack(pady=20)
 
-        self.btn_cam = self._create_icon_btn(self.ctrl_frame, "📷 ON", self.toggle_camera)
+        self.btn_cam = self._create_icon_btn(self.ctrl_frame, "📷 OFF", self.toggle_camera)
         self.btn_cam.configure(width=80) # Slightly wider for text
         if self.camera_active:
-            self.btn_cam.configure(fg_color=self.accent_color, border_color="#ffffff")
+            self.btn_cam.configure(fg_color=self.accent_color, border_color="#ffffff", text="📷 ON")
 
         self.btn_end = ctk.CTkButton(self.ctrl_frame, text="U N L O A D", width=120, height=35,
                                      fg_color="#201010", border_width=1, border_color=self.alert_color,
@@ -211,26 +211,32 @@ class VedaGUI(ctk.CTk):
             self.online_status.configure(text="○ OFFLINE", text_color=self.alert_color)
 
     def _camera_worker(self):
-        self.cap = cv2.VideoCapture(0)
+        """Manages the webcam resource and frame updates."""
         while True:
-            if self.camera_active:
-                if not self.cap or not self.cap.isOpened():
-                    self.cap = cv2.VideoCapture(0)
+            try:
+                if self.camera_active:
+                    # Open camera if not already open
+                    if self.cap is None or not self.cap.isOpened():
+                        self.cap = cv2.VideoCapture(0)
 
-                if self.cap and self.cap.isOpened():
-                    ret, frame = self.cap.read()
-                    if ret:
-                        self.last_raw_frame = frame
-                        # Resize is expensive, do it only as much as needed
-                        small_frame = cv2.resize(frame, (250, 150))
-                        rgb_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
-                        img = Image.fromarray(rgb_frame)
-                        # Pass PIL image to main thread; PhotoImage must be created there
-                        self.after(0, lambda i=img: self._update_cam_ui(i))
-            else:
-                if self.cap and self.cap.isOpened():
-                    self.cap.release()
-                    self.cap = None
+                    if self.cap and self.cap.isOpened():
+                        ret, frame = self.cap.read()
+                        if ret:
+                            self.last_raw_frame = frame
+                            # Efficiently process frame for UI
+                            small_frame = cv2.resize(frame, (250, 150))
+                            rgb_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
+                            img = Image.fromarray(rgb_frame)
+                            self.after(0, lambda i=img: self._update_cam_ui(i))
+                else:
+                    # Explicitly release camera when inactive
+                    if self.cap is not None:
+                        if self.cap.isOpened():
+                            self.cap.release()
+                        self.cap = None
+                        self.last_raw_frame = None
+            except Exception as e:
+                print(f"Camera Worker Error: {e}")
 
             time.sleep(0.1) # 10 FPS for stability
 
