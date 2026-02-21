@@ -86,11 +86,13 @@ class VedaAssistant:
         else:
             self.context.stop_monitoring()
 
-    def process_command(self, user_input):
+    def process_command(self, user_input, is_subcommand=False):
         """Processes a user command, determines intent, and executes actions."""
-        self.gui.set_state("thinking")
+        if not is_subcommand:
+            self.gui.set_state("thinking")
+
         if not user_input or user_input == "None":
-            self.gui.set_state("idle")
+            if not is_subcommand: self.gui.set_state("idle")
             return
 
         # Ensure protocols are synced before processing
@@ -142,7 +144,8 @@ class VedaAssistant:
             response = self.system.toggle_mute()
             action_taken = True
         elif intent == "morning_briefing":
-            self.gui.update_chat("Veda", "Preparing your morning briefing, sir...")
+            if not is_subcommand:
+                self.gui.update_chat("Veda", "Preparing your morning briefing, sir...")
             weather = self.web.get_weather()
             news = self.web.get_news()
             health = self.diagnostics.get_system_health()
@@ -313,9 +316,10 @@ class VedaAssistant:
             cmds = self.llm.memory.get_custom_protocol(name) or marvel_protocols.get(name)
 
             if cmds:
-                self.gui.update_chat("Veda", f"Executing protocol: {name.upper()}")
+                if not is_subcommand:
+                    self.gui.update_chat("Veda", f"Executing protocol: {name.upper()}")
                 for cmd in cmds:
-                    self.process_command(cmd)
+                    self.process_command(cmd, is_subcommand=True)
                 response = f"Protocol '{name}' execution complete."
             else:
                 response = f"Protocol '{name}' not found."
@@ -349,21 +353,28 @@ class VedaAssistant:
 
         # 3. If no specific action or we want a conversational response
         if not action_taken or "none" in intent:
-            current_context = self.context.get_current_context() if self.protocols.protocols["context_monitoring"] else None
-            # Pass protocol status to LLM
-            protocol_status = self.protocols.get_status()
-            response = self.llm.chat(user_input, context_info=current_context, protocols=protocol_status)
+            # Check if extract_intent already provided a response to save time
+            if intent == "none" and intent_data.get("response"):
+                response = intent_data["response"]
+            else:
+                current_context = self.context.get_current_context() if self.protocols.protocols["context_monitoring"] else None
+                # Pass protocol status to LLM
+                protocol_status = self.protocols.get_status()
+                response = self.llm.chat(user_input, context_info=current_context, protocols=protocol_status)
 
         # 4. Update UI and Speak
-        self.gui.update_chat("Veda", response)
-        self.gui.set_state("speaking")
-        try:
-            self.voice.speak(response)
-        except Exception as e:
-            print(f"Speech error: {e}")
-            self.gui.update_chat("System", "Voice module encountered an error, but I am still processing your requests.")
-        finally:
-            self.gui.set_state("idle")
+        if not is_subcommand:
+            self.gui.update_chat("Veda", response)
+            self.gui.set_state("speaking")
+            try:
+                self.voice.speak(response)
+            except Exception as e:
+                print(f"Speech error: {e}")
+                self.gui.update_chat("System", "Voice module encountered an error, but I am still processing your requests.")
+            finally:
+                self.gui.set_state("idle")
+        else:
+            return response
 
     def system_alert(self, message):
         """Used for background routine alerts."""

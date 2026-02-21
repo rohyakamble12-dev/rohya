@@ -105,6 +105,7 @@ class VedaGUI(ctk.CTk):
 
         self.canvas = tk.Canvas(self.center_panel, width=400, height=400, bg="#0d0d12", highlightthickness=0)
         self.canvas.pack(pady=20, expand=True)
+        self._draw_hex_grid()
         self._init_earth_animation()
 
         self.ctrl_frame = ctk.CTkFrame(self.center_panel, fg_color="transparent")
@@ -166,9 +167,30 @@ class VedaGUI(ctk.CTk):
         btn.pack(side="left", padx=5)
         return btn
 
+    def _draw_hex_grid(self):
+        """Draws a subtle tech-style hexagonal grid in the background."""
+        w, h = 400, 400
+        size = 25
+        for row in range(-1, 10):
+            for col in range(-1, 10):
+                x = col * size * 1.5
+                y = row * size * math.sqrt(3)
+                if col % 2 == 1:
+                    y += (size * math.sqrt(3)) / 2
+
+                # Draw hex outline
+                points = []
+                for i in range(6):
+                    angle = math.radians(i * 60)
+                    px = x + size * math.cos(angle)
+                    py = y + size * math.sin(angle)
+                    points.extend([px, py])
+
+                self.canvas.create_polygon(points, outline="#1a1a25", fill="", width=1, tags="grid")
+
     def _init_earth_animation(self):
         """Initializes 3D points for the rotating earth globe."""
-        self.canvas.delete("all")
+        self.canvas.delete("points") # Only delete points, keep grid
         self.points = []
         self.radius = 120
         self.angle_y = 0
@@ -186,7 +208,7 @@ class VedaGUI(ctk.CTk):
             z = math.sin(theta) * radius_at_y
 
             # Create dot on canvas
-            dot = self.canvas.create_oval(0, 0, 0, 0, fill=self.accent_color, outline="")
+            dot = self.canvas.create_oval(0, 0, 0, 0, fill=self.accent_color, outline="", tags="points")
             self.points.append({'id': dot, 'x': x, 'y': y, 'z': z})
 
     def _start_background_tasks(self):
@@ -253,6 +275,7 @@ class VedaGUI(ctk.CTk):
 
     def _update_cam_ui(self, pil_img):
         if self.camera_active:
+            # Add a subtle tech-overlay/tint
             img_tk = ImageTk.PhotoImage(image=pil_img)
             self.cam_label.img_tk = img_tk
             self.cam_label.configure(image=img_tk, text="")
@@ -341,18 +364,24 @@ class VedaGUI(ctk.CTk):
 
         # Bubble Container
         bubble_frame = ctk.CTkFrame(self.chat_display, fg_color="transparent")
-        bubble_frame.pack(fill="x", padx=5, pady=5)
+        bubble_frame.pack(fill="x", padx=5, pady=2)
 
         # Alignment logic
         anchor = "e" if is_user else "w"
         color = "#1a1a25" if is_user else "#0a0a15"
-        if is_system:
+        border_col = "#333340"
+
+        if is_user:
+            border_col = self.accent_color
+        elif is_system:
             color = "#201010"
-            anchor = "center"
+            border_col = self.alert_color
+        else:
+            border_col = self.speak_color if self.veda_state == "speaking" else self.accent_color
 
         # The Bubble
         bubble = ctk.CTkFrame(bubble_frame, fg_color=color, corner_radius=12, border_width=1,
-                              border_color=self.accent_color if not is_user else "#333340")
+                              border_color=border_col)
         bubble.pack(side="right" if is_user else ("left" if not is_system else "top"), padx=10)
 
         # Sender & Time
