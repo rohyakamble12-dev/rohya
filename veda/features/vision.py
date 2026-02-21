@@ -54,8 +54,22 @@ class VedaVision:
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             faces = face_cascade.detectMultiScale(gray, 1.1, 4)
 
-            if len(faces) > 0:
-                return f"Sensor analysis complete. I detected {len(faces)} person(s) in the vicinity."
-            return "Visual scan complete. The immediate area appears to be clear."
+            # Multi-Sensor cascades
+            eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
+            body_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_fullbody.xml')
+            upper_body_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_upperbody.xml')
+
+            eyes = eye_cascade.detectMultiScale(gray, 1.1, 4)
+            bodies = body_cascade.detectMultiScale(gray, 1.1, 4)
+            u_bodies = upper_body_cascade.detectMultiScale(gray, 1.1, 4)
+
+            findings = []
+            if len(faces) > 0: findings.append(f"{len(faces)} face(s)")
+            if len(eyes) > 0: findings.append(f"{len(eyes)} retinal points")
+            if len(bodies) > 0 or len(u_bodies) > 0: findings.append("biological entity detected")
+
+            if findings:
+                return f"Stark-Sensor Analysis: {', '.join(findings)}. Environment is secure."
+            return "Visual scan complete. Area is clear. No unauthorized bio-signs detected."
         except Exception as e:
             return f"Sight error: {str(e)}"

@@ -24,10 +24,19 @@ class VedaLLM:
         """Generates a response from the LLM based on user input and system context."""
         # Inject memory facts into the context before chatting
         facts = self.memory.get_all_facts_summary()
+
+        # Search for similar document chunks if relevant
+        doc_context = ""
+        query_embedding = self.embed_text(user_input)
+        if query_embedding:
+            similar = self.memory.search_similar_chunks(query_embedding)
+            if similar:
+                doc_context = "\n[Relevant Document Segments]:\n" + "\n".join([f"Source: {s} - {t}" for s, t, sim in similar])
+
         context_str = f" [Current System Context: {context_info}]" if context_info else ""
         proto_str = f" [Active Protocols: {protocols}]" if protocols else ""
 
-        context_aware_input = f"[Memory Context: {facts}]{context_str}{proto_str}\nUser: {user_input}"
+        context_aware_input = f"[Memory Context: {facts}]{doc_context}{context_str}{proto_str}\nUser: {user_input}"
 
         self.messages.append({"role": "user", "content": context_aware_input})
 
@@ -65,9 +74,12 @@ class VedaLLM:
             "User: 'mute system' -> {'intent': 'mute_toggle', 'params': {}}\n"
             "User: 'morning briefing' -> {'intent': 'morning_briefing', 'params': {}}\n"
             "User: 'scan wifi' -> {'intent': 'wifi_scan', 'params': {}}\n"
-            "User: 'show my passwords' -> {'intent': 'password_recovery', 'params': {}}\n\n"
+            "User: 'show my passwords' -> {'intent': 'password_recovery', 'params': {}}\n"
+            "User: 'switch to JARVIS' -> {'intent': 'switch_persona', 'params': {'persona': 'jarvis'}}\n"
+            "User: 'clean my system' -> {'intent': 'sys_clean', 'params': {}}\n\n"
             "Supported intents: open_app, close_app, set_volume, set_brightness, web_search, weather, "
             "screenshot, lock_pc, sleep, mute_toggle, morning_briefing, wifi_scan, password_recovery, "
+            "switch_persona, sys_clean, sys_duplicates, sys_thermals, "
             "time, date, note, stock_price, crypto_price, remember_fact, vision_analyze, motivation, "
             "deep_research, read_doc, "
             "sys_health, net_info, storage_info, media_control, play_music, file_search, file_info, "
@@ -94,6 +106,32 @@ class VedaLLM:
             return {"intent": "none", "params": {}}
         except:
             return {"intent": "none", "params": {}}
+
+    def set_persona(self, persona_name):
+        """Updates the system prompt and persona of the LLM."""
+        if persona_name.lower() == "jarvis":
+            self.system_prompt = (
+                "You are JARVIS, the legendary AI assistant. You are sophisticated, British, "
+                "and fiercely loyal. You refer to the user as 'Sir' and manage system "
+                "protocols with clinical precision. Keep responses witty and professional."
+            )
+        else:
+            self.system_prompt = (
+                "You are FRIDAY, a sharp and highly capable AI. You are Irish, efficient, "
+                "and proactive. You refer to the user as 'Boss' or 'Sir' and focus on "
+                "immediate results and system security."
+            )
+        self.reset_history()
+
+    def embed_text(self, text):
+        """Generates an embedding for the given text using Ollama."""
+        try:
+            # Note: Not all models support embeddings, but llama3.2 usually does
+            response = ollama.embeddings(model=self.model, prompt=text)
+            return response['embedding']
+        except Exception as e:
+            # Fallback/Log
+            return None
 
     def reset_history(self):
         self.messages = [{"role": "system", "content": self.system_prompt}]

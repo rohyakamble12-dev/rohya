@@ -9,6 +9,7 @@ import tempfile
 class VedaVoice:
     def __init__(self, online_voice="en-US-AvaNeural"):
         self.online_voice = online_voice
+        self.persona = "friday"
         self.offline_engine = pyttsx3.init()
         self.setup_offline_voice()
         self.recognizer = sr.Recognizer()
@@ -19,12 +20,24 @@ class VedaVoice:
                 print(f"Pygame mixer init error: {e}")
 
     def setup_offline_voice(self):
-        """Sets the offline engine to a female voice if available."""
+        """Sets the offline engine voice based on current persona."""
         voices = self.offline_engine.getProperty('voices')
+        target = "female" if self.persona == "friday" else "male"
         for voice in voices:
-            if "female" in voice.name.lower() or "zira" in voice.name.lower():
+            if target in voice.name.lower() or (target == "female" and "zira" in voice.name.lower()):
                 self.offline_engine.setProperty('voice', voice.id)
                 break
+
+    def set_persona(self, persona_name):
+        """Switches the vocal persona."""
+        persona_name = persona_name.lower()
+        if persona_name == "jarvis":
+            self.online_voice = "en-GB-RyanNeural"
+            self.persona = "jarvis"
+        else:
+            self.online_voice = "en-US-AvaNeural"
+            self.persona = "friday"
+        self.setup_offline_voice()
 
     async def speak_online(self, text):
         """Uses Edge TTS to generate and play speech."""

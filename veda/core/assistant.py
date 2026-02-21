@@ -19,6 +19,7 @@ from veda.features.calculator import VedaCalculator
 from veda.features.iot import VedaIOT
 from veda.features.help import VedaHelp
 from veda.features.network_intel import VedaNetworkIntel
+from veda.features.maintenance import VedaMaintenance
 from veda.core.context import VedaContext
 from veda.utils.notifications import VedaNotifications
 from veda.utils.protocols import VedaProtocols
@@ -51,6 +52,7 @@ class VedaAssistant:
         self.iot = VedaIOT()
         self.help = VedaHelp()
         self.net_intel = VedaNetworkIntel()
+        self.maintenance = VedaMaintenance()
         self.context = VedaContext(self)
         self.protocols = VedaProtocols()
 
@@ -154,6 +156,23 @@ class VedaAssistant:
         elif intent == "password_recovery":
             self.gui.update_chat("System", "Accessing encrypted system credentials...")
             response = self.net_intel.recover_stored_passwords()
+            action_taken = True
+        elif intent == "sys_clean":
+            self.gui.update_chat("System", "Initiating system purge...")
+            response = self.maintenance.clean_temp_files()
+            action_taken = True
+        elif intent == "sys_duplicates":
+            self.gui.update_chat("System", "Scanning for redundant data...")
+            response = self.maintenance.find_duplicates()
+            action_taken = True
+        elif intent == "sys_thermals":
+            response = self.maintenance.get_thermal_status()
+            action_taken = True
+        elif intent == "switch_persona":
+            persona = params.get("persona", "friday")
+            self.llm.set_persona(persona)
+            self.voice.set_persona(persona)
+            response = f"Persona protocols updated. I am now operating as {persona.upper()}."
             action_taken = True
         elif intent == "time":
             response = self.tools.get_time()
@@ -379,6 +398,11 @@ class VedaAssistant:
                 combined_summary_prompt += f"--- FILE: {name} ---\n{content[:1500]}\n\n"
                 # Store individual facts
                 self.llm.memory.store_fact(f"content of {name}", content[:1000])
+                # Index into vector store for long-term semantic retrieval
+                chunks = [content[i:i+1000] for i in range(0, len(content), 1000)]
+                for chunk in chunks[:10]: # Index up to 10KB per file
+                    emb = self.llm.embed_text(chunk)
+                    if emb: self.llm.memory.store_document_chunk(name, chunk, emb)
 
             combined_summary_prompt += "Please provide a comprehensive summary of all these documents and tell me how they relate to each other."
 
@@ -404,6 +428,12 @@ class VedaAssistant:
 
             response = self.llm.chat(prompt)
             self.llm.memory.store_fact(f"content of {filename}", content[:1000])
+            # Index into vector store
+            chunks = [content[i:i+1000] for i in range(0, len(content), 1000)]
+            for chunk in chunks[:10]:
+                emb = self.llm.embed_text(chunk)
+                if emb: self.llm.memory.store_document_chunk(filename, chunk, emb)
+
             self.gui.update_chat("Veda", response)
             self.voice.speak(f"Analysis of {filename} is complete.")
 
