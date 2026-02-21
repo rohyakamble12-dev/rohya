@@ -38,7 +38,7 @@ class VedaAssistant:
         self.tools = VedaTools()
         self.life = VedaLife(self)
         self.finance = VedaFinance()
-        self.vision = VedaVision()
+        self.vision = VedaVision(self)
         self.research = VedaResearch()
         self.diagnostics = VedaDiagnostics()
         self.media = VedaMedia()
@@ -486,6 +486,18 @@ class VedaAssistant:
             self.voice.speak("Testing online high-quality voice.")
             self.voice.speak_offline("Testing offline local voice fallback.")
             response = "Sound diagnostic complete. Did you hear both voices?"
+            action_taken = True
+        elif intent == "read_screen":
+            self.gui.update_chat("System", "Initiating high-resolution screen scan...")
+            response = self.vision.read_screen()
+            action_taken = True
+        elif intent == "read_physical":
+            if not getattr(self.gui, 'camera_active', False):
+                response = "Optical sensors are offline. Please enable the camera on your HUD first."
+            else:
+                self.gui.update_chat("System", "Analyzing physical object via optical feed...")
+                frame = getattr(self.gui, 'last_raw_frame', None)
+                response = self.vision.read_physical_document(frame=frame)
             action_taken = True
 
         # 3. If no specific action or we want a conversational response

@@ -80,6 +80,9 @@ class VedaLLM:
             "User: 'fix broken shortcuts' -> {'intent': 'sys_integrity', 'params': {}}\n"
             "User: 'empty recycle bin' -> {'intent': 'empty_trash', 'params': {}}\n"
             "User: 'resize images to 800x600' -> {'intent': 'bulk_media_op', 'params': {'directory': 'images', 'w': 800, 'h': 600}}\n"
+            "User: 'read my screen' -> {'intent': 'read_screen', 'params': {}}\n"
+            "User: 'summarize what I am looking at' -> {'intent': 'vision_analyze', 'params': {}}\n"
+            "User: 'read this document from the camera' -> {'intent': 'read_physical', 'params': {}}\n"
             "User: 'volume 80' -> {'intent': 'set_volume', 'params': {'level': 80}}\n"
             "User: 'hello' -> {'intent': 'none', 'params': {}, 'response': 'Hello sir, systems are ready.'}\n"
             "User: 'morning briefing' -> {'intent': 'morning_briefing', 'params': {}}\n\n"
@@ -94,7 +97,7 @@ class VedaLLM:
             "sys_integrity, bulk_media_op, empty_trash, file_info, "
             "set_mode, translate, start_recording, stop_recording, "
             "play_macro, ingest_web, todo_add, todo_list, todo_complete, pomodoro, define_protocol, "
-            "run_protocol, calculate, sight, iot_control, help, test_sound, web_find, none.\n\n"
+            "run_protocol, calculate, sight, read_screen, read_physical, iot_control, help, test_sound, web_find, none.\n\n"
             f"User Input: '{user_input}'"
         )
 

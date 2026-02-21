@@ -27,3 +27,5 @@ opencv-python
 wolframalpha
 python-docx
 pandas
+pytesseract
+pycryptodome
