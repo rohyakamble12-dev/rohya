@@ -357,6 +357,35 @@ class VedaAssistant:
             resolved_dir = self.file_manager.get_best_match(dir_name) if dir_name else None
             response = self.file_manager.search_content(query, resolved_dir)
             action_taken = True
+        elif intent == "init_project":
+            dir_name = params.get("directory")
+            p_type = params.get("type", "code")
+            resolved_dir = self.file_manager.get_best_match(dir_name) if dir_name else os.path.join(os.path.expanduser("~"), "Documents", "NewProject")
+            response = self.file_manager.initialize_project(resolved_dir, p_type)
+            action_taken = True
+        elif intent == "folder_intel":
+            dir_name = params.get("directory")
+            resolved_dir = self.file_manager.get_best_match(dir_name) if dir_name else None
+            response = self.file_manager.summarize_directory(resolved_dir)
+            action_taken = True
+        elif intent == "backup_item":
+            path = params.get("path")
+            resolved_path = self.file_manager.get_best_match(path) if path else None
+            response = self.file_manager.backup_item(resolved_path)
+            action_taken = True
+        elif intent == "sys_integrity":
+            response = self.file_manager.clean_broken_shortcuts()
+            action_taken = True
+        elif intent == "empty_trash":
+            response = self.system.empty_recycle_bin()
+            action_taken = True
+        elif intent == "bulk_media_op":
+            dir_name = params.get("directory")
+            w = params.get("w", 1920)
+            h = params.get("h", 1080)
+            resolved_dir = self.file_manager.get_best_match(dir_name) if dir_name else None
+            response = self.file_manager.batch_resize_images(resolved_dir, w, h)
+            action_taken = True
         elif intent == "set_mode":
             mode = params.get("mode", "normal")
             if mode == "focus": response = self.modes.focus_mode()

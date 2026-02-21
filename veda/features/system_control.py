@@ -172,3 +172,15 @@ class SystemControl:
             return f"Searching for '{query}' in your browser."
         except Exception as e:
             return f"Failed to initiate web search: {str(e)}"
+
+    @staticmethod
+    def empty_recycle_bin():
+        """Empties the Windows Recycle Bin."""
+        try:
+            import winshell
+            winshell.recycle_bin().empty(confirm=False, show_progress=False, sound=True)
+            return "Recycle Bin purged. System storage optimized."
+        except ImportError:
+            return "Windows Support (winshell) missing."
+        except Exception as e:
+            return f"Recycle Bin cleanup failed: {str(e)}"

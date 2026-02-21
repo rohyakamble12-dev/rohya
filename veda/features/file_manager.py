@@ -314,6 +314,115 @@ class VedaFileManager:
             return f"Organization failed: {str(e)}"
 
     @staticmethod
+    def initialize_project(directory, proj_type="code"):
+        """Creates a standardized folder structure for a new project."""
+        try:
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+
+            structures = {
+                "code": ["src", "tests", "docs", "data", "README.md", ".gitignore"],
+                "research": ["papers", "notes", "data", "drafts", "summary.txt"],
+                "creative": ["assets", "raw", "edits", "references", "plan.md"]
+            }
+
+            items = structures.get(proj_type.lower(), structures["code"])
+            for item in items:
+                path = os.path.join(directory, item)
+                if "." in item:
+                    with open(path, "w") as f: f.write(f"# Project {os.path.basename(directory)}")
+                else:
+                    os.makedirs(path, exist_ok=True)
+
+            return f"Project initialization complete. Established '{proj_type}' architecture in {os.path.basename(directory)}."
+        except Exception as e:
+            return f"Project init failed: {str(e)}"
+
+    @staticmethod
+    def summarize_directory(directory=None):
+        """Provides a high-level view of a folder's content and structure."""
+        if directory is None: directory = os.getcwd()
+        if not os.path.exists(directory): return "Directory not found."
+
+        try:
+            files = os.listdir(directory)
+            total_files = len(files)
+            exts = [os.path.splitext(f)[1] for f in files if os.path.isfile(os.path.join(directory, f))]
+            from collections import Counter
+            top_exts = Counter(exts).most_common(3)
+
+            structure = f"Intelligence Report for {os.path.basename(directory)}:\n"
+            structure += f"- Total Items: {total_files}\n"
+            structure += f"- Primary Formats: {', '.join([e[0] if e[0] else 'NoExt' for e in top_exts])}\n"
+            structure += "- Core Subdirectories: " + ", ".join([f for f in files[:5] if os.path.isdir(os.path.join(directory, f))])
+
+            return structure
+        except Exception as e:
+            return f"Summarization failed: {str(e)}"
+
+    @staticmethod
+    def backup_item(path, backup_dir=None):
+        """Creates a versioned backup of a file or folder."""
+        try:
+            if not os.path.exists(path): return "Source not found."
+            if backup_dir is None:
+                backup_dir = os.path.join(os.path.expanduser("~"), "Documents", "Veda_Backups")
+
+            os.makedirs(backup_dir, exist_ok=True)
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            name = os.path.basename(path)
+            dst = os.path.join(backup_dir, f"{name}_BKP_{timestamp}")
+
+            if os.path.isdir(path):
+                shutil.copytree(path, dst)
+            else:
+                shutil.copy2(path, dst)
+
+            return f"Backup Protocol successful. Version {timestamp} secured in Veda_Backups."
+        except Exception as e:
+            return f"Backup failed: {str(e)}"
+
+    @staticmethod
+    def clean_broken_shortcuts(directory=None):
+        """Finds and removes broken .lnk files (Windows specific)."""
+        if directory is None: directory = os.path.join(os.path.expanduser("~"), "Desktop")
+
+        count = 0
+        try:
+            import winshell
+            for f in os.listdir(directory):
+                if f.endswith(".lnk"):
+                    path = os.path.join(directory, f)
+                    try:
+                        shortcut = winshell.shortcut(path)
+                        if not os.path.exists(shortcut.path):
+                            os.remove(path)
+                            count += 1
+                    except: continue
+            return f"Cleanup complete. Purged {count} broken shortcuts from {os.path.basename(directory)}."
+        except ImportError:
+            return "Windows Link Support (winshell) missing."
+        except Exception as e:
+            return f"Shortcut cleanup failed: {str(e)}"
+
+    @staticmethod
+    def batch_resize_images(directory, width, height):
+        """Resizes all images in a directory."""
+        try:
+            if not os.path.exists(directory): return "Directory not found."
+            count = 0
+            for f in os.listdir(directory):
+                if f.lower().endswith(('.png', '.jpg', '.jpeg')):
+                    path = os.path.join(directory, f)
+                    with Image.open(path) as img:
+                        img = img.resize((int(width), int(height)), Image.Resampling.LANCZOS)
+                        img.save(path)
+                        count += 1
+            return f"Batch Process complete. Resized {count} images to {width}x{height}."
+        except Exception as e:
+            return f"Batch resize failed: {str(e)}"
+
+    @staticmethod
     def search_content(query, directory=None):
         """Searches for a string within text-based files in a directory."""
         if directory is None:
