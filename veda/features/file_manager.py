@@ -38,6 +38,23 @@ class VedaFileManager:
         return result_str
 
     @staticmethod
+    def get_best_match(filename):
+        """Returns the raw path of the first match found."""
+        search_path = os.path.expanduser("~")
+        important_dirs = ['Documents', 'Downloads', 'Desktop', 'Pictures', 'Videos', 'Music']
+
+        for folder in important_dirs:
+            full_path = os.path.join(search_path, folder)
+            if not os.path.exists(full_path): continue
+
+            for root, dirnames, filenames in os.walk(full_path):
+                for f in fnmatch.filter(filenames, f"*{filename}*"):
+                    return os.path.join(root, f)
+                for d in fnmatch.filter(dirnames, f"*{filename}*"):
+                    return os.path.join(root, d)
+        return None
+
+    @staticmethod
     def get_file_info(file_path):
         """Returns details about a specific file."""
         if not os.path.exists(file_path):

@@ -249,6 +249,17 @@ class VedaAssistant:
             name = params.get("filename", "")
             response = self.file_manager.search_file(name)
             action_taken = True
+        elif intent == "open_item":
+            name = params.get("item_name", "")
+            if os.path.exists(name):
+                response = self.system.open_app(name)
+            else:
+                best_match = self.file_manager.get_best_match(name)
+                if best_match:
+                    response = self.system.open_app(best_match)
+                else:
+                    response = f"I couldn't find '{name}' to open it."
+            action_taken = True
         elif intent == "file_info":
             path = params.get("path", "")
             response = self.file_manager.get_file_info(path)

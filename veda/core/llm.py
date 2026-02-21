@@ -60,6 +60,8 @@ class VedaLLM:
             "User: 'open chrome and find cats' -> {'intent': 'web_find', 'params': {'query': 'cats'}}\n"
             "User: 'search google for space' -> {'intent': 'web_find', 'params': {'query': 'space'}}\n"
             "User: 'find my work folder' -> {'intent': 'file_search', 'params': {'filename': 'work'}}\n"
+            "User: 'open my resume' -> {'intent': 'open_item', 'params': {'item_name': 'resume'}}\n"
+            "User: 'launch the downloads folder' -> {'intent': 'open_item', 'params': {'item_name': 'downloads'}}\n"
             "User: 'volume 80' -> {'intent': 'set_volume', 'params': {'level': 80}}\n"
             "User: 'hello' -> {'intent': 'none', 'params': {}, 'response': 'Hello sir, systems are ready.'}\n"
             "User: 'morning briefing' -> {'intent': 'morning_briefing', 'params': {}}\n\n"
@@ -68,9 +70,9 @@ class VedaLLM:
             "switch_persona, sys_clean, sys_duplicates, sys_thermals, "
             "time, date, note, stock_price, crypto_price, remember_fact, vision_analyze, motivation, "
             "deep_research, read_doc, sys_health, net_info, storage_info, media_control, play_music, "
-            "file_search, file_info, set_mode, translate, start_recording, stop_recording, play_macro, "
-            "ingest_web, todo_add, todo_list, todo_complete, pomodoro, define_protocol, run_protocol, "
-            "calculate, sight, iot_control, help, test_sound, web_find, none.\n\n"
+            "file_search, open_item, file_info, set_mode, translate, start_recording, stop_recording, "
+            "play_macro, ingest_web, todo_add, todo_list, todo_complete, pomodoro, define_protocol, "
+            "run_protocol, calculate, sight, iot_control, help, test_sound, web_find, none.\n\n"
             f"User Input: '{user_input}'"
         )
 
