@@ -283,10 +283,11 @@ class VedaAssistant:
             action_taken = True
         elif intent == "delete_item":
             path = params.get("path", "")
+            secure = params.get("secure", False)
             if not os.path.exists(path):
                 best_path = self.file_manager.get_best_match(path)
                 if best_path: path = best_path
-            response = self.file_manager.delete_item(path)
+            response = self.file_manager.delete_item(path, secure=secure)
             action_taken = True
         elif intent == "convert_item":
             src = params.get("src", "")
@@ -295,6 +296,66 @@ class VedaAssistant:
                 best_src = self.file_manager.get_best_match(src)
                 if best_src: src = best_src
             response = self.file_manager.convert_image(src, target)
+            action_taken = True
+        elif intent == "zip_item":
+            path = params.get("path", "")
+            if not os.path.exists(path):
+                best_path = self.file_manager.get_best_match(path)
+                if best_path: path = best_path
+            response = self.file_manager.zip_item(path)
+            action_taken = True
+        elif intent == "unzip_item":
+            path = params.get("path", "")
+            if not os.path.exists(path):
+                best_path = self.file_manager.get_best_match(path)
+                if best_path: path = best_path
+            response = self.file_manager.unzip_item(path)
+            action_taken = True
+        elif intent == "find_duplicates":
+            dir_name = params.get("directory")
+            resolved_dir = None
+            if dir_name:
+                resolved_dir = self.file_manager.get_best_match(dir_name)
+            response = self.file_manager.find_duplicates(resolved_dir)
+            action_taken = True
+        elif intent == "find_large_files":
+            dir_name = params.get("directory")
+            resolved_dir = None
+            if dir_name:
+                resolved_dir = self.file_manager.get_best_match(dir_name)
+            response = self.file_manager.find_large_files(resolved_dir)
+            action_taken = True
+        elif intent == "encrypt_item":
+            path = params.get("path", "")
+            if not os.path.exists(path):
+                best_path = self.file_manager.get_best_match(path)
+                if best_path: path = best_path
+            response = self.file_manager.encrypt_file(path)
+            action_taken = True
+        elif intent == "decrypt_item":
+            path = params.get("path", "")
+            if not os.path.exists(path):
+                best_path = self.file_manager.get_best_match(path)
+                if best_path: path = best_path
+            response = self.file_manager.decrypt_file(path)
+            action_taken = True
+        elif intent == "batch_rename":
+            dir_name = params.get("directory")
+            pattern = params.get("pattern", "")
+            replacement = params.get("replacement", "")
+            resolved_dir = self.file_manager.get_best_match(dir_name) if dir_name else None
+            response = self.file_manager.batch_rename(resolved_dir, pattern, replacement)
+            action_taken = True
+        elif intent == "organize_dir":
+            dir_name = params.get("directory")
+            resolved_dir = self.file_manager.get_best_match(dir_name) if dir_name else None
+            response = self.file_manager.organize_directory(resolved_dir)
+            action_taken = True
+        elif intent == "search_content":
+            query = params.get("query", "")
+            dir_name = params.get("directory")
+            resolved_dir = self.file_manager.get_best_match(dir_name) if dir_name else None
+            response = self.file_manager.search_content(query, resolved_dir)
             action_taken = True
         elif intent == "set_mode":
             mode = params.get("mode", "normal")

@@ -14,7 +14,7 @@ class VedaHealth:
         required = [
             'ollama', 'edge_tts', 'pyttsx3', 'speech_recognition',
             'customtkinter', 'pyautogui', 'pycaw', 'screen_brightness_control',
-            'requests', 'bs4', 'wikipedia', 'PyPDF2', 'psutil', 'pynput', 'PIL'
+            'requests', 'bs4', 'wikipedia', 'PyPDF2', 'psutil', 'pynput', 'PIL', 'Crypto'
         ]
         missing = []
         for lib in required:
