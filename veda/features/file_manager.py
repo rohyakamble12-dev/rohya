@@ -4,14 +4,14 @@ import fnmatch
 class VedaFileManager:
     @staticmethod
     def search_file(filename, search_path=None):
-        """Searches for a file by name (with wildcards) in user directories."""
+        """Searches for a file or folder by name in user directories."""
         if search_path is None:
             # Default to User profile
             search_path = os.path.expanduser("~")
 
         matches = []
-        # Limit search to avoid long hangs - top level folders
-        important_dirs = ['Documents', 'Downloads', 'Desktop', 'Pictures', 'Videos']
+        # Expanded directories for searching
+        important_dirs = ['Documents', 'Downloads', 'Desktop', 'Pictures', 'Videos', 'Music']
 
         for folder in important_dirs:
             full_path = os.path.join(search_path, folder)
@@ -19,12 +19,17 @@ class VedaFileManager:
                 continue
 
             for root, dirnames, filenames in os.walk(full_path):
+                # Search files
                 for f in fnmatch.filter(filenames, f"*{filename}*"):
-                    matches.append(os.path.join(root, f))
-                    if len(matches) >= 5: # Limit results
-                        break
-                if len(matches) >= 5:
-                    break
+                    matches.append(f"[File] {os.path.join(root, f)}")
+                    if len(matches) >= 10: break
+
+                # Search directories
+                for d in fnmatch.filter(dirnames, f"*{filename}*"):
+                    matches.append(f"[Folder] {os.path.join(root, d)}")
+                    if len(matches) >= 10: break
+
+                if len(matches) >= 10: break
 
         if not matches:
             return "I couldn't find any files matching that description in your primary folders."

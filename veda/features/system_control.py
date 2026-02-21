@@ -161,3 +161,14 @@ class SystemControl:
             return f"Screenshot captured and saved to your Pictures folder."
         except Exception as e:
             return f"Failed to take screenshot: {str(e)}"
+
+    @staticmethod
+    def web_find(query):
+        """Opens a browser and searches for the query."""
+        query = SystemControl._sanitize(query)
+        search_url = f"https://www.google.com/search?q={query}"
+        try:
+            webbrowser.open(search_url)
+            return f"Searching for '{query}' in your browser."
+        except Exception as e:
+            return f"Failed to initiate web search: {str(e)}"

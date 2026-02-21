@@ -134,6 +134,10 @@ class VedaAssistant:
         elif intent == "screenshot":
             response = self.system.screenshot()
             action_taken = True
+        elif intent == "web_find":
+            query = params.get("query", user_input)
+            response = self.system.web_find(query)
+            action_taken = True
         elif intent == "lock_pc":
             response = self.system.lock_pc()
             action_taken = True

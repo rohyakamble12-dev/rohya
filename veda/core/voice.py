@@ -119,8 +119,15 @@ class VedaVoice:
             return "None"
 
     def listen_for_wake_word(self, wake_word="veda"):
-        """Simplified wake word detection."""
-        query = self.listen().lower()
-        if wake_word in query:
-            return True
-        return False
+        """Simplified wake word detection. Returns the full query if wake word is found."""
+        query = self.listen()
+        if query == "None":
+            return None
+
+        if wake_word in query.lower():
+            # Extract command after wake word if any
+            parts = re.split(rf'\b{wake_word}\b', query, flags=re.IGNORECASE)
+            if len(parts) > 1 and parts[1].strip():
+                return query # Return full query to process command
+            return wake_word # Just wake word
+        return None

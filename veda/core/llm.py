@@ -57,7 +57,9 @@ class VedaLLM:
             "If it's just a conversation (not a command), set intent to 'none' and provide a conversational response in 'response'. "
             "Respond ONLY with raw JSON.\n\n"
             "Examples:\n"
-            "User: 'open chrome' -> {'intent': 'open_app', 'params': {'app_name': 'chrome'}}\n"
+            "User: 'open chrome and find cats' -> {'intent': 'web_find', 'params': {'query': 'cats'}}\n"
+            "User: 'search google for space' -> {'intent': 'web_find', 'params': {'query': 'space'}}\n"
+            "User: 'find my work folder' -> {'intent': 'file_search', 'params': {'filename': 'work'}}\n"
             "User: 'volume 80' -> {'intent': 'set_volume', 'params': {'level': 80}}\n"
             "User: 'hello' -> {'intent': 'none', 'params': {}, 'response': 'Hello sir, systems are ready.'}\n"
             "User: 'morning briefing' -> {'intent': 'morning_briefing', 'params': {}}\n\n"
@@ -68,7 +70,7 @@ class VedaLLM:
             "deep_research, read_doc, sys_health, net_info, storage_info, media_control, play_music, "
             "file_search, file_info, set_mode, translate, start_recording, stop_recording, play_macro, "
             "ingest_web, todo_add, todo_list, todo_complete, pomodoro, define_protocol, run_protocol, "
-            "calculate, sight, iot_control, help, test_sound, none.\n\n"
+            "calculate, sight, iot_control, help, test_sound, web_find, none.\n\n"
             f"User Input: '{user_input}'"
         )
 

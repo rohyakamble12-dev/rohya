@@ -58,9 +58,18 @@ def main():
     import threading
     def background_listener():
         while True:
-            if assistant.voice.listen_for_wake_word("veda"):
-                # Use root.after to safely trigger GUI from background thread
-                gui.after(0, gui.trigger_voice)
+            result = assistant.voice.listen_for_wake_word("veda")
+            if result:
+                if result.lower() == "veda":
+                    # Just wake word, trigger active listening
+                    gui.after(0, gui.trigger_voice)
+                else:
+                    # Captured command with wake word
+                    # Strip wake word for cleaner processing
+                    command = result.lower().replace("veda", "").strip()
+                    if command:
+                        gui.after(0, lambda cmd=command: gui.update_chat("You", cmd))
+                        gui.after(0, lambda cmd=command: assistant.process_command(cmd))
 
     # Enable "Hey Veda" wake word listener in the background
     threading.Thread(target=background_listener, daemon=True).start()
