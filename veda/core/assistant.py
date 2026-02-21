@@ -264,6 +264,38 @@ class VedaAssistant:
             path = params.get("path", "")
             response = self.file_manager.get_file_info(path)
             action_taken = True
+        elif intent == "move_item":
+            src = params.get("src", "")
+            dst = params.get("dst", "")
+            # Resolve src if it's not a path
+            if not os.path.exists(src):
+                best_src = self.file_manager.get_best_match(src)
+                if best_src: src = best_src
+            response = self.file_manager.move_item(src, dst)
+            action_taken = True
+        elif intent == "copy_item":
+            src = params.get("src", "")
+            dst = params.get("dst", "")
+            if not os.path.exists(src):
+                best_src = self.file_manager.get_best_match(src)
+                if best_src: src = best_src
+            response = self.file_manager.copy_item(src, dst)
+            action_taken = True
+        elif intent == "delete_item":
+            path = params.get("path", "")
+            if not os.path.exists(path):
+                best_path = self.file_manager.get_best_match(path)
+                if best_path: path = best_path
+            response = self.file_manager.delete_item(path)
+            action_taken = True
+        elif intent == "convert_item":
+            src = params.get("src", "")
+            target = params.get("target", "png")
+            if not os.path.exists(src):
+                best_src = self.file_manager.get_best_match(src)
+                if best_src: src = best_src
+            response = self.file_manager.convert_image(src, target)
+            action_taken = True
         elif intent == "set_mode":
             mode = params.get("mode", "normal")
             if mode == "focus": response = self.modes.focus_mode()

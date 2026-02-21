@@ -1,5 +1,7 @@
 import os
 import fnmatch
+import shutil
+from PIL import Image
 
 class VedaFileManager:
     @staticmethod
@@ -53,6 +55,80 @@ class VedaFileManager:
                 for d in fnmatch.filter(dirnames, f"*{filename}*"):
                     return os.path.join(root, d)
         return None
+
+    @staticmethod
+    def move_item(src, dst):
+        """Moves a file or folder to a new location."""
+        try:
+            if not os.path.exists(src):
+                return f"Source item '{src}' not found."
+
+            # If dst is a folder name, resolve it
+            if not os.path.isabs(dst) or not os.path.isdir(dst):
+                search_dst = VedaFileManager.get_best_match(dst)
+                if search_dst and os.path.isdir(search_dst):
+                    dst = search_dst
+
+            shutil.move(src, dst)
+            return f"Successfully moved '{os.path.basename(src)}' to '{dst}'."
+        except Exception as e:
+            return f"Move failed: {str(e)}"
+
+    @staticmethod
+    def copy_item(src, dst):
+        """Copies a file or folder to a new location."""
+        try:
+            if not os.path.exists(src):
+                return f"Source item '{src}' not found."
+
+            # Resolve destination
+            if not os.path.isabs(dst) or not os.path.isdir(dst):
+                search_dst = VedaFileManager.get_best_match(dst)
+                if search_dst and os.path.isdir(search_dst):
+                    dst = search_dst
+
+            if os.path.isdir(src):
+                shutil.copytree(src, os.path.join(dst, os.path.basename(src)))
+            else:
+                shutil.copy2(src, dst)
+            return f"Successfully copied '{os.path.basename(src)}' to '{dst}'."
+        except Exception as e:
+            return f"Copy failed: {str(e)}"
+
+    @staticmethod
+    def delete_item(path):
+        """Deletes a file or folder."""
+        try:
+            if not os.path.exists(path):
+                return f"Item '{path}' not found."
+
+            if os.path.isdir(path):
+                shutil.rmtree(path)
+            else:
+                os.remove(path)
+            return f"Permanently deleted '{os.path.basename(path)}'."
+        except Exception as e:
+            return f"Deletion failed: {str(e)}"
+
+    @staticmethod
+    def convert_image(src, target_ext):
+        """Converts an image file to another format (e.g., png to jpg)."""
+        try:
+            if not os.path.exists(src):
+                return f"Image '{src}' not found."
+
+            target_ext = target_ext.lower().replace('.', '')
+            base = os.path.splitext(src)[0]
+            output_path = f"{base}.{target_ext}"
+
+            with Image.open(src) as img:
+                if target_ext in ["jpg", "jpeg"]:
+                    img = img.convert("RGB")
+                img.save(output_path)
+
+            return f"Image converted and saved to: {output_path}"
+        except Exception as e:
+            return f"Conversion failed: {str(e)}"
 
     @staticmethod
     def get_file_info(file_path):
