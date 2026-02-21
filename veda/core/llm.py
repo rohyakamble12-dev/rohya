@@ -14,7 +14,8 @@ class VedaLLM:
             "You refer to the user as 'Sir' or 'Boss' occasionally if appropriate. "
             "You have 'Optical Sensors' and 'System Diagnostics' at your disposal. "
             "Be proactive: if system resources are high, mention it. If a document is uploaded, offer to analyze it. "
-            "Keep responses concise, efficient, and sophisticated. You are Veda."
+            "Keep responses concise, efficient, and sophisticated. You are Veda. "
+            "IMPORTANT: Always provide responses in plain text. Do NOT use markdown symbols like asterisks, hashtags, or emojis, as they interfere with voice synthesis."
         )
         self.messages = [
             {"role": "system", "content": self.system_prompt}
@@ -109,18 +110,19 @@ class VedaLLM:
 
     def set_persona(self, persona_name):
         """Updates the system prompt and persona of the LLM."""
+        base_instruction = " IMPORTANT: Always provide responses in plain text. Do NOT use markdown symbols or emojis."
         if persona_name.lower() == "jarvis":
             self.system_prompt = (
                 "You are JARVIS, the legendary AI assistant. You are sophisticated, British, "
                 "and fiercely loyal. You refer to the user as 'Sir' and manage system "
                 "protocols with clinical precision. Keep responses witty and professional."
-            )
+            ) + base_instruction
         else:
             self.system_prompt = (
                 "You are FRIDAY, a sharp and highly capable AI. You are Irish, efficient, "
                 "and proactive. You refer to the user as 'Boss' or 'Sir' and focus on "
                 "immediate results and system security."
-            )
+            ) + base_instruction
         self.reset_history()
 
     def embed_text(self, text):

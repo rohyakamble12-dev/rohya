@@ -5,6 +5,7 @@ import speech_recognition as sr
 import pygame
 import os
 import tempfile
+import re
 
 class VedaVoice:
     def __init__(self, online_voice="en-US-AvaNeural"):
@@ -60,8 +61,32 @@ class VedaVoice:
             pygame.time.Clock().tick(10)
         pygame.mixer.music.unload()  # Unload to release the file lock on Windows
 
+    def sanitize_text_for_speech(self, text):
+        """Removes markdown and special characters that shouldn't be spoken."""
+        if not text: return ""
+        # Remove code blocks
+        text = re.sub(r'```.*?```', '', text, flags=re.DOTALL)
+        # Remove inline code
+        text = re.sub(r'`.*?`', '', text)
+        # Remove markdown bold/italic asterisks and underscores
+        text = re.sub(r'[*_]{1,3}', '', text)
+        # Remove hashtags
+        text = re.sub(r'#+', '', text)
+        # Remove link syntax [text](url) -> text
+        text = re.sub(r'\[(.*?)\]\(.*?\)', r'\1', text)
+        # Remove emojis and other non-standard characters
+        text = text.encode('ascii', 'ignore').decode('ascii')
+        # Remove symbols that shouldn't be read (except standard punctuation)
+        text = re.sub(r'[^\w\s.,?!:;\'"-]', ' ', text)
+        # Clean up whitespace
+        text = re.sub(r'\s+', ' ', text).strip()
+        return text
+
     def speak(self, text):
         """Main speak method that tries online TTS first, then falls back to offline."""
+        if not text: return
+
+        text = self.sanitize_text_for_speech(text)
         if not text: return
 
         try:
