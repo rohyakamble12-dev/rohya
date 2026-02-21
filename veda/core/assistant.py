@@ -444,3 +444,9 @@ class VedaAssistant:
             self.gui.update_chat("You", query)
             self.process_command(query)
         self.gui.reset_voice_button()
+
+    def shutdown(self):
+        """Gracefully shuts down background services."""
+        logging.info("Shutting down Veda services...")
+        self.life.reminders_active = False
+        self.context.stop_monitoring()

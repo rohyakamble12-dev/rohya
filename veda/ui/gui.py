@@ -7,14 +7,16 @@ import psutil
 import time
 import math
 import random
+from datetime import datetime
 
 class VedaGUI(ctk.CTk):
-    def __init__(self, on_send_callback, on_voice_callback, on_upload_callback=None):
+    def __init__(self, on_send_callback, on_voice_callback, on_upload_callback=None, on_closing_callback=None):
         super().__init__()
 
         self.on_send_callback = on_send_callback
         self.on_voice_callback = on_voice_callback
         self.on_upload_callback = on_upload_callback
+        self.on_closing_callback = on_closing_callback
         self.protocol_callback = None
 
         # HUD Configuration
@@ -40,6 +42,7 @@ class VedaGUI(ctk.CTk):
         self.cap = None
         self.last_raw_frame = None
         self.online = True
+        self.running = True
 
         # Protocol Variables
         self.deep_search_var = tk.BooleanVar(value=False)
@@ -50,6 +53,7 @@ class VedaGUI(ctk.CTk):
         self._drag_data = {"x": 0, "y": 0}
 
         self._setup_layout()
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
         # Delay background tasks until main loop is ready
         self.after(1000, self._start_background_tasks)
 
@@ -123,9 +127,8 @@ class VedaGUI(ctk.CTk):
         self.right_panel.grid(row=1, column=2, padx=15, pady=15, sticky="nsew")
 
         self.comm_frame = self._create_panel(self.right_panel, "COMMUNICATION LOG")
-        self.chat_display = ctk.CTkTextbox(self.comm_frame, font=("Consolas", 11), fg_color="#050507", text_color="#cfd8dc")
-        self.chat_display.pack(fill="both", expand=True, padx=5, pady=5)
-        self.chat_display.configure(state="disabled")
+        self.chat_display = ctk.CTkScrollableFrame(self.comm_frame, fg_color="#050507", corner_radius=0)
+        self.chat_display.pack(fill="both", expand=True, padx=2, pady=2)
 
         self.input_entry = ctk.CTkEntry(self.right_panel, placeholder_text="Enter command...", height=40,
                                         fg_color="#050507", border_color=self.accent_color)
@@ -193,7 +196,7 @@ class VedaGUI(ctk.CTk):
         self._animate_loop()
 
     def _metrics_worker(self):
-        while True:
+        while self.running:
             try:
                 cpu = psutil.cpu_percent()
                 ram = psutil.virtual_memory().percent
@@ -209,7 +212,7 @@ class VedaGUI(ctk.CTk):
 
     def _network_worker(self):
         import requests
-        while True:
+        while self.running:
             try:
                 requests.get("https://www.google.com", timeout=2)
                 self.online = True
@@ -225,7 +228,7 @@ class VedaGUI(ctk.CTk):
 
     def _camera_worker(self):
         """Manages the webcam resource and frame updates."""
-        while True:
+        while self.running:
             try:
                 if self.camera_active:
                     if self.cap is None or not self.cap.isOpened():
@@ -256,6 +259,7 @@ class VedaGUI(ctk.CTk):
 
     def _animate_loop(self):
         """Main animation loop for the rotating globe."""
+        if not self.running: return
         t = time.time()
 
         # State-based parameters
@@ -332,14 +336,44 @@ class VedaGUI(ctk.CTk):
         self.after(0, lambda: self._update_chat_ui(sender, message))
 
     def _update_chat_ui(self, sender, message):
-        self.chat_display.configure(state="normal")
-        tag = "veda" if sender.lower() == "veda" else "user"
-        self.chat_display.insert("end", f"{sender.upper()}: ", tag)
-        self.chat_display.insert("end", f"{message}\n\n")
-        self.chat_display.tag_config("veda", foreground=self.accent_color)
-        self.chat_display.tag_config("user", foreground="#ffffff")
-        self.chat_display.configure(state="disabled")
-        self.chat_display.see("end")
+        is_user = sender.lower() == "user"
+        is_system = sender.lower() == "system"
+
+        # Bubble Container
+        bubble_frame = ctk.CTkFrame(self.chat_display, fg_color="transparent")
+        bubble_frame.pack(fill="x", padx=5, pady=5)
+
+        # Alignment logic
+        anchor = "e" if is_user else "w"
+        color = "#1a1a25" if is_user else "#0a0a15"
+        if is_system:
+            color = "#201010"
+            anchor = "center"
+
+        # The Bubble
+        bubble = ctk.CTkFrame(bubble_frame, fg_color=color, corner_radius=12, border_width=1,
+                              border_color=self.accent_color if not is_user else "#333340")
+        bubble.pack(side="right" if is_user else ("left" if not is_system else "top"), padx=10)
+
+        # Sender & Time
+        header_f = ctk.CTkFrame(bubble, fg_color="transparent")
+        header_f.pack(fill="x", padx=10, pady=(5, 0))
+
+        sender_lbl = ctk.CTkLabel(header_f, text=sender.upper(), font=("Orbitron", 8, "bold"),
+                                  text_color=self.accent_color if not is_user else "#888899")
+        sender_lbl.pack(side="left")
+
+        timestamp = datetime.now().strftime("%H:%M")
+        time_lbl = ctk.CTkLabel(header_f, text=timestamp, font=("Consolas", 7), text_color="#555566")
+        time_lbl.pack(side="right", padx=(10, 0))
+
+        # Message text - using label with wrap
+        msg_lbl = ctk.CTkLabel(bubble, text=message, font=("Consolas", 10), text_color="#cfd8dc",
+                               wraplength=220, justify="left")
+        msg_lbl.pack(padx=10, pady=5)
+
+        # Auto-scroll to bottom
+        self.chat_display._parent_canvas.yview_moveto(1.0)
 
     def send_message(self):
         msg = self.input_entry.get()
@@ -400,3 +434,19 @@ class VedaGUI(ctk.CTk):
         x = self.winfo_x() + deltax
         y = self.winfo_y() + deltay
         self.geometry(f"+{x}+{y}")
+
+    def on_closing(self):
+        """Clean shutdown procedure."""
+        self.running = False
+        self.veda_state = "idle"
+
+        if self.on_closing_callback:
+            try: self.on_closing_callback()
+            except: pass
+
+        # Release resources
+        if self.cap is not None:
+            self.cap.release()
+            self.cap = None
+
+        self.destroy()

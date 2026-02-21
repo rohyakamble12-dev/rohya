@@ -26,9 +26,19 @@ def main():
             logging.error(f"Error processing file: {e}")
             gui.update_chat("System", f"File Processing Error: {e}")
 
+    def on_closing():
+        try:
+            assistant.shutdown()
+        except: pass
+
     # Create GUI
     try:
-        gui = VedaGUI(on_send_callback=on_send, on_voice_callback=on_voice, on_upload_callback=on_upload)
+        gui = VedaGUI(
+            on_send_callback=on_send,
+            on_voice_callback=on_voice,
+            on_upload_callback=on_upload,
+            on_closing_callback=on_closing
+        )
     except Exception as e:
         print(f"CRITICAL: Failed to create GUI: {e}")
         return
