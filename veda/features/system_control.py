@@ -184,3 +184,19 @@ class SystemControl:
             return "Windows Support (winshell) missing."
         except Exception as e:
             return f"Recycle Bin cleanup failed: {str(e)}"
+
+    @staticmethod
+    def set_wallpaper(path):
+        """Sets the Windows desktop wallpaper."""
+        import ctypes
+        import os
+        try:
+            if not os.path.exists(path):
+                return "Protocol Error: Target wallpaper image not found."
+
+            # 0x0014 = SPI_SETDESKWALLPAPER
+            # 0x01 | 0x02 = SPIF_UPDATEINIFILE | SPIF_SENDWININICHANGE
+            ctypes.windll.user32.SystemParametersInfoW(0x0014, 0, path, 0x01 | 0x02)
+            return "Desktop visualization updated. Atmospheric sync complete."
+        except Exception as e:
+            return f"Failed to update visualization: {str(e)}"

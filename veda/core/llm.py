@@ -99,6 +99,9 @@ class VedaLLM:
             "User: 'fix broken shortcuts' -> {'intent': 'sys_integrity', 'params': {}}\n"
             "User: 'empty recycle bin' -> {'intent': 'empty_trash', 'params': {}}\n"
             "User: 'resize images to 800x600' -> {'intent': 'bulk_media_op', 'params': {'directory': 'images', 'w': 800, 'h': 600}}\n"
+            "User: 'set wallpaper to city.jpg' -> {'intent': 'set_wallpaper', 'params': {'path': 'city.jpg'}}\n"
+            "User: 'set a timer for 10 minutes' -> {'intent': 'set_timer', 'params': {'minutes': 10}}\n"
+            "User: 'send email to alice@example.com about meeting' -> {'intent': 'send_email', 'params': {'recipient': 'alice@example.com', 'subject': 'meeting'}}\n"
             "User: 'read my screen' -> {'intent': 'read_screen', 'params': {}}\n"
             "User: 'summarize what I am looking at' -> {'intent': 'vision_analyze', 'params': {}}\n"
             "User: 'read this document from the camera' -> {'intent': 'read_physical', 'params': {}}\n"
@@ -117,6 +120,7 @@ class VedaLLM:
             "set_mode, translate, start_recording, stop_recording, "
             "play_macro, ingest_web, todo_add, todo_list, todo_complete, pomodoro, define_protocol, "
             "run_protocol, mission_protocol, security_audit, link_intel, get_connected, calculate, "
+            "set_wallpaper, set_timer, set_alarm, send_email, "
             "sight, read_screen, read_physical, iot_control, help, test_sound, web_find, none.\n\n"
             f"User Input: '{user_input}'"
         )

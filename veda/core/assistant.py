@@ -20,6 +20,7 @@ from veda.features.iot import VedaIOT
 from veda.features.help import VedaHelp
 from veda.features.network_intel import VedaNetworkIntel
 from veda.features.maintenance import VedaMaintenance
+from veda.features.comms import VedaComms
 from veda.core.context import VedaContext
 from veda.utils.notifications import VedaNotifications
 from veda.utils.protocols import VedaProtocols
@@ -53,6 +54,7 @@ class VedaAssistant:
         self.help = VedaHelp()
         self.net_intel = VedaNetworkIntel()
         self.maintenance = VedaMaintenance()
+        self.comms = VedaComms()
         self.context = VedaContext(self)
         self.protocols = VedaProtocols()
 
@@ -378,6 +380,27 @@ class VedaAssistant:
             action_taken = True
         elif intent == "empty_trash":
             response = self.system.empty_recycle_bin()
+            action_taken = True
+        elif intent == "set_wallpaper":
+            path = params.get("path", "")
+            resolved = self.file_manager.get_best_match(path) if not os.path.isabs(path) else path
+            response = self.system.set_wallpaper(resolved)
+            action_taken = True
+        elif intent == "set_timer":
+            mins = params.get("minutes", 5)
+            label = params.get("label", "Timer")
+            response = self.life.set_timer(mins, label)
+            action_taken = True
+        elif intent == "set_alarm":
+            time_val = params.get("time", "08:00")
+            label = params.get("label", "Alarm")
+            response = self.life.set_alarm(time_val, label)
+            action_taken = True
+        elif intent == "send_email":
+            to = params.get("recipient", "")
+            subj = params.get("subject", "Message from Veda")
+            body = params.get("body", "")
+            response = self.comms.send_email(to, subj, body)
             action_taken = True
         elif intent == "bulk_media_op":
             dir_name = params.get("directory")

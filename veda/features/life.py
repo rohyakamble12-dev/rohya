@@ -12,6 +12,30 @@ class VedaLife:
         """Starts a background thread to monitor health routines."""
         threading.Thread(target=self._monitor_loop, daemon=True).start()
 
+    def set_timer(self, minutes, label="General Timer"):
+        """Starts a background timer."""
+        seconds = int(minutes) * 60
+        threading.Thread(target=self._timer_worker, args=(seconds, label), daemon=True).start()
+        return f"Timer established for {minutes} minutes: {label}."
+
+    def _timer_worker(self, seconds, label):
+        time.sleep(seconds)
+        self.assistant.system_alert(f"TIMER COMPLETE: {label}")
+
+    def set_alarm(self, time_str, label="Alarm"):
+        """Sets an alarm (HH:MM)."""
+        threading.Thread(target=self._alarm_worker, args=(time_str, label), daemon=True).start()
+        return f"Alarm established for {time_str}: {label}."
+
+    def _alarm_worker(self, time_str, label):
+        from datetime import datetime
+        while self.reminders_active:
+            now = datetime.now().strftime("%H:%M")
+            if now == time_str:
+                self.assistant.system_alert(f"ALARM TRIGGERED: {label}")
+                break
+            time.sleep(30)
+
     def _monitor_loop(self):
         while self.reminders_active:
             current_time = time.time()
