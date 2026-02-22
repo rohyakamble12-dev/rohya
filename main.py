@@ -54,34 +54,32 @@ def main():
     # Link GUI protocol changes to assistant
     gui.protocol_callback = assistant.sync_protocols
 
-    # Optional: Start background wake-word listener
-    import threading
+    # Background Listeners via ThreadManager
+    from veda.utils.threads import manager as thread_manager
+
     def background_listener():
-        while True:
-            result = assistant.voice.listen_for_wake_word("veda")
-            if result:
-                if result.lower() == "veda":
-                    # Just wake word, trigger active listening
-                    gui.after(0, gui.trigger_voice)
-                else:
-                    # Captured command with wake word
-                    # Strip wake word for cleaner processing
-                    command = result.lower().replace("veda", "").strip()
-                    if command:
-                        gui.after(0, lambda cmd=command: gui.update_chat("You", cmd))
-                        gui.after(0, lambda cmd=command: assistant.process_command(cmd))
+        result = assistant.voice.listen_for_wake_word("veda")
+        if result:
+            if result.lower() == "veda":
+                gui.after(0, gui.trigger_voice)
+            else:
+                command = result.lower().replace("veda", "").strip()
+                if command:
+                    gui.after(0, lambda cmd=command: gui.update_chat("You", cmd))
+                    gui.after(0, lambda cmd=command: assistant.process_command(cmd))
 
-    # Enable "Hey Veda" wake word listener in the background
-    threading.Thread(target=background_listener, daemon=True).start()
+    # Enable "Hey Veda" wake word listener with sleep throttling (0.1s)
+    thread_manager.run_with_throttle("WakeWordListener", background_listener, interval=0.1)
 
-    # Enable Global Hotkey (Alt+V) for instant activation
+    # Enable Global Hotkeys
     try:
         import keyboard
+        import os
         keyboard.add_hotkey('alt+v', lambda: gui.after(0, gui.trigger_voice))
-        # Global KILL-SWITCH (Emergency Abort)
         keyboard.add_hotkey('ctrl+alt+k', lambda: os._exit(1))
     except Exception as e:
-        logging.warning(f"Failed to register global hotkeys: {e}")
+        from veda.utils.logger import logger
+        logger.warning(f"Failed to register global hotkeys: {e}")
 
     # Start the GUI main loop
     gui.mainloop()

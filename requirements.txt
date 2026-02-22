@@ -29,3 +29,4 @@ python-docx
 pandas
 pytesseract
 pycryptodome
+keyboard

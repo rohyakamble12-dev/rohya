@@ -7,15 +7,26 @@ from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 from ctypes import cast, POINTER
 from comtypes import CLSCTX_ALL
 import screen_brightness_control as sbc
-import shutil
+from veda.features.base import VedaPlugin, PermissionTier
 
-class SystemControl:
-    @staticmethod
-    def _sanitize(text):
-        """Sanitizes input to prevent command injection."""
-        return re.sub(r'[^a-zA-Z0-9\s._-]', '', text).strip()
+class SystemPlugin(VedaPlugin):
+    def __init__(self, assistant):
+        super().__init__(assistant)
+        self.register_intent("open_app", self.open_app, PermissionTier.SAFE)
+        self.register_intent("close_app", self.close_app, PermissionTier.CONFIRM_REQUIRED)
+        self.register_intent("set_volume", self.set_volume, PermissionTier.SAFE)
+        self.register_intent("set_brightness", self.set_brightness, PermissionTier.SAFE)
+        self.register_intent("lock_pc", self.lock_pc, PermissionTier.SAFE)
+        self.register_intent("sleep", self.system_sleep, PermissionTier.CONFIRM_REQUIRED)
+        self.register_intent("mute_toggle", self.toggle_mute, PermissionTier.SAFE)
+        self.register_intent("screenshot", self.screenshot, PermissionTier.SAFE)
+        self.register_intent("web_find", self.web_find, PermissionTier.SAFE)
+        self.register_intent("empty_trash", self.empty_recycle_bin, PermissionTier.CONFIRM_REQUIRED)
+        self.register_intent("set_wallpaper", self.set_wallpaper, PermissionTier.SAFE)
 
-    # Mapping of apps to web alternatives
+    def _sanitize(self, text):
+        return re.sub(r'[^a-zA-Z0-9\s._-]', '', str(text)).strip()
+
     WEB_FALLBACKS = {
         "word": "https://www.office.com/launch/word",
         "excel": "https://www.office.com/launch/excel",
@@ -33,13 +44,11 @@ class SystemControl:
         "netflix": "https://www.netflix.com/"
     }
 
-    @staticmethod
-    def open_app(app_name):
-        """Opens an application locally, or falls back to a web version."""
-        app_name = SystemControl._sanitize(app_name)
-        app_name_lower = app_name.lower()
+    def open_app(self, params):
+        app_name = self._sanitize(params.get("app_name", ""))
+        if not app_name: return "Specify an application to open."
 
-        # 1. Try common local command aliases with 'start'
+        app_name_lower = app_name.lower()
         apps = {
             "chrome": "chrome",
             "notepad": "notepad",
@@ -48,99 +57,69 @@ class SystemControl:
             "explorer": "explorer",
             "task manager": "taskmgr",
             "cmd": "cmd",
-            "powershell": "powershell",
-            "browser": "https://www.google.com"
+            "powershell": "powershell"
         }
 
         target = apps.get(app_name_lower, app_name_lower)
 
-        # 2. Attempt to use Windows 'start' command for maximum resilience
         try:
-            # os.startfile is built into Python on Windows and very effective
             os.startfile(target)
-            return f"Opening {app_name} via Windows Shell."
+            return f"Opening {app_name}."
         except Exception:
-            pass
+            try:
+                subprocess.Popen(f"start {target}", shell=True)
+                return f"Launching {app_name}."
+            except Exception:
+                if app_name_lower in self.WEB_FALLBACKS:
+                    webbrowser.open(self.WEB_FALLBACKS[app_name_lower])
+                    return f"Opening web version of {app_name}."
 
-        # 3. Try subprocess with shell=True as fallback
+                webbrowser.open(f"https://www.google.com/search?q=open+{app_name}")
+                return f"I couldn't find {app_name} locally. Searching for it..."
+
+    def close_app(self, params):
+        app_name = self._sanitize(params.get("app_name", ""))
         try:
-            subprocess.Popen(f"start {target}", shell=True)
-            return f"Launching {app_name}."
-        except Exception:
-            pass
-
-        # 4. Web Fallback
-        if app_name_lower in SystemControl.WEB_FALLBACKS:
-            url = SystemControl.WEB_FALLBACKS[app_name_lower]
-            webbrowser.open(url)
-            return f"I couldn't find {app_name} locally, so I'm opening the web version for you."
-
-        # 5. Last resort: Search for the app on Google
-        search_url = f"https://www.google.com/search?q=open+{app_name}"
-        webbrowser.open(search_url)
-        return f"I couldn't find {app_name} on this system. I've initiated a search to help you find it."
-
-    @staticmethod
-    def close_app(app_name):
-        """Closes an application by name."""
-        app_name = SystemControl._sanitize(app_name)
-        try:
-            # Using subprocess list for better safety than os.system
             subprocess.run(["taskkill", "/f", "/im", f"{app_name}.exe"], capture_output=True)
             subprocess.run(["taskkill", "/f", "/im", app_name], capture_output=True)
-            return f"Attempted to terminate {app_name} processes."
+            return f"Attempted to terminate {app_name}."
         except Exception as e:
             return f"Failed to close {app_name}: {str(e)}"
 
-    @staticmethod
-    def set_volume(level):
-        """Sets system volume (0-100)."""
+    def set_volume(self, params):
+        level = params.get("level", 50)
         try:
-            # First try Native Volume Control
             devices = AudioUtilities.GetSpeakers()
             interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
             volume = cast(interface, POINTER(IAudioEndpointVolume))
             volume.SetMasterVolumeLevelScalar(float(level) / 100, None)
-            return f"Volume set to {level} percent"
-        except Exception:
-            # Fallback to pyautogui media keys (vague but works)
-            try:
-                # If they ask for low volume, just mute or something?
-                # Better to just log failure.
-                return f"Could not set precise volume. Please use your keyboard shortcuts."
-            except Exception as e:
-                return f"Volume control failure: {str(e)}"
+            return f"Volume set to {level}%."
+        except Exception as e:
+            return f"Volume control failed: {e}"
 
-    @staticmethod
-    def set_brightness(level):
-        """Sets screen brightness (0-100)."""
+    def set_brightness(self, params):
+        level = params.get("level", 50)
         try:
             sbc.set_brightness(int(level))
-            return f"Brightness set to {level} percent"
+            return f"Brightness set to {level}%."
         except Exception:
-            return "Screen brightness control is not supported on this monitor."
+            return "Screen brightness control not supported."
 
-    @staticmethod
-    def lock_pc():
-        """Locks the Windows PC."""
+    def lock_pc(self, params):
         try:
             os.system("rundll32.exe user32.dll,LockWorkStation")
-            return "Locking the PC"
+            return "System locked."
         except Exception as e:
-            return f"Failed to lock PC: {str(e)}"
+            return f"Lock failed: {e}"
 
-    @staticmethod
-    def system_sleep():
-        """Puts the Windows PC to sleep."""
+    def system_sleep(self, params):
         try:
             os.system("rundll32.exe powrprof.dll,SetSuspendState 0,1,0")
-            return "Initiating system suspension."
+            return "Suspending system."
         except Exception as e:
-            return f"Sleep command failed: {str(e)}"
+            return f"Sleep command failed: {e}"
 
-    @staticmethod
-    def toggle_mute():
-        """Mutes or unmutes the system volume."""
+    def toggle_mute(self, params):
         try:
             devices = AudioUtilities.GetSpeakers()
             interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
@@ -148,55 +127,40 @@ class SystemControl:
             current_mute = volume.GetMute()
             volume.SetMute(not current_mute, None)
             state = "Muted" if not current_mute else "Unmuted"
-            return f"System audio {state}."
+            return f"System {state}."
         except Exception as e:
-            return f"Mute toggle failed: {str(e)}"
+            return f"Mute toggle failed: {e}"
 
-    @staticmethod
-    def screenshot():
-        """Takes a screenshot and saves it."""
+    def screenshot(self, params):
         try:
             save_path = os.path.join(os.path.expanduser("~"), "Pictures", "Veda_Screenshot.png")
             pyautogui.screenshot(save_path)
-            return f"Screenshot captured and saved to your Pictures folder."
+            return f"Screenshot saved to Pictures."
         except Exception as e:
-            return f"Failed to take screenshot: {str(e)}"
+            return f"Screenshot failed: {e}"
 
-    @staticmethod
-    def web_find(query):
-        """Opens a browser and searches for the query."""
-        query = SystemControl._sanitize(query)
-        search_url = f"https://www.google.com/search?q={query}"
+    def web_find(self, params):
+        query = self._sanitize(params.get("query", "google"))
         try:
-            webbrowser.open(search_url)
-            return f"Searching for '{query}' in your browser."
+            webbrowser.open(f"https://www.google.com/search?q={query}")
+            return f"Searching for '{query}'."
         except Exception as e:
-            return f"Failed to initiate web search: {str(e)}"
+            return f"Search failed: {e}"
 
-    @staticmethod
-    def empty_recycle_bin():
-        """Empties the Windows Recycle Bin."""
+    def empty_recycle_bin(self, params):
         try:
             import winshell
             winshell.recycle_bin().empty(confirm=False, show_progress=False, sound=True)
-            return "Recycle Bin purged. System storage optimized."
-        except ImportError:
-            return "Windows Support (winshell) missing."
+            return "Recycle bin purged."
         except Exception as e:
-            return f"Recycle Bin cleanup failed: {str(e)}"
+            return f"Purge failed: {e}"
 
-    @staticmethod
-    def set_wallpaper(path):
-        """Sets the Windows desktop wallpaper."""
+    def set_wallpaper(self, params):
         import ctypes
-        import os
+        path = params.get("path", "")
         try:
-            if not os.path.exists(path):
-                return "Protocol Error: Target wallpaper image not found."
-
-            # 0x0014 = SPI_SETDESKWALLPAPER
-            # 0x01 | 0x02 = SPIF_UPDATEINIFILE | SPIF_SENDWININICHANGE
+            if not os.path.exists(path): return "Image not found."
             ctypes.windll.user32.SystemParametersInfoW(0x0014, 0, path, 0x01 | 0x02)
-            return "Desktop visualization updated. Atmospheric sync complete."
+            return "Wallpaper updated."
         except Exception as e:
-            return f"Failed to update visualization: {str(e)}"
+            return f"Update failed: {e}"

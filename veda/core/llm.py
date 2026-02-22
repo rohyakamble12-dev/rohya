@@ -18,47 +18,48 @@ class VedaLLM:
         ]
 
     def chat(self, user_input, context_info=None, protocols=None):
-        """Generates a response from the LLM based on user input and system context."""
-        # 1. Manage History (Pruning to last 10 messages + System Prompt)
-        if len(self.messages) > 11:
-            self.messages = [self.messages[0]] + self.messages[-10:]
+        """Generates a response with compressed history and deep context."""
+        # 1. Manage History via Summarization
+        if len(self.messages) > 15:
+            self._compress_history()
 
-        # 2. Strategic Context Retrieval
+        # 2. Strategic Retrieval (Semantic + Episodic + KG)
         facts = self.memory.get_all_facts_summary()
+        episodes = self.memory.get_recent_episodes(3)
 
-        # Search for similar document chunks
+        # RAG Search
         doc_context = ""
         query_embedding = self.embed_text(user_input)
         if query_embedding:
-            similar = self.memory.search_similar_chunks(query_embedding)
+            similar = self.memory.search_similar_chunks(query_embedding, threshold=0.7)
             if similar:
-                doc_context = "\n[Relevant Documents]: " + " ".join([t[:200] for s, t, sim in similar])
+                doc_context = "\n[Neural Data]: " + " ".join([t[:300] for s, t, sim in similar])
 
-        # Knowledge Graph Injection (Search keywords from user input in KG)
+        # KG Linkage
         kg_context = ""
-        words = user_input.split()
-        for word in words:
-            if len(word) > 4: # Only check significant words
+        for word in user_input.split():
+            if len(word) > 4:
                 rel = self.memory.get_connected_intel(word)
-                if "No strategic links" not in rel:
-                    kg_context += f"\n[Neural Link]: {rel}"
+                if "No links" not in rel: kg_context += f"\n[Linked Intel]: {rel}"
 
-        context_str = f" [System: {context_info}]" if context_info else ""
-        proto_str = f" [Protocols: {protocols}]" if protocols else ""
-
-        # Merge Context
-        context_aware_input = f"{context_str}{proto_str}\n[Memory: {facts}]{doc_context}{kg_context}\nUser: {user_input}"
+        # 3. Context Merging
+        context_aware_input = (
+            f"[Protocols: {protocols}]\n"
+            f"[Recent Context: {context_info}]\n"
+            f"[Episodic Log: {episodes}]\n"
+            f"[Semantic Knowledge: {facts}]"
+            f"{doc_context}{kg_context}\n"
+            f"User: {user_input}"
+        )
 
         self.messages.append({"role": "user", "content": context_aware_input})
 
         try:
-            response = ollama.chat(
-                model=self.model,
-                messages=self.messages
-            )
+            response = ollama.chat(model=self.model, messages=self.messages)
             assistant_response = response['message']['content']
-            # Store cleaned response for voice
             self.messages.append({"role": "assistant", "content": assistant_response})
+            # Store event in episodic memory
+            self.memory.store_episode("conversation", f"User: {user_input[:50]}... | Veda: {assistant_response[:50]}...")
             return assistant_response
         except Exception as e:
             error_msg = f"I'm having trouble connecting to my brain (Ollama). Error: {str(e)}"
@@ -144,6 +145,20 @@ class VedaLLM:
         except Exception as e:
             # Fallback/Log
             return None
+
+    def _compress_history(self):
+        """Summarizes old conversation history to stay efficient."""
+        logger.info("Compressing conversation history...")
+        to_summarize = self.messages[1:6] # Keep system prompt, summarize next 5
+        self.messages = [self.messages[0]] + self.messages[6:]
+
+        summary_prompt = "Summarize the following interaction concisely for long-term memory: " + json.dumps(to_summarize)
+        try:
+            res = ollama.chat(model=self.model, messages=[{"role": "user", "content": summary_prompt}])
+            summary = res['message']['content']
+            self.messages.insert(1, {"role": "system", "content": f"[Past Context Summary: {summary}]"})
+        except:
+            pass
 
     def reset_history(self):
         self.messages = [{"role": "system", "content": self.system_prompt}]
