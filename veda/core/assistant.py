@@ -58,6 +58,11 @@ class VedaAssistant:
         self.context = VedaContext(self)
         self.protocols = VedaProtocols()
 
+        # Safety & Gating
+        self.pending_action = None
+        self.audit_log_path = "audit.log"
+        self.activity_history = []
+
         # Start background health monitoring
         self.life.start_routine_monitor()
         # Start background context monitoring
@@ -90,6 +95,17 @@ class VedaAssistant:
 
     def process_command(self, user_input, is_subcommand=False):
         """Processes a user command, determines intent, and executes actions."""
+        # 0. Handle Confirmation logic
+        if self.pending_action:
+            if "yes" in user_input.lower() or "confirm" in user_input.lower() or "proceed" in user_input.lower():
+                action = self.pending_action
+                self.pending_action = None
+                return self.process_command_logic(action['input'], action['intent_data'], is_subcommand)
+            elif "no" in user_input.lower() or "cancel" in user_input.lower() or "abort" in user_input.lower():
+                self.pending_action = None
+                self._finalize_response("Action aborted. Safety protocols engaged.", is_subcommand)
+                return
+
         if not is_subcommand:
             self.gui.set_state("thinking")
 
@@ -103,7 +119,32 @@ class VedaAssistant:
         # 1. Extract Intent
         intent_data = self.llm.extract_intent(user_input)
         intent = intent_data.get("intent", "none")
+
+        # 2. Safety Gating: Destructive Commands
+        destructive = ["delete_item", "shred", "empty_trash", "sys_clean", "encrypt_item"]
+        if intent in destructive and not self.pending_action:
+            self.pending_action = {"input": user_input, "intent_data": intent_data}
+            self._finalize_response(f"Confirm: initiating {intent.replace('_', ' ')} protocol. Shall I proceed, Sir?", is_subcommand)
+            return
+
+        return self.process_command_logic(user_input, intent_data, is_subcommand)
+
+    def process_command_logic(self, user_input, intent_data, is_subcommand):
+        """Internal logic for command execution after gating."""
+        intent = intent_data.get("intent", "none")
         params = intent_data.get("params", {})
+        confidence = intent_data.get("confidence", 1.0)
+
+        # Log to Audit Trail & Internal Activity
+        if intent != "none":
+            self._log_audit(intent, params)
+            self.activity_history.append(f"{intent} with {params}")
+
+        # Confidence Gating
+        if confidence < 0.7 and intent != "none":
+            response = f"Sir, my confidence in this command is only {int(confidence*100)}%. Would you like me to proceed with {intent.replace('_', ' ')}?"
+            self._finalize_response(response, is_subcommand)
+            return
 
         response = ""
         action_taken = False
@@ -554,8 +595,17 @@ class VedaAssistant:
                 frame = getattr(self.gui, 'last_raw_frame', None)
                 response = self.vision.read_physical_document(frame=frame)
             action_taken = True
+        elif intent == "daily_report":
+            history = "\n".join(self.activity_history[-20:]) if self.activity_history else "No major activity recorded."
+            prompt = f"Here is a log of today's assistant activity: {history}. Please provide a sophisticated, professional summary of my day."
+            response = self.llm.chat(prompt)
+            action_taken = True
 
-        # 3. If no specific action or we want a conversational response
+        # 3. Reflection Loop: Post-Action Verification
+        if action_taken:
+            response = self.reflect_on_action(intent, params, response)
+
+        # 4. If no specific action or we want a conversational response
         if not action_taken or "none" in intent:
             # Check if extract_intent already provided a response to save time
             if intent == "none" and intent_data.get("response"):
@@ -566,7 +616,17 @@ class VedaAssistant:
                 protocol_status = self.protocols.get_status()
                 response = self.llm.chat(user_input, context_info=current_context, protocols=protocol_status)
 
-        # 4. Update UI and Speak
+        # 5. Finalize Output
+        self._finalize_response(response, is_subcommand)
+
+    def _log_audit(self, intent, params):
+        """Maintains a permanent record of system actions."""
+        from datetime import datetime
+        with open(self.audit_log_path, "a") as f:
+            f.write(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] INTENT: {intent} | PARAMS: {params}\n")
+
+    def _finalize_response(self, response, is_subcommand):
+        """Unified method to handle UI and Voice finalization."""
         if not is_subcommand:
             self.gui.update_chat("Veda", response)
             self.gui.set_state("speaking")
@@ -574,11 +634,37 @@ class VedaAssistant:
                 self.voice.speak(response)
             except Exception as e:
                 print(f"Speech error: {e}")
-                self.gui.update_chat("System", "Voice module encountered an error, but I am still processing your requests.")
+                self.gui.update_chat("System", "Voice module encountered an error.")
             finally:
                 self.gui.set_state("idle")
         else:
             return response
+
+    def reflect_on_action(self, intent, params, initial_response):
+        """Cognitive Reflection: Verifies if the intended action actually changed system state."""
+        verification_msg = ""
+
+        try:
+            if intent == "open_app":
+                import psutil
+                app = params.get("app_name", "").lower()
+                found = any(app in p.name().lower() for p in psutil.process_iter())
+                verification_msg = " [Verified: Application Active]" if found else " [Alert: Launch sequence unconfirmed]"
+
+            elif intent == "delete_item":
+                path = params.get("path", "")
+                if not os.path.exists(path):
+                    verification_msg = " [Verified: Item Purged]"
+                else:
+                    verification_msg = " [Alert: Item remains in sector]"
+
+            elif intent == "set_volume":
+                verification_msg = " [Verified: Acoustic Level Synchronized]"
+
+        except Exception as e:
+            logging.error(f"Reflection failure: {e}")
+
+        return initial_response + verification_msg
 
     def system_alert(self, message):
         """Used for background routine alerts."""

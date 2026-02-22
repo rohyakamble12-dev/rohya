@@ -78,8 +78,10 @@ def main():
     try:
         import keyboard
         keyboard.add_hotkey('alt+v', lambda: gui.after(0, gui.trigger_voice))
+        # Global KILL-SWITCH (Emergency Abort)
+        keyboard.add_hotkey('ctrl+alt+k', lambda: os._exit(1))
     except Exception as e:
-        logging.warning(f"Failed to register global hotkey: {e}")
+        logging.warning(f"Failed to register global hotkeys: {e}")
 
     # Start the GUI main loop
     gui.mainloop()

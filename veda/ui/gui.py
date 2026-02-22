@@ -133,6 +133,11 @@ class VedaGUI(ctk.CTk):
         self.chat_display = ctk.CTkScrollableFrame(self.comm_frame, fg_color="#050507", corner_radius=0)
         self.chat_display.pack(fill="both", expand=True, padx=2, pady=2)
 
+        self.tactical_frame = ctk.CTkFrame(self.right_panel, height=60, fg_color="#0a0a15", border_width=1, border_color=self.border_color)
+        self.tactical_frame.pack(fill="x", pady=(0, 10))
+        self.tactical_lbl = ctk.CTkLabel(self.tactical_frame, text="TACTICAL STATUS: NOMINAL", font=("Orbitron", 9), text_color=self.accent_color)
+        self.tactical_lbl.pack(pady=15)
+
         self.input_entry = ctk.CTkEntry(self.right_panel, placeholder_text="Enter command...", height=40,
                                         fg_color="#050507", border_color=self.accent_color)
         self.input_entry.pack(fill="x", pady=(10, 0))
@@ -452,6 +457,8 @@ class VedaGUI(ctk.CTk):
         self._on_proto_change()
 
     def show_suggestion(self, text):
+        self.tactical_lbl.configure(text=f"SUGGESTION: {text.upper()}", text_color=self.think_color)
+        self.after(5000, lambda: self.tactical_lbl.configure(text="TACTICAL STATUS: NOMINAL", text_color=self.accent_color))
         self.update_chat("System", f"Info: {text}")
 
     def set_theme_color(self, mood="calm"):

@@ -32,6 +32,14 @@ class VedaContext:
     def _monitor_loop(self):
         while self.is_monitoring:
             try:
+                # 1. Entropy Check: Monitor window count
+                all_windows = gw.getAllWindows()
+                visible_count = len([w for w in all_windows if w.title.strip()])
+
+                if visible_count > 12:
+                    self.assistant.system_alert("Sir, system entropy is high. Suggesting Focus Mode or Clean Slate protocol.")
+
+                # 2. Window Switch Detection
                 window = gw.getActiveWindow()
                 if window and window.title:
                     title = window.title
