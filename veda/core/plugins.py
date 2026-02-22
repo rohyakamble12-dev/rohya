@@ -1,28 +1,29 @@
 from veda.features.base import PermissionTier
 from veda.utils.logger import logger
 from veda.utils.events import bus, Events
+from veda.core.registry import registry
 
 class PluginManager:
     def __init__(self, assistant):
         self.assistant = assistant
-        self.plugins = []
-        self.intent_map = {} # intent_name: (plugin, method, tier)
+        self.plugins = {}
+        self.intent_map = {}
+        registry.register("plugin_manager", self)
 
     def load_plugin(self, plugin_instance):
-        self.plugins.append(plugin_instance)
+        name = plugin_instance.name
+        self.plugins[name] = plugin_instance
         for intent, (method, tier) in plugin_instance.intents.items():
             self.intent_map[intent] = (plugin_instance, method, tier)
-        logger.info(f"Loaded plugin: {plugin_instance.name}")
+        logger.info(f"Loaded Plugin: {name} ({len(plugin_instance.intents)} intents)")
 
     def execute_intent(self, intent, params):
         if intent not in self.intent_map:
-            return f"Error: Intent '{intent}' not recognized by any plugin.", PermissionTier.SAFE
+            return f"Intent '{intent}' unmapped.", PermissionTier.SAFE
 
         plugin, method, tier = self.intent_map[intent]
 
-        # Check if confirmation is needed (handled by Assistant/GUI)
         if tier != PermissionTier.SAFE:
-            # We return the intent info and the tier, the Assistant will handle the Gating
             return (method, params), tier
 
         try:
@@ -30,5 +31,8 @@ class PluginManager:
             bus.publish(Events.ACTION_COMPLETED, {"intent": intent, "result": result})
             return result, tier
         except Exception as e:
-            logger.error(f"Execution error in {plugin.name}.{intent}: {e}")
-            return f"System Error: {str(e)}", tier
+            logger.error(f"Plugin Error [{plugin.name}.{intent}]: {e}")
+            return f"Execution failure: {e}", tier
+
+    def get_plugin(self, name):
+        return self.plugins.get(name)

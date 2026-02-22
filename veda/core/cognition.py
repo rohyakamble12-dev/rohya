@@ -8,40 +8,48 @@ class VedaPlanner:
         self.model = assistant.llm.model
 
     def generate_plan(self, user_input):
-        """Generates a multi-step execution plan in JSON format."""
-        # Get available tools from PluginManager
+        """Generates a multi-step execution plan with validation."""
         available_tools = list(self.assistant.plugins.intent_map.keys())
 
         prompt = (
-            "You are the Strategic Planner for Veda. Break down the user's request into a sequence of tool calls. "
-            "Respond ONLY with a JSON list of steps.\n\n"
-            f"Available tools: {available_tools}\n"
-            "If a step requires information from a previous step, use the 'await' keyword in params.\n\n"
-            "Example:\n"
-            "User: 'Find my resume and email it to Tony'\n"
-            "Plan: [\n"
-            "  {'intent': 'file_search', 'params': {'filename': 'resume'}},\n"
-            "  {'intent': 'send_email', 'params': {'recipient': 'Tony', 'subject': 'Resume', 'body': 'Attached is the resume you requested.', 'attachment': 'await'}}\n"
-            "]\n\n"
-            f"User Input: {user_input}"
+            "Break down user request into JSON list of tool calls.\n"
+            f"Tools: {available_tools}\n"
+            "Schema: [{'intent': str, 'params': dict}]\n"
+            f"Input: {user_input}"
         )
 
         try:
             response = ollama.chat(
                 model=self.model,
-                messages=[{"role": "system", "content": "You are Veda's Strategic Planner. Respond ONLY with raw JSON."},
+                messages=[{"role": "system", "content": "You are Veda's Planner. Output RAW JSON list only."},
                           {"role": "user", "content": prompt}],
                 options={"temperature": 0}
             )
             content = response['message']['content']
+            plan = self._parse_json(content)
+            return self._validate_plan(plan)
+        except Exception as e:
+            logger.error(f"Planning Error: {e}")
+            return []
+
+    def _parse_json(self, content):
+        try:
             start = content.find('[')
             end = content.rfind(']') + 1
             if start != -1 and end != -1:
                 return json.loads(content[start:end])
-        except Exception as e:
-            logger.error(f"Planning failed: {e}")
-
+        except: pass
         return []
+
+    def _validate_plan(self, plan):
+        """Ensures the plan follows the expected structure and intents exist."""
+        if not isinstance(plan, list): return []
+        valid_plan = []
+        for step in plan:
+            if isinstance(step, dict) and 'intent' in step:
+                if step['intent'] in self.assistant.plugins.intent_map:
+                    valid_plan.append(step)
+        return valid_plan
 
 class VedaReflector:
     def __init__(self, assistant):

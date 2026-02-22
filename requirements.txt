@@ -30,3 +30,4 @@ pandas
 pytesseract
 pycryptodome
 keyboard
+numpy

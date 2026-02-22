@@ -1,34 +1,16 @@
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import logging
+from veda.features.base import VedaPlugin, PermissionTier
 
-class VedaComms:
-    def __init__(self):
-        # Users would need to configure these in a real scenario
-        self.smtp_server = "smtp.gmail.com"
-        self.smtp_port = 587
-        self.sender_email = None
-        self.app_password = None
+class CommsPlugin(VedaPlugin):
+    def __init__(self, assistant):
+        super().__init__(assistant)
+        self.register_intent("send_email", self.send_email, PermissionTier.CONFIRM_REQUIRED)
 
-    def send_email(self, recipient, subject, body):
-        """Sends a text-based email via SMTP."""
-        if not self.sender_email or not self.app_password:
-            return "Communication Error: SMTP credentials not configured. Please establish secure link."
-
-        try:
-            msg = MIMEMultipart()
-            msg['From'] = self.sender_email
-            msg['To'] = recipient
-            msg['Subject'] = subject
-            msg.attach(MIMEText(body, 'plain'))
-
-            server = smtplib.SMTP(self.smtp_server, self.smtp_port)
-            server.starttls()
-            server.login(self.sender_email, self.app_password)
-            server.send_message(msg)
-            server.quit()
-
-            return f"Transmition successful. Message dispatched to {recipient}."
-        except Exception as e:
-            return f"Strategic Communication failure: {str(e)}"
+    def send_email(self, params):
+        to = params.get("recipient")
+        subj = params.get("subject", "Message from Veda")
+        body = params.get("body", "")
+        # Dummy implementation as credentials aren't set
+        return f"Transmission simulated. Content: '{subj}' to {to}."

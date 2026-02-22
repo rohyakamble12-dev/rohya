@@ -1,42 +1,51 @@
 import requests
 from duckduckgo_search import DDGS
+from veda.features.base import VedaPlugin, PermissionTier
 
-class WebInfo:
-    @staticmethod
-    def search(query):
-        """Searches the web using DuckDuckGo."""
+class WebPlugin(VedaPlugin):
+    def __init__(self, assistant):
+        super().__init__(assistant)
+        self.register_intent("web_search", self.search, PermissionTier.SAFE)
+        self.register_intent("weather", self.get_weather, PermissionTier.SAFE)
+        self.register_intent("get_news", self.get_news, PermissionTier.SAFE)
+        self.register_intent("stock_price", self.get_market_info, PermissionTier.SAFE)
+        self.register_intent("crypto_price", self.get_market_info, PermissionTier.SAFE)
+
+    def search(self, params):
+        query = params.get("query", "")
+        if not query: return "Please specify what to search for."
         try:
             with DDGS() as ddgs:
                 results = list(ddgs.text(query, max_results=3))
                 if results:
-                    summary = results[0]['body']
-                    return f"According to the web: {summary}"
-                return "I couldn't find anything on that."
+                    return f"Search result: {results[0]['body']}"
+                return "No results found."
         except Exception as e:
-            return f"Search failed: {str(e)}"
+            return f"Search failed: {e}"
 
-    @staticmethod
-    def get_weather(city="New York"):
-        """Gets weather info (simplified for demo, usually needs an API key)."""
-        # Using a free service that doesn't require a key or simple scraping
+    def get_weather(self, params):
+        city = params.get("city", "auto")
         try:
             url = f"https://wttr.in/{city}?format=%C+%t"
-            response = requests.get(url)
+            response = requests.get(url, timeout=5)
             if response.status_code == 200:
-                return f"The weather in {city} is {response.text}"
-            return "I couldn't retrieve the weather right now."
+                return f"Weather in {city}: {response.text}"
+            return "Weather data unavailable."
         except Exception as e:
-            return f"Weather check failed: {str(e)}"
+            return f"Weather check failed: {e}"
 
-    @staticmethod
-    def get_news():
-        """Gets top news headlines."""
+    def get_news(self, params):
         try:
             with DDGS() as ddgs:
-                results = list(ddgs.news("top stories", max_results=3))
+                results = list(ddgs.news("world news", max_results=3))
                 if results:
                     headlines = [r['title'] for r in results]
-                    return "Here are the top headlines: " + "; ".join(headlines)
-                return "I couldn't find any news."
+                    return "Top stories: " + " | ".join(headlines)
+                return "No news found."
         except Exception as e:
-            return f"News retrieval failed: {str(e)}"
+            return f"News retrieval failed: {e}"
+
+    def get_market_info(self, params):
+        symbol = params.get("symbol") or params.get("coin") or "market"
+        query = f"current price of {symbol}"
+        return self.search({"query": query})

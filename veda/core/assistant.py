@@ -3,6 +3,7 @@ from veda.core.voice import VedaVoice
 from veda.core.context import VedaContext
 from veda.core.plugins import PluginManager
 from veda.core.cognition import VedaPlanner, VedaReflector
+from veda.core.registry import registry
 from veda.features.base import PermissionTier
 from veda.utils.notifications import VedaNotifications
 from veda.utils.protocols import VedaProtocols
@@ -25,6 +26,12 @@ class VedaAssistant:
         self.plugins = PluginManager(self)
         self.planner = VedaPlanner(self)
         self.reflector = VedaReflector(self)
+
+        # Register Core Services
+        registry.register("llm", self.llm)
+        registry.register("voice", self.voice)
+        registry.register("gui", self.gui)
+        registry.register("assistant", self)
 
         # Initialize Plugins
         self._initialize_plugins()
@@ -49,11 +56,35 @@ class VedaAssistant:
         from veda.features.file_manager import FilePlugin
         from veda.features.life import LifePlugin
         from veda.features.task_master import TaskPlugin
+        from veda.features.web_info import WebPlugin
+        from veda.features.vision import VisionPlugin
+        from veda.features.research import ResearchPlugin
+        from veda.features.diagnostics import DiagnosticsPlugin
+        from veda.features.media import MediaPlugin
+        from veda.features.automation import AutomationPlugin
+        from veda.features.tools import ToolsPlugin
+        from veda.features.translator import TranslatorPlugin
+        from veda.features.calculator import CalculatorPlugin
+        from veda.features.comms import CommsPlugin
+        from veda.features.iot import IOTPlugin
+        from veda.features.help import HelpPlugin
 
         self.plugins.load_plugin(SystemPlugin(self))
         self.plugins.load_plugin(FilePlugin(self))
         self.plugins.load_plugin(LifePlugin(self))
         self.plugins.load_plugin(TaskPlugin(self))
+        self.plugins.load_plugin(WebPlugin(self))
+        self.plugins.load_plugin(VisionPlugin(self))
+        self.plugins.load_plugin(ResearchPlugin(self))
+        self.plugins.load_plugin(DiagnosticsPlugin(self))
+        self.plugins.load_plugin(MediaPlugin(self))
+        self.plugins.load_plugin(AutomationPlugin(self))
+        self.plugins.load_plugin(ToolsPlugin(self))
+        self.plugins.load_plugin(TranslatorPlugin(self))
+        self.plugins.load_plugin(CalculatorPlugin(self))
+        self.plugins.load_plugin(CommsPlugin(self))
+        self.plugins.load_plugin(IOTPlugin(self))
+        self.plugins.load_plugin(HelpPlugin(self))
 
     def verify_startup(self):
         """Verifies that all core systems are ready."""

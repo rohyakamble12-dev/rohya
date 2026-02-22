@@ -1,27 +1,21 @@
 import datetime
-import os
+from veda.features.base import VedaPlugin, PermissionTier
 
-class VedaTools:
-    @staticmethod
-    def take_note(text):
-        """Saves a note to a local file."""
-        try:
-            filename = "veda_notes.txt"
-            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            with open(filename, "a") as f:
-                f.write(f"[{timestamp}] {text}\n")
-            return "I've saved that note for you."
-        except Exception as e:
-            return f"Failed to save note: {str(e)}"
+class ToolsPlugin(VedaPlugin):
+    def __init__(self, assistant):
+        super().__init__(assistant)
+        self.register_intent("time", self.get_time, PermissionTier.SAFE)
+        self.register_intent("date", self.get_date, PermissionTier.SAFE)
+        self.register_intent("note", self.take_note, PermissionTier.SAFE)
 
-    @staticmethod
-    def get_time():
-        """Returns the current time."""
-        now = datetime.datetime.now().strftime("%I:%M %p")
-        return f"The current time is {now}"
+    def get_time(self, params):
+        return f"Time: {datetime.datetime.now().strftime('%H:%M')}."
 
-    @staticmethod
-    def get_date():
-        """Returns today's date."""
-        today = datetime.datetime.now().strftime("%B %d, %Y")
-        return f"Today is {today}"
+    def get_date(self, params):
+        return f"Date: {datetime.datetime.now().strftime('%Y-%m-%d')}."
+
+    def take_note(self, params):
+        text = params.get("text")
+        with open("veda_notes.txt", "a") as f:
+            f.write(f"[{datetime.datetime.now()}] {text}\n")
+        return "Note secured."

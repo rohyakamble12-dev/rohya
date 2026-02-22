@@ -1,117 +1,59 @@
-from pynput import keyboard, mouse
 import time
-import threading
 import json
+from pynput import keyboard, mouse
+from veda.features.base import VedaPlugin, PermissionTier
 
-class VedaAutomation:
-    def __init__(self):
+class AutomationPlugin(VedaPlugin):
+    def __init__(self, assistant):
+        super().__init__(assistant)
         self.recording = False
         self.events = []
         self.start_time = 0
+        self.register_intent("start_recording", self.start_rec, PermissionTier.SAFE)
+        self.register_intent("stop_recording", self.stop_rec, PermissionTier.SAFE)
+        self.register_intent("play_macro", self.play_macro, PermissionTier.SAFE)
+        self.register_intent("mission_protocol", self.execute_mission, PermissionTier.SAFE)
 
-    def start_recording(self):
+    def start_rec(self, params):
         self.events = []
         self.recording = True
         self.start_time = time.time()
+        self.k_listener = keyboard.Listener(on_press=self._on_key)
+        self.m_listener = mouse.Listener(on_click=self._on_click)
+        self.k_listener.start()
+        self.m_listener.start()
+        return "Action recording initiated."
 
-        # Start listeners
-        self.key_listener = keyboard.Listener(on_press=self._on_key_press)
-        self.mouse_listener = mouse.Listener(on_click=self._on_click)
-
-        self.key_listener.start()
-        self.mouse_listener.start()
-        return "Recording started. Perform the actions you want me to learn."
-
-    def stop_recording(self, macro_name="default"):
+    def stop_rec(self, params):
         self.recording = False
-        self.key_listener.stop()
-        self.mouse_listener.stop()
-
-        # Save to file
-        with open(f"macro_{macro_name}.json", 'w') as f:
+        self.k_listener.stop()
+        self.m_listener.stop()
+        name = params.get("name", "default")
+        with open(f"macro_{name}.json", 'w') as f:
             json.dump(self.events, f)
+        return f"Macro '{name}' secured."
 
-        return f"Macro '{macro_name}' saved successfully."
-
-    def _on_key_press(self, key):
-        if not self.recording: return False
-        try:
-            k = key.char
-        except AttributeError:
-            k = str(key)
-        self.events.append({'type': 'key', 'time': time.time() - self.start_time, 'data': k})
+    def _on_key(self, key):
+        if self.recording:
+            k = key.char if hasattr(key, 'char') else str(key)
+            self.events.append({'type': 'key', 'time': time.time() - self.start_time, 'data': k})
 
     def _on_click(self, x, y, button, pressed):
-        if not self.recording: return False
-        if pressed:
-            self.events.append({'type': 'click', 'time': time.time() - self.start_time, 'x': x, 'y': y, 'button': str(button)})
+        if self.recording and pressed:
+            self.events.append({'type': 'click', 'time': time.time() - self.start_time, 'x': x, 'y': y})
 
-    def play_macro(self, macro_name="default"):
-        try:
-            with open(f"macro_{macro_name}.json", 'r') as f:
-                events = json.load(f)
+    def play_macro(self, params):
+        name = params.get("name", "default")
+        return f"Replaying macro '{name}' (Simulation Mode)."
 
-            kb_controller = keyboard.Controller()
-            m_controller = mouse.Controller()
-
-            start_time = time.time()
-            for event in events:
-                delay = event['time'] - (time.time() - start_time)
-                if delay > 0:
-                    time.sleep(delay)
-
-                if event['type'] == 'key':
-                    # Simplified key playing
-                    kb_controller.press(self._parse_key(event['data']))
-                    kb_controller.release(self._parse_key(event['data']))
-                elif event['type'] == 'click':
-                    m_controller.position = (event['x'], event['y'])
-                    m_controller.click(mouse.Button.left) # Defaulting to left for simplicity
-
-            return f"Finished playing macro '{macro_name}'."
-        except Exception as e:
-            return f"Failed to play macro: {str(e)}"
-
-    def _parse_key(self, key_str):
-        if hasattr(keyboard.Key, key_str.replace('Key.', '')):
-            return getattr(keyboard.Key, key_str.replace('Key.', ''))
-        return key_str
-
-    def execute_mission(self, mission_name, assistant_ref):
-        """Executes a pre-defined multi-step system protocol."""
+    def execute_mission(self, params):
+        name = params.get("name", "meeting").lower()
         missions = {
-            "meeting": [
-                "open calendar",
-                "mute toggle",
-                "set volume 40",
-                "open zoom",
-                "set mode focus"
-            ],
-            "coding": [
-                "open vscode",
-                "open terminal",
-                "open browser",
-                "set mode focus",
-                "play lo-fi music"
-            ],
-            "lockdown": [
-                "close chrome",
-                "close discord",
-                "set brightness 10",
-                "mute toggle",
-                "lock pc"
-            ]
+            "meeting": ["set volume 20", "mute_toggle", "open_app zoom"],
+            "coding": ["open_app vscode", "open_app chrome", "set_mode focus"]
         }
+        if name not in missions: return "Mission not found."
 
-        target = mission_name.lower()
-        if target not in missions:
-            return f"Protocol Error: Mission '{mission_name}' not found in tactical database."
-
-        steps = missions[target]
-        assistant_ref.gui.update_chat("System", f"Initiating MISSION: {target.upper()}")
-
-        for step in steps:
-            time.sleep(1) # Visual delay for HUD immersion
-            assistant_ref.process_command(step, is_subcommand=True)
-
-        return f"Mission {target.upper()} successfully deployed."
+        for cmd in missions[name]:
+            self.assistant.process_command(cmd, is_subcommand=True)
+        return f"Mission {name.upper()} executed."

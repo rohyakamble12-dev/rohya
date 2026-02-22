@@ -1,26 +1,16 @@
 from deep_translator import GoogleTranslator
+from veda.features.base import VedaPlugin, PermissionTier
 
-class VedaTranslator:
-    @staticmethod
-    def translate_text(text, target_lang='en'):
-        """Translates text to the target language."""
+class TranslatorPlugin(VedaPlugin):
+    def __init__(self, assistant):
+        super().__init__(assistant)
+        self.register_intent("translate", self.translate, PermissionTier.SAFE)
+
+    def translate(self, params):
+        text = params.get("text", "")
+        lang = params.get("language", "en")
         try:
-            translator = GoogleTranslator(source='auto', target=target_lang)
-            translation = translator.translate(text)
-            return translation
+            res = GoogleTranslator(source='auto', target=lang).translate(text)
+            return f"Translated: {res}"
         except Exception as e:
-            return f"Translation failed: {str(e)}"
-
-    @staticmethod
-    def get_supported_languages():
-        """Returns a list of commonly used language codes."""
-        return {
-            "spanish": "es",
-            "french": "fr",
-            "german": "de",
-            "chinese": "zh-CN",
-            "hindi": "hi",
-            "japanese": "ja",
-            "russian": "ru",
-            "italian": "it"
-        }
+            return f"Translation error: {e}"
