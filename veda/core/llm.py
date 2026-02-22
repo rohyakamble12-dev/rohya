@@ -61,6 +61,10 @@ class VedaLLM:
             "User: 'search google for space' -> {'intent': 'web_find', 'params': {'query': 'space'}}\n"
             "User: 'find my work folder' -> {'intent': 'file_search', 'params': {'filename': 'work'}}\n"
             "User: 'open my resume' -> {'intent': 'open_item', 'params': {'item_name': 'resume'}}\n"
+            "User: 'initiate meeting protocol' -> {'intent': 'mission_protocol', 'params': {'name': 'meeting'}}\n"
+            "User: 'run a security audit' -> {'intent': 'security_audit', 'params': {}}\n"
+            "User: 'remember that Tony is the CEO of Stark Industries' -> {'intent': 'link_intel', 'params': {'a': 'Tony', 'r': 'CEO of', 'b': 'Stark Industries'}}\n"
+            "User: 'who is connected to Stark Industries?' -> {'intent': 'get_connected', 'params': {'entity': 'Stark Industries'}}\n"
             "User: 'move image.jpg to desktop' -> {'intent': 'move_item', 'params': {'src': 'image.jpg', 'dst': 'desktop'}}\n"
             "User: 'copy notes.txt to downloads' -> {'intent': 'copy_item', 'params': {'src': 'notes.txt', 'dst': 'downloads'}}\n"
             "User: 'shred this document' -> {'intent': 'delete_item', 'params': {'path': 'document', 'secure': True}}\n"
@@ -97,7 +101,8 @@ class VedaLLM:
             "sys_integrity, bulk_media_op, empty_trash, file_info, "
             "set_mode, translate, start_recording, stop_recording, "
             "play_macro, ingest_web, todo_add, todo_list, todo_complete, pomodoro, define_protocol, "
-            "run_protocol, calculate, sight, read_screen, read_physical, iot_control, help, test_sound, web_find, none.\n\n"
+            "run_protocol, mission_protocol, security_audit, link_intel, get_connected, calculate, "
+            "sight, read_screen, read_physical, iot_control, help, test_sound, web_find, none.\n\n"
             f"User Input: '{user_input}'"
         )
 

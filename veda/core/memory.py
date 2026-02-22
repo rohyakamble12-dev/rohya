@@ -49,6 +49,16 @@ class VedaMemory:
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         ''')
+        # Table for fact relationships (Neural Stage)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS fact_links (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                entity_a TEXT,
+                relation TEXT,
+                entity_b TEXT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
         conn.commit()
         conn.close()
 
@@ -126,6 +136,38 @@ class VedaMemory:
             conn.commit()
         finally:
             conn.close()
+
+    def link_intel(self, entity_a, relation, entity_b):
+        """Creates a semantic link between two entities."""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        try:
+            cursor.execute('''
+                INSERT INTO fact_links (entity_a, relation, entity_b)
+                VALUES (?, ?, ?)
+            ''', (entity_a.lower(), relation.lower(), entity_b.lower()))
+            conn.commit()
+            return f"Strategic link established: {entity_a} {relation} {entity_b}."
+        finally:
+            conn.close()
+
+    def get_connected_intel(self, entity):
+        """Retrieves all semantic links for a specific entity."""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT relation, entity_b FROM fact_links WHERE entity_a = ?
+            UNION
+            SELECT relation, entity_a FROM fact_links WHERE entity_b = ?
+        ''', (entity.lower(), entity.lower()))
+        rows = cursor.fetchall()
+        conn.close()
+
+        if not rows:
+            return f"No strategic links found for '{entity}'."
+
+        connections = [f"{entity} {r} {e}" for r, e in rows]
+        return "Tactical Knowledge Graph:\n" + "\n".join(connections)
 
     def search_similar_chunks(self, query_embedding, limit=3):
         """Finds the most similar chunks using cosine similarity."""

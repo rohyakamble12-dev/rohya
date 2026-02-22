@@ -76,3 +76,42 @@ class VedaAutomation:
         if hasattr(keyboard.Key, key_str.replace('Key.', '')):
             return getattr(keyboard.Key, key_str.replace('Key.', ''))
         return key_str
+
+    def execute_mission(self, mission_name, assistant_ref):
+        """Executes a pre-defined multi-step system protocol."""
+        missions = {
+            "meeting": [
+                "open calendar",
+                "mute toggle",
+                "set volume 40",
+                "open zoom",
+                "set mode focus"
+            ],
+            "coding": [
+                "open vscode",
+                "open terminal",
+                "open browser",
+                "set mode focus",
+                "play lo-fi music"
+            ],
+            "lockdown": [
+                "close chrome",
+                "close discord",
+                "set brightness 10",
+                "mute toggle",
+                "lock pc"
+            ]
+        }
+
+        target = mission_name.lower()
+        if target not in missions:
+            return f"Protocol Error: Mission '{mission_name}' not found in tactical database."
+
+        steps = missions[target]
+        assistant_ref.gui.update_chat("System", f"Initiating MISSION: {target.upper()}")
+
+        for step in steps:
+            time.sleep(1) # Visual delay for HUD immersion
+            assistant_ref.process_command(step, is_subcommand=True)
+
+        return f"Mission {target.upper()} successfully deployed."

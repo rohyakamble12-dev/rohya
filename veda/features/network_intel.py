@@ -65,3 +65,54 @@ class VedaNetworkIntel:
             return "Paired / Detected Bluetooth Devices:\n" + result.strip()
         except:
             return "Bluetooth discovery is restricted on this environment."
+
+    @staticmethod
+    def perform_security_audit():
+        """Performs a multi-layered local security check."""
+        import psutil
+        import socket
+
+        report = "VEDA SECURITY SOVEREIGN - Audit Report\n"
+        report += "====================================\n"
+
+        # 1. Firewall Status
+        try:
+            fw_data = subprocess.check_output(["netsh", "advfirewall", "show", "allprofiles", "state"], encoding='utf-8', errors='ignore')
+            status = "ACTIVE" if "ON" in fw_data.upper() else "DISABLED"
+            report += f"Firewall Status: {status}\n"
+        except:
+            report += "Firewall Status: UNKNOWN\n"
+
+        # 2. Open Local Ports Check (Common ones)
+        report += "\nNetwork Entry Points (Open Ports):\n"
+        common_ports = [80, 443, 8080, 3000, 5000, 22, 21, 3389]
+        open_found = []
+        for port in common_ports:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.settimeout(0.1)
+                if s.connect_ex(('127.0.0.1', port)) == 0:
+                    open_found.append(str(port))
+
+        if open_found:
+            report += f"Caution: Local ports {', '.join(open_found)} are active.\n"
+        else:
+            report += "No common suspicious entry points detected locally.\n"
+
+        # 3. Suspicious Process Scan
+        report += "\nProcess Integrity Scan:\n"
+        blacklist = ["pcap", "wireshark", "keylogger", "crack", "hack"]
+        found_proc = []
+        for proc in psutil.process_iter(['name']):
+            try:
+                name = proc.info['name'].lower()
+                if any(bad in name for bad in blacklist):
+                    found_proc.append(name)
+            except: continue
+
+        if found_proc:
+            report += f"Alert: Potential integrity threat detected - {', '.join(found_proc)}\n"
+        else:
+            report += "No blacklisted processes identified.\n"
+
+        report += "\nSecurity Status: NOMINAL" if not found_proc else "\nSecurity Status: CAUTION"
+        return report

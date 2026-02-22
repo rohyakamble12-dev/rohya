@@ -487,6 +487,30 @@ class VedaAssistant:
             self.voice.speak_offline("Testing offline local voice fallback.")
             response = "Sound diagnostic complete. Did you hear both voices?"
             action_taken = True
+        elif intent == "mission_protocol":
+            name = params.get("name", "meeting")
+            response = self.automation.execute_mission(name, self)
+            action_taken = True
+        elif intent == "security_audit":
+            self.gui.update_chat("System", "Executing multi-layered security audit...")
+            response = self.net_intel.perform_security_audit()
+            action_taken = True
+        elif intent == "link_intel":
+            a = params.get("a")
+            r = params.get("r")
+            b = params.get("b")
+            if a and r and b:
+                response = self.llm.memory.link_intel(a, r, b)
+            else:
+                response = "Intelligence linking requires source, relation, and target entities."
+            action_taken = True
+        elif intent == "get_connected":
+            entity = params.get("entity")
+            if entity:
+                response = self.llm.memory.get_connected_intel(entity)
+            else:
+                response = "Please specify an entity to map."
+            action_taken = True
         elif intent == "read_screen":
             self.gui.update_chat("System", "Initiating high-resolution screen scan...")
             response = self.vision.read_screen()
