@@ -19,21 +19,35 @@ class VedaLLM:
 
     def chat(self, user_input, context_info=None, protocols=None):
         """Generates a response from the LLM based on user input and system context."""
-        # Inject memory facts into the context before chatting
+        # 1. Manage History (Pruning to last 10 messages + System Prompt)
+        if len(self.messages) > 11:
+            self.messages = [self.messages[0]] + self.messages[-10:]
+
+        # 2. Strategic Context Retrieval
         facts = self.memory.get_all_facts_summary()
 
-        # Search for similar document chunks if relevant
+        # Search for similar document chunks
         doc_context = ""
         query_embedding = self.embed_text(user_input)
         if query_embedding:
             similar = self.memory.search_similar_chunks(query_embedding)
             if similar:
-                doc_context = "\n[Relevant Document Segments]:\n" + "\n".join([f"Source: {s} - {t}" for s, t, sim in similar])
+                doc_context = "\n[Relevant Documents]: " + " ".join([t[:200] for s, t, sim in similar])
 
-        context_str = f" [Current System Context: {context_info}]" if context_info else ""
-        proto_str = f" [Active Protocols: {protocols}]" if protocols else ""
+        # Knowledge Graph Injection (Search keywords from user input in KG)
+        kg_context = ""
+        words = user_input.split()
+        for word in words:
+            if len(word) > 4: # Only check significant words
+                rel = self.memory.get_connected_intel(word)
+                if "No strategic links" not in rel:
+                    kg_context += f"\n[Neural Link]: {rel}"
 
-        context_aware_input = f"[Memory Context: {facts}]{doc_context}{context_str}{proto_str}\nUser: {user_input}"
+        context_str = f" [System: {context_info}]" if context_info else ""
+        proto_str = f" [Protocols: {protocols}]" if protocols else ""
+
+        # Merge Context
+        context_aware_input = f"{context_str}{proto_str}\n[Memory: {facts}]{doc_context}{kg_context}\nUser: {user_input}"
 
         self.messages.append({"role": "user", "content": context_aware_input})
 
@@ -43,6 +57,7 @@ class VedaLLM:
                 messages=self.messages
             )
             assistant_response = response['message']['content']
+            # Store cleaned response for voice
             self.messages.append({"role": "assistant", "content": assistant_response})
             return assistant_response
         except Exception as e:

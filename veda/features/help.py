@@ -52,11 +52,10 @@ class VedaHelp:
             ]
         }
 
-        output = "AVAILABLE VEDA COMMANDS:\n\n"
+        output = "COMMANDS DATABASE:\n"
         for category, cmds in commands.items():
-            output += f"--- {category.upper()} ---\n"
+            output += f"\n[{category.upper()}]\n"
             for cmd in cmds:
-                output += f"• {cmd}\n"
-            output += "\n"
+                output += f"› {cmd}\n"
 
         return output

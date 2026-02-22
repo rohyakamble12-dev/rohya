@@ -93,6 +93,8 @@ class VedaGUI(ctk.CTk):
         self.perf_frame = self._create_panel(self.left_panel, "TELEMETRY")
         self._add_metric(self.perf_frame, "CPU", "cpu_bar", "cpu_val", self.accent_color)
         self._add_metric(self.perf_frame, "RAM", "ram_bar", "ram_val", "#b000ff")
+        self._add_metric(self.perf_frame, "DSK", "dsk_bar", "dsk_val", "#ff9900")
+        self._add_metric(self.perf_frame, "NET", "net_bar", "net_val", "#00ffea")
 
         self.proto_frame = self._create_panel(self.left_panel, "PROTOCOLS")
         self._add_proto_cb(self.proto_frame, "DEEP RESEARCH", self.deep_search_var)
@@ -222,23 +224,43 @@ class VedaGUI(ctk.CTk):
             try:
                 cpu = psutil.cpu_percent()
                 ram = psutil.virtual_memory().percent
-                self.after(0, lambda c=cpu, r=ram: self._update_metrics_ui(c, r))
-            except: pass
-            time.sleep(3)
+                dsk = psutil.disk_usage('/').percent
 
-    def _update_metrics_ui(self, cpu, ram):
+                # Network load (Simplified as activity indicator)
+                net_io_1 = psutil.net_io_counters()
+                time.sleep(1)
+                net_io_2 = psutil.net_io_counters()
+                # Use a log scale or simple cap for visibility
+                net_activity = min(100, (net_io_2.bytes_sent + net_io_2.bytes_recv - net_io_1.bytes_sent - net_io_1.bytes_recv) / 10000)
+
+                self.after(0, lambda c=cpu, r=ram, d=dsk, n=net_activity: self._update_metrics_ui(c, r, d, n))
+            except: pass
+            time.sleep(2)
+
+    def _update_metrics_ui(self, cpu, ram, dsk, net):
         self.cpu_bar.set(cpu/100)
         self.cpu_val.configure(text=f"{cpu}%")
         self.ram_bar.set(ram/100)
         self.ram_val.configure(text=f"{ram}%")
+        self.dsk_bar.set(dsk/100)
+        self.dsk_val.configure(text=f"{dsk}%")
+        self.net_bar.set(net/100)
+        self.net_val.configure(text=f"{int(net)}%")
 
     def _network_worker(self):
         import requests
+        prev_status = True
         while self.running:
             try:
                 requests.get("https://www.google.com", timeout=2)
                 self.online = True
             except: self.online = False
+
+            if self.online != prev_status:
+                msg = "Connection restored. Systems online." if self.online else "Warning: Internet connection lost. Core functions limited."
+                self.after(0, lambda m=msg: self.update_chat("System", m))
+                prev_status = self.online
+
             self.after(0, self._update_status_ui)
             time.sleep(15)
 

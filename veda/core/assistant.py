@@ -487,6 +487,14 @@ class VedaAssistant:
             self.voice.speak_offline("Testing offline local voice fallback.")
             response = "Sound diagnostic complete. Did you hear both voices?"
             action_taken = True
+        elif intent == "show_logs":
+            try:
+                with open("veda.log", "r") as f:
+                    logs = f.readlines()[-15:]
+                response = "System Internal Logs (Last 15):\n" + "".join(logs)
+            except:
+                response = "Unable to access internal logs."
+            action_taken = True
         elif intent == "mission_protocol":
             name = params.get("name", "meeting")
             response = self.automation.execute_mission(name, self)

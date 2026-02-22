@@ -74,6 +74,13 @@ def main():
     # Enable "Hey Veda" wake word listener in the background
     threading.Thread(target=background_listener, daemon=True).start()
 
+    # Enable Global Hotkey (Alt+V) for instant activation
+    try:
+        import keyboard
+        keyboard.add_hotkey('alt+v', lambda: gui.after(0, gui.trigger_voice))
+    except Exception as e:
+        logging.warning(f"Failed to register global hotkey: {e}")
+
     # Start the GUI main loop
     gui.mainloop()
 
