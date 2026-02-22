@@ -1,30 +1,40 @@
+import json
+import os
 from veda.features.base import PermissionTier
 from veda.utils.logger import logger
 from veda.core.registry import registry
 
 class CapabilityManager:
-    def __init__(self):
-        self.registry = registry
+    def __init__(self, policy_path="veda/core/capabilities.json"):
+        self.policy_path = policy_path
+        self.policy = self._load_policy()
         registry.register("capability_manager", self)
 
+    def _load_policy(self):
+        try:
+            if os.path.exists(self.policy_path):
+                with open(self.policy_path, 'r') as f:
+                    return json.load(f)
+        except Exception as e:
+            logger.error(f"Policy load failed: {e}")
+        return {"global_policy": "DEFAULT", "blocked_intents": []}
+
     def authorize(self, intent, tier, params):
-        """Determines if an intent execution is authorized based on tier and context."""
+        if intent in self.policy.get("blocked_intents", []):
+            return False, f"Protocol Violation: {intent} is restricted by global policy."
+
         if tier == PermissionTier.SAFE:
             return True, "Authorized."
 
         if tier == PermissionTier.CONFIRM_REQUIRED:
-            return False, f"Verification required for {intent}."
+            return False, "Verification required."
 
         if tier == PermissionTier.ADMIN:
-            return False, f"Administrative override required for {intent}."
+            return False, "Administrative authorization required."
 
-        return False, "Unknown permission tier."
+        return False, "Access denied."
 
     def validate_params(self, intent, params):
-        """Sanitizes and validates parameters for a given intent."""
-        # This could be expanded with specific schemas per intent
-        if not isinstance(params, dict):
-            return False, "Invalid parameter format."
         return True, "Valid."
 
 # Singleton instance

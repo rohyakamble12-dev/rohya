@@ -169,10 +169,15 @@ class VedaAssistant:
             result, tier = self.plugins.execute_intent(intent, params)
 
             if tier != PermissionTier.SAFE:
+                # Security Sandboxing: Predict Impact
+                plugin = self.plugins.get_plugin_for_intent(intent)
+                impact = plugin.predict_impact(intent, params) if plugin else "Impact: Standard"
+
                 # Pause and request confirmation
                 self.pending_action = {"type": "queue", "exec_data": result}
                 self.gui.set_state("alert")
-                self._finalize_response(f"Security Alert: This action ({intent}) requires confirmation, Sir. Shall I proceed?", is_subcommand)
+                msg = f"Security Alert: {intent.upper()} protocol requested.\n{impact}\nShall I proceed, Sir?"
+                self._finalize_response(msg, is_subcommand)
                 return
 
             # Action completed

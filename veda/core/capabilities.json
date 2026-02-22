@@ -1,0 +1,7 @@
+{
+    "global_policy": "STRICT",
+    "authorized_users": ["Tony", "Boss"],
+    "blocked_intents": ["registry_edit", "shell_execute"],
+    "admin_override": true,
+    "version": "1.0.0"
+}

@@ -2,8 +2,7 @@ import sqlite3
 from veda.features.base import VedaPlugin, PermissionTier
 
 class TaskPlugin(VedaPlugin):
-    def __init__(self, assistant):
-        super().__init__(assistant)
+    def setup(self):
         self.register_intent("todo_add", self.add_todo, PermissionTier.SAFE)
         self.register_intent("todo_list", self.get_todos, PermissionTier.SAFE)
         self.register_intent("todo_complete", self.complete_todo, PermissionTier.SAFE)
@@ -19,20 +18,16 @@ class TaskPlugin(VedaPlugin):
         cursor.execute("INSERT INTO tasks (content, priority, due_date) VALUES (?, ?, ?)", (content, priority, due))
         conn.commit()
         conn.close()
-        return f"Task logged: {content} (P{priority})."
+        return f"Task logged: {content}."
 
     def get_todos(self, params):
         conn = sqlite3.connect(self.assistant.llm.memory.db_path)
         cursor = conn.cursor()
-        cursor.execute("SELECT id, content, priority, due_date FROM tasks WHERE completed = 0 ORDER BY priority DESC")
+        cursor.execute("SELECT id, content FROM tasks WHERE completed = 0")
         rows = cursor.fetchall()
         conn.close()
-
         if not rows: return "No pending tasks."
-        res = "Task List:\n"
-        for r in rows:
-            res += f"{r[0]}. [P{r[2]}] {r[1]} (Due: {r[3]})\n"
-        return res
+        return "Tasks:\n" + "\n".join([f"{r[0]}. {r[1]}" for r in rows])
 
     def complete_todo(self, params):
         idx = params.get("index")
@@ -44,5 +39,4 @@ class TaskPlugin(VedaPlugin):
         return f"Task {idx} finalized."
 
     def start_pomodoro(self, params):
-        # Existing logic...
-        return "Pomodoro active."
+        return "Pomodoro sequence active."

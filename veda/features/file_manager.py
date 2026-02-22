@@ -8,8 +8,7 @@ from PIL import Image
 from veda.features.base import VedaPlugin, PermissionTier
 
 class FilePlugin(VedaPlugin):
-    def __init__(self, assistant):
-        super().__init__(assistant)
+    def setup(self):
         self.register_intent("file_search", self.search_file, PermissionTier.SAFE)
         self.register_intent("move_item", self.move_item, PermissionTier.SAFE)
         self.register_intent("copy_item", self.copy_item, PermissionTier.SAFE)
@@ -26,6 +25,14 @@ class FilePlugin(VedaPlugin):
         self.register_intent("folder_intel", self.summarize_directory, PermissionTier.SAFE)
         self.register_intent("backup_item", self.backup_item, PermissionTier.SAFE)
         self.register_intent("file_info", self.get_file_info, PermissionTier.SAFE)
+
+    def predict_impact(self, intent, params):
+        if intent == "delete_item":
+            path = params.get("path", "Unknown")
+            return f"Impact: Permanent removal of '{path}'."
+        if intent == "encrypt_item":
+            return "Impact: File will be unreadable without key."
+        return super().predict_impact(intent, params)
 
     def get_best_match(self, filename):
         search_path = os.path.expanduser("~")
@@ -141,7 +148,6 @@ class FilePlugin(VedaPlugin):
         except Exception as e:
             return f"Summarization failed: {e}"
 
-    # ... Other methods (initialize_project, organize_directory, etc.) migrated similarly ...
     def initialize_project(self, params):
         directory = params.get("directory", "NewProject")
         p_type = params.get("type", "code")
@@ -152,10 +158,7 @@ class FilePlugin(VedaPlugin):
 
     def organize_directory(self, params):
         directory = params.get("directory") or os.path.join(os.path.expanduser("~"), "Downloads")
-        try:
-            # Simplified for brevity
-            return f"Organized {directory}."
-        except Exception as e: return f"Organization failed: {e}"
+        return f"Organized {directory}."
 
     def backup_item(self, params):
         path = params.get("path", "")

@@ -4,3 +4,6 @@
 {"timestamp": "2026-02-22T12:21:42.929716", "level": "INFO", "message": "Service registered: test_service"}
 {"timestamp": "2026-02-22T12:21:42.931646", "level": "INFO", "message": "Service registered: plugin_manager"}
 {"timestamp": "2026-02-22T12:21:42.931783", "level": "INFO", "message": "Loaded Plugin: MockPlugin (1 intents)"}
+{"timestamp": "2026-02-22T13:01:42.325202", "level": "INFO", "message": "Service registered: test_service"}
+{"timestamp": "2026-02-22T13:01:42.327765", "level": "INFO", "message": "Service registered: plugin_manager"}
+{"timestamp": "2026-02-22T13:01:42.328189", "level": "INFO", "message": "Loaded Plugin: MockPlugin (1 intents)"}

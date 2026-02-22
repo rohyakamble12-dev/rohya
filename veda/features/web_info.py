@@ -1,51 +1,43 @@
 import requests
 from duckduckgo_search import DDGS
 from veda.features.base import VedaPlugin, PermissionTier
+from veda.utils.throttling import limiter
 
 class WebPlugin(VedaPlugin):
-    def __init__(self, assistant):
-        super().__init__(assistant)
+    def setup(self):
         self.register_intent("web_search", self.search, PermissionTier.SAFE)
         self.register_intent("weather", self.get_weather, PermissionTier.SAFE)
         self.register_intent("get_news", self.get_news, PermissionTier.SAFE)
         self.register_intent("stock_price", self.get_market_info, PermissionTier.SAFE)
         self.register_intent("crypto_price", self.get_market_info, PermissionTier.SAFE)
 
+    @limiter.limit(3.0)
     def search(self, params):
         query = params.get("query", "")
-        if not query: return "Please specify what to search for."
+        if not query: return "Search topic required."
         try:
             with DDGS() as ddgs:
                 results = list(ddgs.text(query, max_results=3))
-                if results:
-                    return f"Search result: {results[0]['body']}"
-                return "No results found."
+                if results: return results[0]['body']
+                return "Zero matches."
         except Exception as e:
-            return f"Search failed: {e}"
+            return f"DDG Link failure: {e}"
 
     def get_weather(self, params):
         city = params.get("city", "auto")
         try:
-            url = f"https://wttr.in/{city}?format=%C+%t"
-            response = requests.get(url, timeout=5)
-            if response.status_code == 200:
-                return f"Weather in {city}: {response.text}"
-            return "Weather data unavailable."
-        except Exception as e:
-            return f"Weather check failed: {e}"
+            res = requests.get(f"https://wttr.in/{city}?format=%C+%t", timeout=5)
+            return f"Atmospheric status ({city}): {res.text}"
+        except:
+            return "Unable to sync with orbital weather sensors."
 
     def get_news(self, params):
         try:
             with DDGS() as ddgs:
-                results = list(ddgs.news("world news", max_results=3))
-                if results:
-                    headlines = [r['title'] for r in results]
-                    return "Top stories: " + " | ".join(headlines)
-                return "No news found."
-        except Exception as e:
-            return f"News retrieval failed: {e}"
+                results = list(ddgs.news("world", max_results=3))
+                return "Headlines: " + " | ".join([r['title'] for r in results])
+        except: return "Global intel feed offline."
 
     def get_market_info(self, params):
         symbol = params.get("symbol") or params.get("coin") or "market"
-        query = f"current price of {symbol}"
-        return self.search({"query": query})
+        return self.search({"query": f"current price of {symbol}"})

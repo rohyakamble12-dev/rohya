@@ -36,3 +36,8 @@ class PluginManager:
 
     def get_plugin(self, name):
         return self.plugins.get(name)
+
+    def get_plugin_for_intent(self, intent):
+        if intent in self.intent_map:
+            return self.intent_map[intent][0]
+        return None

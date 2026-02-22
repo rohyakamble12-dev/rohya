@@ -10,8 +10,7 @@ import screen_brightness_control as sbc
 from veda.features.base import VedaPlugin, PermissionTier
 
 class SystemPlugin(VedaPlugin):
-    def __init__(self, assistant):
-        super().__init__(assistant)
+    def setup(self):
         self.register_intent("open_app", self.open_app, PermissionTier.SAFE)
         self.register_intent("close_app", self.close_app, PermissionTier.CONFIRM_REQUIRED)
         self.register_intent("set_volume", self.set_volume, PermissionTier.SAFE)
