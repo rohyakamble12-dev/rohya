@@ -36,7 +36,7 @@ Veda has evolved into the ultimate Marvel-inspired AI digital partner. This **Ma
 ## 🚀 Setup & Run
 
 1.  **Dependencies**: `pip install -r requirements.txt`
-2.  **Ollama Brain**: `ollama pull llama3.2:3b`
+2.  **Ollama Brain**: `ollama pull qwen2.5:3b`
 3.  **Launch**: `python main.py`
 
 *Tip: Install the 'Orbitron' font for the intended HUD aesthetic.*

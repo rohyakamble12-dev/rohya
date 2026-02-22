@@ -3,7 +3,7 @@ import json
 from veda.core.memory import VedaMemory
 
 class VedaLLM:
-    def __init__(self, model="llama3.2:3b"):
+    def __init__(self, model="qwen2.5:3b"):
         self.model = model
         self.memory = VedaMemory()
         self.system_prompt = (
@@ -63,7 +63,7 @@ class VedaLLM:
         except Exception as e:
             error_msg = f"I'm having trouble connecting to my brain (Ollama). Error: {str(e)}"
             print(error_msg)
-            return "System alert: Local LLM connection failed. Please ensure Ollama is active and 'llama3.2:3b' is installed."
+            return "System alert: Local LLM connection failed. Please ensure Ollama is active and 'qwen2.5:3b' is installed."
 
     def extract_intent(self, user_input):
         """Extracts system commands using a highly structured few-shot prompt."""

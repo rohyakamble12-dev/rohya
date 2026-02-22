@@ -25,7 +25,7 @@ class VedaHealth:
         return missing
 
     @staticmethod
-    def check_ollama(model="llama3.2:3b"):
+    def check_ollama(model="qwen2.5:3b"):
         """Checks if Ollama is running and the model is pulled."""
         try:
             # Check connection
