@@ -28,7 +28,8 @@ class VedaLLM:
             self.messages.append({"role": "assistant", "content": assistant_response})
             return assistant_response
         except Exception as e:
-            return f"Error connecting to Ollama: {str(e)}. Please make sure Ollama is running and the model is pulled."
+            # Enhanced error handling for Ollama
+            return f"Error connecting to Ollama: {str(e)}. I'm operating in Survival Mode for now."
 
     def extract_intent(self, user_input):
         """
@@ -38,7 +39,7 @@ class VedaLLM:
         intent_prompt = (
             "Analyze the following user input and determine if they want to perform a system action. "
             "Respond ONLY with a JSON object containing 'intent' and 'params'. "
-            "Possible intents: 'open_app', 'close_app', 'set_volume', 'set_brightness', 'web_search', 'weather', 'screenshot', 'lock_pc', 'time', 'date', 'note', 'none'. "
+            "Possible intents: 'open_app', 'close_app', 'set_volume', 'set_brightness', 'web_search', 'weather', 'screenshot', 'lock_pc', 'time', 'date', 'note', 'find', 'move', 'none'. "
             f"User input: \"{user_input}\""
         )
 
@@ -56,7 +57,9 @@ class VedaLLM:
             if start != -1 and end != -1:
                 return json.loads(content[start:end])
             return {"intent": "none", "params": {}}
-        except:
+        except Exception as e:
+            # Added error handling to prevent crash when Ollama is down
+            print(f"LLM Intent Extraction failed: {e}")
             return {"intent": "none", "params": {}}
 
     def reset_history(self):
