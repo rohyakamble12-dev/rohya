@@ -31,6 +31,20 @@ class TacticalFastPath:
             "move": [
                 r"move ([\w\s./\\]+) to ([\w\s./\\]+)"
             ],
+            "add_task": [
+                r"add ([\w\s.-]+) to my tasks",
+                r"remind me to ([\w\s.-]+)"
+            ],
+            "list_tasks": [
+                r"what are my tasks",
+                r"show my tasks",
+                r"list tasks"
+            ],
+            "set_mode": [
+                r"set mode to ([\w\s]+)",
+                r"switch to ([\w\s]+) mode",
+                r"engage ([\w\s]+) protocol"
+            ],
             "time": [
                 r"what time",
                 r"current time",
@@ -74,6 +88,10 @@ class TacticalFastPath:
                     elif intent == "move":
                         params["source"] = match.group(1).strip()
                         params["destination"] = match.group(2).strip()
+                    elif intent == "add_task":
+                        params["task"] = match.group(1).strip()
+                    elif intent == "set_mode":
+                        params["mode"] = match.group(1).strip()
                     elif intent == "weather":
                         params["city"] = match.group(1).strip()
 
