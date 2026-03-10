@@ -1,79 +1,66 @@
-# Veda: Your Advanced AI Assistant
+# Veda: The JARVIS/FRIDAY Edition
 
-Veda is an advanced, Jarvis/Friday-inspired AI assistant specifically designed for Windows 11. She combines the power of local LLMs with cloud-based natural speech synthesis to provide a seamless personal assistant experience.
+Veda has evolved into the ultimate Marvel-inspired AI digital partner. This **Marvel Edition** adds optical sensors, computational mastery, and Stark-level protocols to the Windows 11 HUD experience.
 
-## 🌟 Key Features
+## 🌟 The Ultimate Marvel Upgrades
 
-### 🤖 Intelligence
-- **Local LLM**: Powered by `llama3.2:3b` via Ollama. Your conversations stay private and work offline.
-- **Intent Recognition**: Naturally understands commands like "Turn up the volume" or "Take a screenshot."
+### 👁️ Veda Sight (Optical Sensors)
+- **Visual Intelligence**: Veda can now access your webcam to perform room scans and face detection. Ask her to "look through the camera" to see what she finds.
 
-### 🗣️ Voice & Personality
-- **Friday/Jarvis Persona**: Professional, witty, and efficient.
-- **High-Quality Speech**: Uses Microsoft Edge TTS (`AvaNeural`) for a realistic female voice when online.
-- **Offline Fallback**: Automatically switches to Windows built-in voices if the internet is disconnected.
+### 📐 High-Precision Computation
+- **Engineering Brain**: Integrated calculation engine for complex math and physics. She can handle advanced expressions and unit conversions with ease.
 
-### 💻 Windows 11 Integration
-- **System Control**: Adjust volume, change screen brightness, and lock your PC.
-- **App Management**: Open common applications (Chrome, Notepad, Settings, etc.) via voice or text.
-- **Screenshots**: Capture your screen instantly.
+### 🏠 IOT & Smart Home Protocols
+- **Physical Environment Control**: Veda can now trigger IOT devices and smart home setups via customizable webhooks (IFTTT, Home Assistant).
 
-### 🌍 Life & Productivity
-- **Web Search**: Answers questions using DuckDuckGo.
-- **Weather & News**: Real-time updates on weather and top headlines.
-- **Tools**: Keep notes, check the time, and stay on top of your date.
-
-### 🎨 Modern Interface
-- **Windows 11 GUI**: A sleek, dark-themed interface built with `CustomTkinter`.
+### 🚀 Marvel Protocols (Easter Eggs)
+- **House Party Protocol**: Ready for a break? This protocol sets the mood by launching fun apps and playing music.
+- **Clean Slate Protocol**: Instant shutdown of all non-essential work applications and system muting.
+- **Mark 42 Status**: A full diagnostic report of system health, connectivity, and environmental vision.
 
 ---
 
-## 🛠️ Prerequisites
+## 🛠️ Complete Feature Matrix
 
-1.  **Windows 11**: Optimized for the latest Windows environment.
-2.  **Python 3.10+**: Ensure Python is installed and added to your PATH.
-3.  **Ollama**:
-    *   Download from [ollama.ai](https://ollama.ai/).
-    *   Pull the model: `ollama pull llama3.2:3b`
-4.  **Microphone**: Required for voice commands.
-
----
-
-## 🚀 Installation & Setup
-
-1.  **Clone the project** to your local machine.
-2.  **Install dependencies**:
-    ```bash
-    pip install -r requirements.txt
-    ```
-    *Note: Some packages like `pyaudio` may require additional build tools on Windows if pip cannot find a wheel.*
-3.  **Run Veda**:
-    ```bash
-    python main.py
-    ```
+| Pillar | JARVIS / FRIDAY Capability | Veda Real-World Equivalent |
+| :--- | :--- | :--- |
+| **Voice** | Full conversation | Qwen 2.5 3B + Edge TTS |
+| **Interface** | Holographic HUD | Windows 11 Transparent HUD |
+| **Vision** | Object / Face Recognition | OpenCV + Screen Analysis |
+| **Logic** | Proactive Problem Solving | Real-Time Context Engine |
+| **Control** | System / Hardware Mastery | os.startfile + Native Win APIs |
+| **Memory** | Total Life Context | Local SQLite Memory Engine |
 
 ---
 
-## ⌨️ How to Use
+## 🚀 Setup & Run
 
-- **Text Commands**: Type your request in the input box and press Enter.
-- **Voice Commands**: Click the "Voice" button or say "Hey Veda" (if wake-word detection is enabled) to start talking.
-- **Example Commands**:
-    - "Open Chrome"
-    - "What's the weather in London?"
-    - "Set volume to 80%"
-    - "Take a note: I have a meeting at 3 PM"
-    - "Who are you?"
+1.  **Dependencies**: `pip install -r requirements.txt`
+2.  **Ollama Brain**: `ollama pull qwen2.5:3b`
+3.  **Launch**: `python main.py`
+
+*Tip: Install the 'Orbitron' font for the intended HUD aesthetic.*
 
 ---
 
-## 🛠️ Project Structure
-
-- `veda/core/`: The "brain" (LLM, Voice Engine, Assistant Logic).
-- `veda/features/`: The "skills" (System control, Web search, Tools).
-- `veda/ui/`: The "face" (Modern GUI).
-- `main.py`: The entry point.
+## 🛡️ Security & Integrity
+Veda remains 100% local. Your webcam data, screen captures, and macro recordings are never uploaded to any server. You are the sole administrator of your digital partner.
 
 ---
 
-*Veda - Built with ❤️ for the Windows 11 community.*
+*Veda - Inspired by Legends. Built for Reality.*
+
+## ⌨️ Quick Command Cheat Sheet
+
+| Category | Commands |
+| :--- | :--- |
+| **System** | `Open [App]`, `Close [App]`, `Set Volume [0-100]`, `System Health`, `Screenshot` |
+| **Media** | `Play [Song Name]`, `Pause`, `Next`, `Translate to [Language]` |
+| **Intel** | `Search for [Topic]`, `Deep research on [Topic]`, `Summarize URL [Link]`, `Calculate [Math]` |
+| **Life** | `Add to todo [Task]`, `Show todo list`, `Start Pomodoro [Mins]`, `Weather in [City]` |
+| **Sensors** | `What am I looking at?`, `Look through the camera` |
+| **Special** | `Run protocol [Name]`, `Focus Mode`, `Gaming Mode`, `Test sound` |
+
+---
+
+*Veda - Your personal JARVIS for Windows 11.*
