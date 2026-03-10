@@ -5,3 +5,17 @@ veda_notes.txt
 .env
 *.mp3
 *.wav
+*.py[cod]
+*$py.class
+.env
+venv/
+ENV/
+veda_notes.txt
+Veda_Screenshot.png
+*.mp3
+*.db
+logs/
+audit.log
+veda.log
+veda_sight.jpg
+macro_*.json
