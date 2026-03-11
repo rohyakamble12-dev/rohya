@@ -6,7 +6,7 @@ Veda is a high-performance, modular AI assistant for Windows 11, inspired by Mar
 
 ### 🧠 Tiered Intelligence
 - **Tactical Fast-Path**: Instant, regex-based command execution for core system functions.
-- **Neural Link**: Powered by `llama3.2:3b` via Ollama for sophisticated natural language processing.
+- **Neural Link**: Powered by `qwen2.5:3b` via Ollama for sophisticated natural language processing and logical reasoning.
 - **Survival Mode**: A robust fallback system with a loyal and efficient "Friday" persona for offline operations.
 
 ### 🛠 Modular Architecture
@@ -33,7 +33,7 @@ Veda is a high-performance, modular AI assistant for Windows 11, inspired by Mar
 2.  **Setup**:
     ```bash
     pip install -r requirements.txt
-    ollama pull llama3.2:3b
+    ollama pull qwen2.5:3b
     ```
 3.  **Run Veda**:
     ```bash

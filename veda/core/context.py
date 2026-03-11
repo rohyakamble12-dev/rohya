@@ -1,10 +1,10 @@
 class VedaContext:
     def __init__(self):
-        self.version = "3.1.0"
-        self.codename = "Stark Edition"
+        self.version = "3.2.0"
+        self.codename = "Qwen Edition"
         self.creator = "Marvel Legacy"
-        self.online_voice = "en-US-AvaNeural"
-        self.primary_model = "llama3.2:3b"
+        self.online_voice = "en-US-AvaNeural" # Edge TTS voice
+        self.primary_model = "qwen2.5:3b"
         self.fallback_model = "tinyllama"
 
         # Tactical Thresholds
