@@ -14,6 +14,7 @@ def main():
     gui = VedaGUI(on_send_callback=on_send, on_voice_callback=on_voice)
 
     # Initialize Assistant with GUI reference
+    # global is used to ensure accessibility within callbacks if needed
     global assistant
     assistant = VedaAssistant(gui)
 
@@ -21,12 +22,9 @@ def main():
     import threading
     def background_listener():
         while True:
+            # Note: requires properly configured hardware link
             if assistant.voice.listen_for_wake_word("veda"):
-                # Use root.after to safely trigger GUI from background thread
                 gui.after(0, gui.trigger_voice)
-
-    # Uncomment the line below to enable "Hey Veda" wake word
-    # threading.Thread(target=background_listener, daemon=True).start()
 
     # Start the GUI main loop
     gui.mainloop()
@@ -35,5 +33,5 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("Veda shutting down...")
+        print("\n[SYSTEM]: Veda interface offline. Terminating links...")
         sys.exit()
