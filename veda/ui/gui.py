@@ -36,7 +36,7 @@ class VedaGUI(ctk.CTk):
 
         self.protocol_label = ctk.CTkLabel(self.hud_frame, text="ACTIVE PROTOCOLS", font=("Courier", 12))
         self.protocol_label.pack(pady=(20, 5))
-        self.protocol_display = ctk.CTkLabel(self.hud_frame, text="Standard", text_color="cyan", font=("Courier", 14, "bold"))
+        self.protocol_display = ctk.CTkLabel(self.hud_frame, text="STANDARD", text_color="cyan", font=("Courier", 14, "bold"))
         self.protocol_display.pack()
 
         # Input Area
@@ -55,10 +55,13 @@ class VedaGUI(ctk.CTk):
         self.voice_button.grid(row=0, column=2, padx=5, pady=10)
 
         self.update_chat("Veda", "Tactical interface established. Systems operational.")
-        self.update_hud()
+
+        # Delayed HUD start to ensure Assistant is ready
+        self.after(1000, self.update_hud)
 
     def update_chat(self, sender, message):
-        self.after(0, self._update_chat_ui, sender, message)
+        if hasattr(self, 'chat_display'):
+            self.after(0, self._update_chat_ui, sender, message)
 
     def _update_chat_ui(self, sender, message):
         self.chat_display.configure(state="normal")
@@ -71,10 +74,12 @@ class VedaGUI(ctk.CTk):
         text = f"OS: {summary['os']}\n"
         text += f"PYTHON: {summary['python']}\n"
 
-        # Add real-time stats if SystemMonitor is available
-        stats = self.on_send_callback("system_stats_internal") # Hack to get internal stats
-        if stats:
-            text += f"\n-- HARDWARE --\n{stats}"
+        # Safe call to assistant for stats
+        try:
+            stats = self.on_send_callback("system_stats_internal")
+            if stats:
+                text += f"\n-- HARDWARE --\n{stats}"
+        except: pass
 
         text += f"\n\nDEPS: {'OK' if not summary['missing_deps'] else 'MISSING'}\n"
         if summary['missing_deps']:
@@ -84,7 +89,6 @@ class VedaGUI(ctk.CTk):
         self.status_text.delete("1.0", "end")
         self.status_text.insert("1.0", text)
         self.status_text.configure(state="disabled")
-        # Refresh every 10 seconds for more responsiveness
         self.after(10000, self.update_hud)
 
     def update_protocol(self, protocol_name):
