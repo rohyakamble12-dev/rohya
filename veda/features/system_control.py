@@ -3,6 +3,7 @@ import subprocess
 import pyautogui
 import time
 import shutil
+import ctypes
 from veda.utils.sanitizer import VedaSanitizer
 
 try:
@@ -41,13 +42,17 @@ class SystemControl:
             "list_windows": self.list_windows,
             "focus_window": self.focus_window,
             "power_off": self.shutdown,
-            "restart": self.restart
+            "restart": self.restart,
+            "set_wallpaper": self.set_wallpaper,
+            "notify": self.send_notification
         }
 
     def open_app(self, params):
         app_name = params.get("app_name", "")
         safe_app = VedaSanitizer.normalize_app_name(app_name)
         if not safe_app: return "Application name missing."
+
+        # Tactical Alias System
         apps = {
             "chrome": ["start", "chrome"],
             "notepad": ["notepad.exe"],
@@ -57,7 +62,9 @@ class SystemControl:
             "paint": ["mspaint.exe"],
             "cmd": ["start", "cmd.exe"],
             "powershell": ["start", "powershell.exe"],
-            "taskmgr": ["taskmgr.exe"]
+            "taskmgr": ["taskmgr.exe"],
+            "discord": ["start", "discord"],
+            "code": ["code"]
         }
         args = apps.get(safe_app.lower(), ["start", safe_app])
         subprocess.Popen(args, shell=True)
@@ -97,6 +104,27 @@ class SystemControl:
     def restart(self, params=None):
         os.system("shutdown /r /t 60")
         return "System restart initiated. Standby for reboot."
+
+    def set_wallpaper(self, params):
+        path = params.get("path")
+        if not path or not os.path.exists(path): return "Invalid image path."
+        try:
+            # SPI_SETDESKWALLPAPER = 20
+            ctypes.windll.user32.SystemParametersInfoW(20, 0, os.path.abspath(path), 0)
+            return "Tactical wallpaper updated."
+        except Exception as e: return f"Wallpaper update failed: {e}"
+
+    def send_notification(self, params):
+        msg = params.get("message", "Tactical Update")
+        title = params.get("title", "VEDA")
+        try:
+            # Using basic PowerShell notification for zero-dep W11 integration
+            cmd = f'powershell -Command "New-BurntToastNotification -Text \'{title}\', \'{msg}\'"'
+            # Fallback if BurntToast isn't installed
+            fallback_cmd = f'powershell -Command "[Reflection.Assembly]::LoadWithPartialName(\'System.Windows.Forms\'); [System.Windows.Forms.MessageBox]::Show(\'{msg}\', \'{title}\')"'
+            subprocess.run(fallback_cmd, shell=True)
+            return "Notification dispatched."
+        except: return "Notification link failed."
 
     def screenshot(self, params=None):
         try:

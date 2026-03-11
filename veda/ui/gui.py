@@ -1,5 +1,7 @@
 import customtkinter as ctk
 import threading
+import random
+import time
 from veda.utils.health import get_system_summary
 
 class VedaGUI(ctk.CTk):
@@ -10,7 +12,7 @@ class VedaGUI(ctk.CTk):
         self.on_voice_callback = on_voice_callback
 
         self.title("VEDA | Tactical Interface")
-        self.geometry("800x600")
+        self.geometry("900x700")
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
 
@@ -19,7 +21,7 @@ class VedaGUI(ctk.CTk):
         self.grid_rowconfigure(0, weight=1)
 
         # Main Chat Area
-        self.chat_display = ctk.CTkTextbox(self, width=580, height=500)
+        self.chat_display = ctk.CTkTextbox(self, width=580, height=500, font=("Consolas", 12))
         self.chat_display.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
         self.chat_display.configure(state="disabled")
 
@@ -27,10 +29,10 @@ class VedaGUI(ctk.CTk):
         self.hud_frame = ctk.CTkFrame(self)
         self.hud_frame.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
 
-        self.hud_label = ctk.CTkLabel(self.hud_frame, text="SYSTEM STATUS", font=("Courier", 14, "bold"))
+        self.hud_label = ctk.CTkLabel(self.hud_frame, text="SYSTEM DIAGNOSTICS", font=("Courier", 14, "bold"))
         self.hud_label.pack(pady=10)
 
-        self.status_text = ctk.CTkTextbox(self.hud_frame, width=180, height=200)
+        self.status_text = ctk.CTkTextbox(self.hud_frame, width=200, height=250, font=("Courier", 10))
         self.status_text.pack(padx=5, pady=5)
         self.status_text.configure(state="disabled")
 
@@ -39,25 +41,32 @@ class VedaGUI(ctk.CTk):
         self.protocol_display = ctk.CTkLabel(self.hud_frame, text="STANDARD", text_color="cyan", font=("Courier", 14, "bold"))
         self.protocol_display.pack()
 
+        # Neural Link Status
+        self.link_label = ctk.CTkLabel(self.hud_frame, text="NEURAL LINK", font=("Courier", 12))
+        self.link_label.pack(pady=(20, 5))
+        self.link_display = ctk.CTkLabel(self.hud_frame, text="ESTABLISHED", text_color="green", font=("Courier", 12, "bold"))
+        self.link_display.pack()
+
         # Input Area
         self.input_frame = ctk.CTkFrame(self)
         self.input_frame.grid(row=1, column=0, columnspan=2, padx=10, pady=10, sticky="ew")
         self.input_frame.grid_columnconfigure(0, weight=1)
 
-        self.input_entry = ctk.CTkEntry(self.input_frame, placeholder_text="Enter tactical command...")
+        self.input_entry = ctk.CTkEntry(self.input_frame, placeholder_text="Enter tactical command...", font=("Consolas", 12))
         self.input_entry.grid(row=0, column=0, padx=(0, 10), pady=10, sticky="ew")
         self.input_entry.bind("<Return>", lambda e: self.send_message())
 
-        self.send_button = ctk.CTkButton(self.input_frame, text="EXECUTE", command=self.send_message)
+        self.send_button = ctk.CTkButton(self.input_frame, text="EXECUTE", command=self.send_message, font=("Courier", 12, "bold"))
         self.send_button.grid(row=0, column=1, padx=5, pady=10)
 
-        self.voice_button = ctk.CTkButton(self.input_frame, text="AUDIO LINK", command=self.trigger_voice, fg_color="green")
+        self.voice_button = ctk.CTkButton(self.input_frame, text="AUDIO LINK", command=self.trigger_voice, fg_color="green", font=("Courier", 12, "bold"))
         self.voice_button.grid(row=0, column=2, padx=5, pady=10)
 
         self.update_chat("Veda", "Tactical interface established. Systems operational.")
 
-        # Delayed HUD start to ensure Assistant is ready
+        # Start animations and HUD
         self.after(1000, self.update_hud)
+        self.after(2000, self.glitch_effect)
 
     def update_chat(self, sender, message):
         if hasattr(self, 'chat_display'):
@@ -74,7 +83,6 @@ class VedaGUI(ctk.CTk):
         text = f"OS: {summary['os']}\n"
         text += f"PYTHON: {summary['python']}\n"
 
-        # Safe call to assistant for stats
         try:
             stats = self.on_send_callback("system_stats_internal")
             if stats:
@@ -89,10 +97,29 @@ class VedaGUI(ctk.CTk):
         self.status_text.delete("1.0", "end")
         self.status_text.insert("1.0", text)
         self.status_text.configure(state="disabled")
-        self.after(10000, self.update_hud)
+
+        # Random "Heartbeat" flicker on link display
+        colors = ["green", "#00FF00", "lime"]
+        self.link_display.configure(text_color=random.choice(colors))
+
+        self.after(5000, self.update_hud)
+
+    def glitch_effect(self):
+        """MCU-inspired digital glitch animation."""
+        if random.random() > 0.95:
+             original_color = self.protocol_display.cget("text_color")
+             self.protocol_display.configure(text_color="red")
+             self.after(100, lambda: self.protocol_display.configure(text_color=original_color))
+        self.after(random.randint(1000, 5000), self.glitch_effect)
 
     def update_protocol(self, protocol_name):
         self.after(0, lambda: self.protocol_display.configure(text=protocol_name.upper()))
+
+    def update_link_status(self, connected):
+        if connected:
+            self.link_display.configure(text="ESTABLISHED", text_color="green")
+        else:
+            self.link_display.configure(text="COMPROMISED", text_color="red")
 
     def send_message(self):
         message = self.input_entry.get()

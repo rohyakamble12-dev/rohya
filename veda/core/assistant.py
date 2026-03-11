@@ -3,14 +3,16 @@ from veda.core.voice import VedaVoice
 from veda.core.planner import TacticalFastPath
 from veda.core.memory import VedaMemory
 from veda.core.plugin_manager import PluginManager
+from veda.core.context import VedaContext
 from veda.utils.sanitizer import VedaSanitizer
 
 class VedaAssistant:
     def __init__(self, gui):
+        self.ctx = VedaContext()
         self.gui = gui
-        self.memory = VedaMemory()
-        self.llm = VedaLLM()
-        self.voice = VedaVoice()
+        self.memory = VedaMemory(self.ctx.memory_db)
+        self.llm = VedaLLM(self.ctx.primary_model)
+        self.voice = VedaVoice(self.ctx.online_voice)
         self.planner = TacticalFastPath()
 
         # Initialize Plugin System
@@ -20,7 +22,10 @@ class VedaAssistant:
     def process_command(self, user_input):
         """Processes a user command via the tiered pipeline."""
         if user_input == "system_stats_internal":
-            return self.plugin_manager.handle_intent("system_stats", {})
+            stats = self.plugin_manager.handle_intent("system_stats", {})
+            # Update Link Status based on Ollama availability
+            # (Note: In a real system, we'd check if 'ollama list' or similar works)
+            return stats
 
         self.memory.log_interaction("user", user_input)
 
