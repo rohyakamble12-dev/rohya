@@ -1,80 +1,56 @@
 from veda.core.llm import VedaLLM
 from veda.core.voice import VedaVoice
-from veda.features.system_control import SystemControl
-from veda.features.web_info import WebInfo
-from veda.features.tools import VedaTools
+from veda.core.planner import TacticalFastPath
+from veda.core.memory import VedaMemory
+from veda.core.plugin_manager import PluginManager
+from veda.utils.sanitizer import VedaSanitizer
 
 class VedaAssistant:
     def __init__(self, gui):
         self.gui = gui
+        self.memory = VedaMemory()
         self.llm = VedaLLM()
         self.voice = VedaVoice()
-        self.system = SystemControl()
-        self.web = WebInfo()
-        self.tools = VedaTools()
+        self.planner = TacticalFastPath()
+
+        # Initialize Plugin System
+        self.plugin_manager = PluginManager(self)
+        self.plugin_manager.discover_and_load()
 
     def process_command(self, user_input):
-        """Processes a user command, determines intent, and executes actions."""
-        # 1. Extract Intent
-        intent_data = self.llm.extract_intent(user_input)
+        """Processes a user command via the tiered pipeline."""
+        if user_input == "system_stats_internal":
+            return self.plugin_manager.handle_intent("system_stats", {})
+
+        self.memory.log_interaction("user", user_input)
+
+        cleaned_input = VedaSanitizer.clean_input(user_input)
+        if not cleaned_input:
+            return
+
+        # 1. Tactical Fast-Path (Survival Mode)
+        intent_data = self.planner.extract(cleaned_input)
+
+        # 2. Fallback to LLM
+        if not intent_data:
+             intent_data = self.llm.extract_intent(cleaned_input)
+
         intent = intent_data.get("intent", "none")
         params = intent_data.get("params", {})
 
-        response = ""
-        action_taken = False
+        # 3. Handle via Plugins
+        response = self.plugin_manager.handle_intent(intent, params)
 
-        # 2. Execute Feature based on Intent
-        if intent == "open_app":
-            app = params.get("app_name", "")
-            response = self.system.open_app(app)
-            action_taken = True
-        elif intent == "close_app":
-            app = params.get("app_name", "")
-            response = self.system.close_app(app)
-            action_taken = True
-        elif intent == "set_volume":
-            level = params.get("level", 50)
-            response = self.system.set_volume(level)
-            action_taken = True
-        elif intent == "set_brightness":
-            level = params.get("level", 50)
-            response = self.system.set_brightness(level)
-            action_taken = True
-        elif intent == "web_search":
-            query = params.get("query", user_input)
-            response = self.web.search(query)
-            action_taken = True
-        elif intent == "weather":
-            city = params.get("city", "auto")
-            response = self.web.get_weather(city)
-            action_taken = True
-        elif intent == "screenshot":
-            response = self.system.screenshot()
-            action_taken = True
-        elif intent == "lock_pc":
-            response = self.system.lock_pc()
-            action_taken = True
-        elif intent == "time":
-            response = self.tools.get_time()
-            action_taken = True
-        elif intent == "date":
-            response = self.tools.get_date()
-            action_taken = True
-        elif intent == "note":
-            note_text = params.get("text", user_input)
-            response = self.tools.take_note(note_text)
-            action_taken = True
+        # 4. Final Fallback to Chat
+        if response is None:
+            response = self.llm.chat(cleaned_input)
 
-        # 3. If no specific action or we want a conversational response
-        if not action_taken or "none" in intent:
-            response = self.llm.chat(user_input)
-
-        # 4. Update UI and Speak
+        # Log, Update UI and Speak
+        self.memory.log_interaction("assistant", response)
         self.gui.update_chat("Veda", response)
         self.voice.speak(response)
 
     def listen_and_process(self):
-        """Listens for voice input and processes it."""
         query = self.voice.listen()
         if query != "None":
             self.gui.update_chat("You", query)

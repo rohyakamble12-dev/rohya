@@ -11,3 +11,11 @@ beautifulsoup4
 duckduckgo-search
 pyaudio
 pygame
+psutil
+pygetwindow
+pyperclip
+pynput
+wikipedia
+PyPDF2
+Pillow
+schedule

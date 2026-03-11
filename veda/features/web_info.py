@@ -2,41 +2,37 @@ import requests
 from duckduckgo_search import DDGS
 
 class WebInfo:
-    @staticmethod
-    def search(query):
-        """Searches the web using DuckDuckGo."""
+    def __init__(self, assistant):
+        self.assistant = assistant
+
+    def register_intents(self):
+        return {
+            "web_search": self.web_search,
+            "weather": self.get_weather,
+            "news": self.get_news
+        }
+
+    def web_search(self, params):
+        query = params.get("query")
         try:
             with DDGS() as ddgs:
-                results = list(ddgs.text(query, max_results=3))
-                if results:
-                    summary = results[0]['body']
-                    return f"According to the web: {summary}"
-                return "I couldn't find anything on that."
-        except Exception as e:
-            return f"Search failed: {str(e)}"
+                res = list(ddgs.text(query, max_results=1))
+                return f"Web result: {res[0]['body']}" if res else "No results found."
+        except: return "Search failed."
 
-    @staticmethod
-    def get_weather(city="New York"):
-        """Gets weather info (simplified for demo, usually needs an API key)."""
-        # Using a free service that doesn't require a key or simple scraping
+    def get_weather(self, params):
+        city = params.get("city", "New York")
         try:
-            url = f"https://wttr.in/{city}?format=%C+%t"
-            response = requests.get(url)
-            if response.status_code == 200:
-                return f"The weather in {city} is {response.text}"
-            return "I couldn't retrieve the weather right now."
-        except Exception as e:
-            return f"Weather check failed: {str(e)}"
+            res = requests.get(f"https://wttr.in/{city}?format=%C+%t")
+            return f"Weather in {city}: {res.text}" if res.status_code == 200 else "Weather unavailable."
+        except: return "Weather error."
 
-    @staticmethod
-    def get_news():
-        """Gets top news headlines."""
+    def get_news(self, params=None):
         try:
             with DDGS() as ddgs:
-                results = list(ddgs.news("top stories", max_results=3))
+                results = list(ddgs.news("top headlines", max_results=3))
                 if results:
                     headlines = [r['title'] for r in results]
-                    return "Here are the top headlines: " + "; ".join(headlines)
-                return "I couldn't find any news."
-        except Exception as e:
-            return f"News retrieval failed: {str(e)}"
+                    return "Tactical update: " + "; ".join(headlines)
+                return "No news available at this moment."
+        except: return "Intelligence gathering failed."

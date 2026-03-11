@@ -1,79 +1,46 @@
-# Veda: Your Advanced AI Assistant
+# Veda: Advanced MCU-Inspired Assistant
 
-Veda is an advanced, Jarvis/Friday-inspired AI assistant specifically designed for Windows 11. She combines the power of local LLMs with cloud-based natural speech synthesis to provide a seamless personal assistant experience.
+Veda is an advanced AI assistant for Windows 11, inspired by Marvel's **Friday**. She features a modular, plugin-based architecture and a tiered intelligence pipeline that ensures seamless operation online and offline.
 
-## 🌟 Key Features
+## 🚀 Key Features
 
-### 🤖 Intelligence
-- **Local LLM**: Powered by `llama3.2:3b` via Ollama. Your conversations stay private and work offline.
-- **Intent Recognition**: Naturally understands commands like "Turn up the volume" or "Take a screenshot."
+### 🛠 Modular Architecture
+Veda uses a dynamic `PluginManager` to discover capabilities. Every feature is a standalone module in `veda/features/`.
 
-### 🗣️ Voice & Personality
-- **Friday/Jarvis Persona**: Professional, witty, and efficient.
-- **High-Quality Speech**: Uses Microsoft Edge TTS (`AvaNeural`) for a realistic female voice when online.
-- **Offline Fallback**: Automatically switches to Windows built-in voices if the internet is disconnected.
+### 🧠 Tiered Intelligence
+1.  **Tactical Fast-Path:** Instant regex-based intent extraction for common commands.
+2.  **Neural Link (Local LLM):** Powered by `llama3.2:3b` via Ollama for natural language.
+3.  **Survival Mode:** Robust fallback with sarcastic Friday persona for offline use.
 
-### 💻 Windows 11 Integration
-- **System Control**: Adjust volume, change screen brightness, and lock your PC.
-- **App Management**: Open common applications (Chrome, Notepad, Settings, etc.) via voice or text.
-- **Screenshots**: Capture your screen instantly.
+### 📊 Tactical HUD
+Modern CustomTkinter GUI featuring real-time system monitoring (CPU, RAM, Battery) and active protocol tracking.
 
-### 🌍 Life & Productivity
-- **Web Search**: Answers questions using DuckDuckGo.
-- **Weather & News**: Real-time updates on weather and top headlines.
-- **Tools**: Keep notes, check the time, and stay on top of your date.
+### 🔌 Tactical Plugins Included:
+- **System Control:** Apps, Volume, Brightness, Windows Management, Power.
+- **Intelligence:** Web Search, Wikipedia, PDF Text Extraction, Image Metadata.
+- **Productivity:** Task Management, Local Calendar, Task Scheduling.
+- **Comms:** Privacy-first Email dispatch via local client.
+- **Media:** YouTube search and System Media Key control.
+- **File Pro:** Automated folder organization and MD5-based deduplication.
 
-### 🎨 Modern Interface
-- **Windows 11 GUI**: A sleek, dark-themed interface built with `CustomTkinter`.
+## 🛠 Installation
 
----
-
-## 🛠️ Prerequisites
-
-1.  **Windows 11**: Optimized for the latest Windows environment.
-2.  **Python 3.10+**: Ensure Python is installed and added to your PATH.
-3.  **Ollama**:
-    *   Download from [ollama.ai](https://ollama.ai/).
-    *   Pull the model: `ollama pull llama3.2:3b`
-4.  **Microphone**: Required for voice commands.
-
----
-
-## 🚀 Installation & Setup
-
-1.  **Clone the project** to your local machine.
-2.  **Install dependencies**:
+1.  **Prerequisites:** Windows 11, Python 3.10+, Ollama.
+2.  **Setup:**
     ```bash
     pip install -r requirements.txt
+    ollama pull llama3.2:3b
     ```
-    *Note: Some packages like `pyaudio` may require additional build tools on Windows if pip cannot find a wheel.*
-3.  **Run Veda**:
+3.  **Run:**
     ```bash
     python main.py
     ```
 
----
-
-## ⌨️ How to Use
-
-- **Text Commands**: Type your request in the input box and press Enter.
-- **Voice Commands**: Click the "Voice" button or say "Hey Veda" (if wake-word detection is enabled) to start talking.
-- **Example Commands**:
-    - "Open Chrome"
-    - "What's the weather in London?"
-    - "Set volume to 80%"
-    - "Take a note: I have a meeting at 3 PM"
-    - "Who are you?"
+## 🧩 Plugin Development Guide
+To add a new skill to Veda:
+1.  Create a new file in `veda/features/your_skill.py`.
+2.  Implement a class with a `register_intents(self)` method returning a dict mapping intent names to handler functions.
+3.  Veda will automatically discover and load your plugin on startup.
 
 ---
-
-## 🛠️ Project Structure
-
-- `veda/core/`: The "brain" (LLM, Voice Engine, Assistant Logic).
-- `veda/features/`: The "skills" (System control, Web search, Tools).
-- `veda/ui/`: The "face" (Modern GUI).
-- `main.py`: The entry point.
-
----
-
-*Veda - Built with ❤️ for the Windows 11 community.*
+*Veda - Modular Intelligence for the Modern Operator.*

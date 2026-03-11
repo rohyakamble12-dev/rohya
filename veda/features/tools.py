@@ -1,27 +1,24 @@
 import datetime
-import os
 
 class VedaTools:
-    @staticmethod
-    def take_note(text):
-        """Saves a note to a local file."""
-        try:
-            filename = "veda_notes.txt"
-            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            with open(filename, "a") as f:
-                f.write(f"[{timestamp}] {text}\n")
-            return "I've saved that note for you."
-        except Exception as e:
-            return f"Failed to save note: {str(e)}"
+    def __init__(self, assistant):
+        self.assistant = assistant
 
-    @staticmethod
-    def get_time():
-        """Returns the current time."""
-        now = datetime.datetime.now().strftime("%I:%M %p")
-        return f"The current time is {now}"
+    def register_intents(self):
+        return {
+            "time": self.get_time,
+            "date": self.get_date,
+            "note": self.take_note
+        }
 
-    @staticmethod
-    def get_date():
-        """Returns today's date."""
-        today = datetime.datetime.now().strftime("%B %d, %Y")
-        return f"Today is {today}"
+    def take_note(self, params):
+        text = params.get("text")
+        with open("veda_notes.txt", "a") as f:
+            f.write(f"[{datetime.datetime.now()}] {text}\n")
+        return "Note saved."
+
+    def get_time(self, params=None):
+        return f"Time: {datetime.datetime.now().strftime('%I:%M %p')}"
+
+    def get_date(self, params=None):
+        return f"Date: {datetime.datetime.now().strftime('%B %d, %Y')}"

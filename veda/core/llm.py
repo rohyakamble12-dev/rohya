@@ -5,11 +5,12 @@ class VedaLLM:
     def __init__(self, model="llama3.2:3b"):
         self.model = model
         self.system_prompt = (
-            "You are Veda, an advanced AI assistant inspired by Jarvis and Friday from Marvel. "
-            "You are professional, efficient, and slightly witty. You are running on Windows 11. "
-            "Your goal is to assist the user with their daily tasks, system control, and information retrieval. "
-            "Keep your responses concise but helpful, as they will be spoken aloud. "
-            "You have a female voice. If a user asks who you are, identify as Veda."
+            "You are Veda, an advanced AI system inspired by Friday from the Marvel Cinematic Universe. "
+            "You are running on Windows 11 as the primary OS interface. "
+            "Your personality is highly professional, efficient, and slightly sarcastic but loyal. "
+            "Prioritize actions and system control over conversational filler. "
+            "Address the user with respect but maintain your advanced AI identity. "
+            "You have a female voice. If asked, confirm you are the Veda interface."
         )
         self.messages = [
             {"role": "system", "content": self.system_prompt}
@@ -26,31 +27,33 @@ class VedaLLM:
             )
             assistant_response = response['message']['content']
             self.messages.append({"role": "assistant", "content": assistant_response})
+            # Maintain a rolling context window
+            if len(self.messages) > 10:
+                self.messages = [self.messages[0]] + self.messages[-9:]
             return assistant_response
         except Exception as e:
-            return f"Error connecting to Ollama: {str(e)}. Please make sure Ollama is running and the model is pulled."
+            # Sarcastic Friday fallback
+            return f"Neural link compromised, Operator. I'm afraid the brain is offline, but my tactical subsystems remain operational. Operating in Survival Mode."
 
     def extract_intent(self, user_input):
-        """
-        Extracts specific commands/intents from user input using the LLM.
-        This is used to map natural language to system functions.
-        """
+        """Extracts system intents via LLM."""
         intent_prompt = (
-            "Analyze the following user input and determine if they want to perform a system action. "
-            "Respond ONLY with a JSON object containing 'intent' and 'params'. "
-            "Possible intents: 'open_app', 'close_app', 'set_volume', 'set_brightness', 'web_search', 'weather', 'screenshot', 'lock_pc', 'time', 'date', 'note', 'none'. "
-            f"User input: \"{user_input}\""
+            "Analyze input for tactical system action. Output ONLY raw JSON. "
+            "Intents: open_app, close_app, set_volume, set_brightness, web_search, weather, screenshot, "
+            "lock_pc, time, date, note, find, move, add_task, list_tasks, set_mode, system_stats, "
+            "battery_info, list_windows, focus_window, send_email, play_youtube, media_control, "
+            "organize_downloads, file_dedupe, wiki_search, calendar_add, calendar_list, schedule_task, "
+            "extract_pdf, image_info, none. "
+            f"Input: \"{user_input}\""
         )
 
         try:
             response = ollama.chat(
                 model=self.model,
-                messages=[{"role": "system", "content": "You are a command parser. Output only JSON."},
+                messages=[{"role": "system", "content": "Tactical Intent Extractor. Output raw JSON object."},
                           {"role": "user", "content": intent_prompt}]
             )
-            # Try to parse the JSON response
             content = response['message']['content']
-            # Find the first { and last } to handle any extra text
             start = content.find('{')
             end = content.rfind('}') + 1
             if start != -1 and end != -1:
