@@ -35,6 +35,14 @@ class VedaLLM:
             # Sarcastic Friday fallback
             return f"Neural link compromised, Operator. I'm afraid the brain is offline, but my tactical subsystems remain operational. Operating in Survival Mode."
 
+    def check_link(self):
+        """Proactively checks if the Ollama link is active."""
+        try:
+            ollama.list()
+            return True
+        except:
+            return False
+
     def extract_intent(self, user_input):
         """Extracts system intents via LLM."""
         intent_prompt = (
