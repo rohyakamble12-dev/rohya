@@ -3,12 +3,14 @@ import os
 import threading
 
 class VedaMemory:
-    def __init__(self, db_path="veda_memory.db"):
+    def __init__(self, db_path="veda/storage/veda_memory.db"):
         self.db_path = db_path
         self.lock = threading.Lock()
         self._init_db()
 
     def _init_db(self):
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
         with self.lock:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()

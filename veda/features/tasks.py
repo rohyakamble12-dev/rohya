@@ -1,9 +1,12 @@
 import sqlite3
+import os
 
 class TaskManager:
     def __init__(self, assistant):
         self.assistant = assistant
-        self.db_path = "veda_memory.db"
+        self.db_path = "veda/storage/veda_memory.db"
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
         conn = sqlite3.connect(self.db_path)
         conn.execute('CREATE TABLE IF NOT EXISTS tasks (id INTEGER PRIMARY KEY, task TEXT, status TEXT DEFAULT "pending")')
         conn.close()
@@ -16,6 +19,7 @@ class TaskManager:
 
     def add_task(self, params):
         task = params.get("task")
+        if not task: return "Task description missing."
         conn = sqlite3.connect(self.db_path)
         conn.execute("INSERT INTO tasks (task) VALUES (?)", (task,))
         conn.commit(); conn.close()

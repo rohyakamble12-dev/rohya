@@ -1,8 +1,10 @@
 import datetime
+import os
 
 class VedaTools:
     def __init__(self, assistant):
         self.assistant = assistant
+        self.notes_file = "veda/storage/notes.txt"
 
     def register_intents(self):
         return {
@@ -13,7 +15,10 @@ class VedaTools:
 
     def take_note(self, params):
         text = params.get("text")
-        with open("veda_notes.txt", "a") as f:
+        if not text: return "Note content missing."
+
+        os.makedirs(os.path.dirname(self.notes_file), exist_ok=True)
+        with open(self.notes_file, "a") as f:
             f.write(f"[{datetime.datetime.now()}] {text}\n")
         return "Note saved."
 
