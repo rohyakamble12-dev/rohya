@@ -22,16 +22,18 @@ class VedaAssistant:
     def process_command(self, user_input):
         """Processes a user command via the tiered pipeline."""
         if user_input == "system_stats_internal":
-            stats = self.plugin_manager.handle_intent("system_stats", {})
-            # Update Link Status based on Ollama availability
-            # (Note: In a real system, we'd check if 'ollama list' or similar works)
-            return stats
+            return self.plugin_manager.handle_intent("system_stats", {})
+
+        if user_input == "check_neural_link":
+            return self.llm.check_link()
 
         self.memory.log_interaction("user", user_input)
-
         cleaned_input = VedaSanitizer.clean_input(user_input)
         if not cleaned_input:
             return
+
+        # Update UI to thinking state
+        self.gui.set_state("thinking")
 
         # 1. Tactical Fast-Path (Survival Mode)
         intent_data = self.planner.extract(cleaned_input)
@@ -50,12 +52,15 @@ class VedaAssistant:
         if response is None:
             response = self.llm.chat(cleaned_input)
 
-        # Log, Update UI and Speak
+        # 5. UI Finalization
+        self.gui.set_state("speaking")
         self.memory.log_interaction("assistant", response)
         self.gui.update_chat("Veda", response)
         self.voice.speak(response)
+        self.gui.set_state("idle")
 
     def listen_and_process(self):
+        """Listens for voice input and processes it."""
         query = self.voice.listen()
         if query != "None":
             self.gui.update_chat("You", query)
