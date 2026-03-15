@@ -32,9 +32,18 @@ Veda is a high-performance, modular AI assistant for Windows 11, inspired by Mar
 1.  **Prerequisites**: Windows 11, Python 3.10+, Ollama.
 2.  **Setup**:
     ```bash
-    pip install -r requirements.txt
+    # Automatic Dependency Link
+    python install_deps.py
+
+    # Intelligence Link
     ollama pull qwen2.5:3b
     ```
+
+### ⚠️ Troubleshooting
+If you encounter `ModuleNotFoundError` (e.g., `No module named 'customtkinter'`):
+1.  Ensure you ran `python install_deps.py`.
+2.  Verify you are using the same Python version where the modules were installed.
+3.  Check if you are using a Virtual Environment (recommended).
 3.  **Run Veda**:
     ```bash
     python main.py
