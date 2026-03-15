@@ -49,6 +49,7 @@ def main():
                 self.assistant.listen_and_process()
 
             def run(self):
+        self.gui.run_boot_sequence()
                 self.gui.mainloop()
 
         controller = VedaController()

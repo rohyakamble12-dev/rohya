@@ -40,16 +40,47 @@ class CenterPanel(VedaPanel):
         self.points = []
         self.neighbors = []
         self.angle_y = 0
+        self.angle_x = 0
         self.center_x = 200
         self.center_y = 200
         self.calibrating = True
 
+        # Interaction stats
+        self.mouse_x = 0
+        self.mouse_y = 0
+        self.momentum_x = 0
+        self.momentum_y = 0
+
         self.canvas.bind("<Configure>", self._on_resize)
+        self.canvas.bind("<Motion>", self._on_mouse_move)
         self.start_globe_init()
 
     def _on_resize(self, event):
         self.center_x = event.width / 2
         self.center_y = event.height / 2
+        self._draw_hex_grid()
+
+    def _on_mouse_move(self, event):
+        self.momentum_x = (event.x - self.center_x) / 5000
+        self.momentum_y = (event.y - self.center_y) / 5000
+
+    def _draw_hex_grid(self):
+        self.canvas.delete("grid")
+        size = 30
+        w = self.center_x * 2
+        h = self.center_y * 2
+        for x in range(0, int(w) + size, size * 2):
+            for y in range(0, int(h) + size, int(size * 1.5)):
+                offset = size if (y // int(size * 1.5)) % 2 == 1 else 0
+                self._draw_hex(x + offset, y, size)
+
+    def _draw_hex(self, x, y, size):
+        pts = []
+        for i in range(6):
+            ang = math.radians(i * 60 + 30)
+            pts.append(x + size * math.cos(ang))
+            pts.append(y + size * math.sin(ang))
+        self.canvas.create_polygon(pts, outline="#111115", fill="", tags="grid")
 
     def start_globe_init(self):
         self.canvas.delete("status")
@@ -68,7 +99,6 @@ class CenterPanel(VedaPanel):
                 z = math.sin(theta) * radius
                 self.points.append([x, y, z])
 
-            # Pre-calculate neighbors
             for i in range(n):
                 dists = []
                 for j in range(n):
@@ -91,48 +121,55 @@ class CenterPanel(VedaPanel):
             self.canvas.delete("status")
             color = self.colors.get(self.state, "#00d4ff")
 
-            # Rotation speed per state
-            speed_map = {"idle": 0.012, "thinking": 0.05, "speaking": 0.025, "alert": 0.12}
-            self.angle_y += speed_map.get(self.state, 0.01)
+            # Rotation with momentum
+            speed_map = {"idle": 0.012, "thinking": 0.06, "speaking": 0.03, "alert": 0.15}
+            self.angle_y += speed_map.get(self.state, 0.01) + self.momentum_x
+            self.angle_x += self.momentum_y
 
-            # Pulse per state (Heartbeat double-beat for idle)
+            # Pulse logic
             t = time.time()
             pulse = 1.0
             if self.state == "idle":
                  pulse = 1.0 + 0.07 * (math.pow(math.sin(t*2.5), 10) + math.pow(math.sin(t*2.6), 10))
             elif self.state == "thinking":
-                 if int(t*12) % 2 == 0: color = "#ffffff" # Gold strobe sim
+                 if int(t*15) % 2 == 0: color = "#ffffff"
             elif self.state == "speaking":
-                 pulse = 1.0 + 0.15 * math.sin(t*12)
+                 pulse = 1.0 + 0.18 * math.sin(t*15)
 
-            scale = min(self.center_x, self.center_y) * 0.75 * pulse
+            scale = min(self.center_x, self.center_y) * 0.78 * pulse
 
             proj_points = []
             for p in self.points:
                 x, y, z = p
-                nx = x * math.cos(self.angle_y) - z * math.sin(self.angle_y)
-                nz = x * math.sin(self.angle_y) + z * math.cos(self.angle_y)
+                # Rotate Y
+                ry_x = x * math.cos(self.angle_y) - z * math.sin(self.angle_y)
+                ry_z = x * math.sin(self.angle_y) + z * math.cos(self.angle_y)
+                # Rotate X
+                rx_y = y * math.cos(self.angle_x) - ry_z * math.sin(self.angle_x)
+                rx_z = y * math.sin(self.angle_x) + ry_z * math.cos(self.angle_x)
 
-                px = nx * scale + self.center_x
-                py = y * scale + self.center_y
-                proj_points.append((px, py, nz))
+                px = ry_x * scale + self.center_x
+                py = rx_y * scale + self.center_y
+                proj_points.append((px, py, rx_z))
 
             # Render Mesh
             for i, pt in enumerate(proj_points):
-                if pt[2] < -0.3: continue # Back-face cull
+                if pt[2] < -0.4: continue
 
                 for n_idx in self.neighbors[i]:
                     n_pt = proj_points[n_idx]
-                    if n_pt[2] < -0.3: continue
+                    if n_pt[2] < -0.4: continue
                     self.canvas.create_line(pt[0], pt[1], n_pt[0], n_pt[1], fill=color, width=1, stipple="gray50", tags="globe")
 
                 self.canvas.create_oval(pt[0]-2, pt[1]-2, pt[0]+2, pt[1]+2, fill=color, outline="", tags="globe")
 
-            # 1% HUD Glitch
-            if random.random() > 0.99:
-                 self.canvas.create_rectangle(0, 0, self.center_x*2, self.center_y*2, fill="#ffffff", tags="globe")
+            # State-based Glitch
+            glitch_chance = 0.99 if self.state != "alert" else 0.95
+            if random.random() > glitch_chance:
+                 g_color = random.choice(["#ffffff", color, "#ff00ff"])
+                 self.canvas.create_rectangle(0, 0, self.center_x*2, self.center_y*2, fill=g_color, tags="globe")
 
-            self.after(35, self._animate)
+            self.after(30, self._animate)
         except Exception as e:
             logger.warning(f"Globe render cycle error: {e}")
             self.after(100, self._animate)

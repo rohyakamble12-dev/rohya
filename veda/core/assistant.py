@@ -50,7 +50,17 @@ class VedaAssistant:
         self.gui.left.update_plan(f"Intent extracted: {intent}")
 
         # 4. Handle via Tactical Modules (Plugins)
-        response = self.plugin_manager.handle_intent(intent, params)
+        # Check for profile shift first
+        if intent == "set_mode":
+            mode = params.get("mode", "").lower()
+            if mode in self.ctx.themes:
+                self.ctx.current_theme = mode
+                self.gui.set_theme_color(self.ctx.get_accent())
+                response = f"UI profile synchronized to {mode.upper()}."
+            else:
+                response = self.plugin_manager.handle_intent(intent, params)
+        else:
+            response = self.plugin_manager.handle_intent(intent, params)
 
         # 5. Final Fallback to Neural Link (Chat)
         if response is None:

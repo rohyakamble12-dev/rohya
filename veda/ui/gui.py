@@ -38,7 +38,13 @@ class VedaGUI(ctk.CTk):
         self.right = RightPanel(self, None)
         self.right.grid(row=0, column=2, sticky="nsew", padx=2, pady=2)
 
-        # 4. Global Interactivity & Draggable Link
+        # 4. Overlay for Boot Sequence
+        self.boot_overlay = ctk.CTkFrame(self, fg_color="#08080a", corner_radius=0)
+        self.boot_overlay.place(relx=0, rely=0, relwidth=1, relheight=1)
+        self.boot_text = ctk.CTkTextbox(self.boot_overlay, fg_color="transparent", font=("Consolas", 10), text_color="#00d4ff")
+        self.boot_text.pack(expand=True, fill="both", padx=50, pady=50)
+
+        # 5. Global Interactivity & Draggable Link
         self.bind("<Button-1>", self._start_drag)
         self.bind("<B1-Motion>", self._drag)
 
@@ -58,16 +64,43 @@ class VedaGUI(ctk.CTk):
             self.geometry(f"+{x}+{y}")
         except: pass
 
+    def run_boot_sequence(self):
+        steps = [
+            "INITIALIZING VEDA KERNEL v4.1.0...",
+            "LINKING NEURAL ARCHITECTURE: [OK]",
+            "ESTABLISHING TACTICAL HUD: [OK]",
+            "MOUNTING Modular Feature Set (18 Active)",
+            "CALIBRATING OPTICAL SENSORS...",
+            "LINKING OPERATOR INTERFACE...",
+            "SYSTEM READY. TACTICAL CORE ONLINE."
+        ]
+
+        def display_step(idx):
+            if idx < len(steps):
+                self.boot_text.insert("end", f"> {steps[idx]}\n")
+                self.boot_text.see("end")
+                self.after(400, lambda: display_step(idx + 1))
+            else:
+                self.after(500, self.boot_overlay.destroy)
+
+        display_step(0)
+
     def update_chat(self, sender, message):
         is_user = sender.lower() in ["operator", "you"]
         self.after(0, lambda: self.right.add_message(sender, message, is_user))
 
-    def set_state(self, state):
-        """Tiered states: idle (cyan), thinking (gold), speaking (green), alert (red)."""
-        color = self.center.colors.get(state, "#00d4ff")
-        self.after(0, lambda: self.center.set_state(state))
+    def set_theme_color(self, color):
+        """Forces a full UI re-theme to the specified color."""
         self.after(0, lambda: self.left.refresh_theme(color))
+        self.after(0, lambda: self.center.refresh_theme(color))
         self.after(0, lambda: self.right.refresh_theme(color))
+
+    def set_state(self, state):
+        """Tiered states: idle, thinking, speaking, alert."""
+        color = self.center.colors.get(state, "#00d4ff")
+        self.after(0, lambda: self.left.set_state(state))
+        self.after(0, lambda: self.center.set_state(state))
+        self.set_theme_color(color)
 
         if state == "thinking":
             self.after(0, lambda: self.right.show_typing(True))
