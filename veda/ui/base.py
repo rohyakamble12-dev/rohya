@@ -2,11 +2,12 @@ import customtkinter as ctk
 
 class VedaPanel(ctk.CTkFrame):
     def __init__(self, master, title, **kwargs):
-        super().__init__(master, fg_color="#0a0a0f", border_color="#1a1a20", border_width=1, **kwargs)
+        super().__init__(master, fg_color="#0a0a0f", border_color="#1a1a20", border_width=1, corner_radius=0, **kwargs)
         self.accent_color = "#00d4ff"
+        self.accent_widgets = []
 
-        # Header (No rounded corners)
-        self.header = ctk.CTkFrame(self, fg_color="#050507", height=30, corner_radius=0)
+        # Header (No rounded corners, fixed Stark-style header)
+        self.header = ctk.CTkFrame(self, fg_color="#050507", height=35, corner_radius=0)
         self.header.pack(fill="x", side="top")
         self.header.pack_propagate(False)
 
@@ -14,9 +15,24 @@ class VedaPanel(ctk.CTkFrame):
             self.header, text=title.upper(),
             font=("Orbitron", 12, "bold"), text_color=self.accent_color
         )
-        self.title_label.pack(side="left", padx=10)
+        self.title_label.pack(side="left", padx=15)
+        self.register_accent_widget(self.title_label, "text")
+
+    def register_accent_widget(self, widget, attr="text"):
+        """Registers a widget to be updated when the accent color changes."""
+        self.accent_widgets.append((widget, attr))
 
     def refresh_theme(self, color):
         self.accent_color = color
-        self.title_label.configure(text_color=color)
-        # Inherited panels will override for more specific updates
+        for widget, attr in self.accent_widgets:
+            try:
+                if attr == "text":
+                    widget.configure(text_color=color)
+                elif attr == "border":
+                    widget.configure(border_color=color)
+                elif attr == "progress":
+                    widget.configure(progress_color=color)
+                elif attr == "fg":
+                    widget.configure(fg_color=color)
+            except:
+                pass
