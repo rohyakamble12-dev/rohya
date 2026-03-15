@@ -39,13 +39,14 @@ class CenterPanel(VedaPanel):
 
         self.points = []
         self.neighbors = []
+        self.impulses = [] # Moving "Neural Firings"
+        self.stars = []
         self.angle_y = 0
         self.angle_x = 0
         self.center_x = 200
         self.center_y = 200
         self.calibrating = True
 
-        # Interaction stats
         self.mouse_x = 0
         self.mouse_y = 0
         self.momentum_x = 0
@@ -53,6 +54,7 @@ class CenterPanel(VedaPanel):
 
         self.canvas.bind("<Configure>", self._on_resize)
         self.canvas.bind("<Motion>", self._on_mouse_move)
+        self._init_stars()
         self.start_globe_init()
 
     def _on_resize(self, event):
@@ -64,11 +66,14 @@ class CenterPanel(VedaPanel):
         self.momentum_x = (event.x - self.center_x) / 5000
         self.momentum_y = (event.y - self.center_y) / 5000
 
+    def _init_stars(self):
+        for _ in range(50):
+            self.stars.append([random.randint(0, 800), random.randint(0, 600), random.uniform(0.5, 1.5)])
+
     def _draw_hex_grid(self):
         self.canvas.delete("grid")
-        size = 30
-        w = self.center_x * 2
-        h = self.center_y * 2
+        size = 35
+        w, h = self.center_x * 2, self.center_y * 2
         for x in range(0, int(w) + size, size * 2):
             for y in range(0, int(h) + size, int(size * 1.5)):
                 offset = size if (y // int(size * 1.5)) % 2 == 1 else 0
@@ -80,7 +85,7 @@ class CenterPanel(VedaPanel):
             ang = math.radians(i * 60 + 30)
             pts.append(x + size * math.cos(ang))
             pts.append(y + size * math.sin(ang))
-        self.canvas.create_polygon(pts, outline="#111115", fill="", tags="grid")
+        self.canvas.create_polygon(pts, outline="#0d0d12", fill="", tags="grid")
 
     def start_globe_init(self):
         self.canvas.delete("status")
@@ -119,14 +124,18 @@ class CenterPanel(VedaPanel):
         try:
             self.canvas.delete("globe")
             self.canvas.delete("status")
+            self.canvas.delete("star")
             color = self.colors.get(self.state, "#00d4ff")
 
-            # Rotation with momentum
-            speed_map = {"idle": 0.012, "thinking": 0.06, "speaking": 0.03, "alert": 0.15}
+            # Draw Starfield
+            for s in self.stars:
+                s[0] = (s[0] + s[2]) % (self.center_x * 2)
+                self.canvas.create_oval(s[0], s[1], s[0]+1, s[1]+1, fill="#22222a", tags="star")
+
+            speed_map = {"idle": 0.012, "thinking": 0.06, "speaking": 0.03, "alert": 0.18}
             self.angle_y += speed_map.get(self.state, 0.01) + self.momentum_x
             self.angle_x += self.momentum_y
 
-            # Pulse logic
             t = time.time()
             pulse = 1.0
             if self.state == "idle":
@@ -141,30 +150,40 @@ class CenterPanel(VedaPanel):
             proj_points = []
             for p in self.points:
                 x, y, z = p
-                # Rotate Y
                 ry_x = x * math.cos(self.angle_y) - z * math.sin(self.angle_y)
                 ry_z = x * math.sin(self.angle_y) + z * math.cos(self.angle_y)
-                # Rotate X
                 rx_y = y * math.cos(self.angle_x) - ry_z * math.sin(self.angle_x)
                 rx_z = y * math.sin(self.angle_x) + ry_z * math.cos(self.angle_x)
-
-                px = ry_x * scale + self.center_x
-                py = rx_y * scale + self.center_y
-                proj_points.append((px, py, rx_z))
+                proj_points.append((ry_x * scale + self.center_x, rx_y * scale + self.center_y, rx_z))
 
             # Render Mesh
             for i, pt in enumerate(proj_points):
                 if pt[2] < -0.4: continue
-
                 for n_idx in self.neighbors[i]:
                     n_pt = proj_points[n_idx]
                     if n_pt[2] < -0.4: continue
                     self.canvas.create_line(pt[0], pt[1], n_pt[0], n_pt[1], fill=color, width=1, stipple="gray50", tags="globe")
-
                 self.canvas.create_oval(pt[0]-2, pt[1]-2, pt[0]+2, pt[1]+2, fill=color, outline="", tags="globe")
 
-            # State-based Glitch
-            glitch_chance = 0.99 if self.state != "alert" else 0.95
+            # Neural Firings (Impulses)
+            if random.random() > 0.90:
+                 self.impulses.append([random.randint(0, 99), 0])
+
+            new_impulses = []
+            for imp in self.impulses:
+                pt_idx, progress = imp
+                if progress < 1.0:
+                    start_pt = proj_points[pt_idx]
+                    target_idx = self.neighbors[pt_idx][0]
+                    end_pt = proj_points[target_idx]
+                    ix = start_pt[0] + (end_pt[0] - start_pt[0]) * progress
+                    iy = start_pt[1] + (end_pt[1] - start_pt[1]) * progress
+                    self.canvas.create_oval(ix-2, iy-2, ix+2, iy+2, fill="#ffffff", tags="globe")
+                    imp[1] += 0.1
+                    new_impulses.append(imp)
+            self.impulses = new_impulses
+
+            glitch_chance = 0.992 if self.state != "alert" else 0.94
             if random.random() > glitch_chance:
                  g_color = random.choice(["#ffffff", color, "#ff00ff"])
                  self.canvas.create_rectangle(0, 0, self.center_x*2, self.center_y*2, fill=g_color, tags="globe")

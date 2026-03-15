@@ -6,6 +6,7 @@ import threading
 from veda.ui.left_panel import LeftPanel
 from veda.ui.center_panel import CenterPanel
 from veda.ui.right_panel import RightPanel
+from veda.utils.sounds import TacticalSoundEngine
 
 logger = logging.getLogger("VEDA")
 
@@ -14,6 +15,7 @@ class VedaGUI(ctk.CTk):
         super().__init__()
 
         self.on_send_callback = on_send_callback
+        self.sounds = TacticalSoundEngine()
         self.on_voice_callback = on_voice_callback
 
         # 1. MCU Stark-Inspired HUD Configuration
@@ -65,6 +67,7 @@ class VedaGUI(ctk.CTk):
         except: pass
 
     def run_boot_sequence(self):
+        self.fade_in(0)
         steps = [
             "INITIALIZING VEDA KERNEL v4.1.0...",
             "LINKING NEURAL ARCHITECTURE: [OK]",
@@ -97,6 +100,9 @@ class VedaGUI(ctk.CTk):
 
     def set_state(self, state):
         """Tiered states: idle, thinking, speaking, alert."""
+        if state != self.center.state:
+            self.sounds.play_system_blip(state)
+
         color = self.center.colors.get(state, "#00d4ff")
         self.after(0, lambda: self.left.set_state(state))
         self.after(0, lambda: self.center.set_state(state))
@@ -123,7 +129,21 @@ class VedaGUI(ctk.CTk):
         except:
             return False
 
+    def fade_in(self, alpha):
+        if alpha < 0.92:
+            alpha += 0.05
+            self.attributes("-alpha", alpha)
+            self.after(50, lambda: self.fade_in(alpha))
+
+    def fade_out(self, alpha):
+        if alpha > 0:
+            alpha -= 0.05
+            self.attributes("-alpha", alpha)
+            self.after(30, lambda: self.fade_out(alpha))
+        else:
+            self.destroy()
+            sys.exit(0)
+
     def terminate(self):
         print("[SYSTEM]: Termination sequence complete. Unloading VEDA CORE.")
-        self.destroy()
-        sys.exit(0)
+        self.fade_out(0.92)
