@@ -52,23 +52,27 @@ class SystemControl:
         safe_app = VedaSanitizer.normalize_app_name(app_name)
         if not safe_app: return "Application name missing."
 
-        # Tactical Alias System
-        apps = {
+        # Strictly controlled whitelist to prevent unwanted launches
+        allowed_apps = {
             "chrome": ["start", "chrome"],
             "notepad": ["notepad.exe"],
             "calculator": ["calc.exe"],
-            "settings": ["start", "ms-settings text-decoration"],
+            "settings": ["start", "ms-settings:display"],
             "explorer": ["explorer.exe"],
             "paint": ["mspaint.exe"],
             "cmd": ["start", "cmd.exe"],
             "powershell": ["start", "powershell.exe"],
-            "taskmgr": ["taskmgr.exe"],
-            "discord": ["start", "discord"],
-            "vscode": ["code"]
+            "taskmgr": ["taskmgr.exe"]
         }
-        args = apps.get(safe_app.lower(), ["start", safe_app])
-        subprocess.Popen(args, shell=True)
-        return f"Opening {safe_app}"
+
+        if safe_app.lower() in allowed_apps:
+            args = allowed_apps[safe_app.lower()]
+            subprocess.Popen(args, shell=True)
+            return f"Opening {safe_app}"
+        else:
+            # For non-whitelisted apps, we attempt a search rather than direct execution
+            # this prevents the 'code' or other accidental triggers
+            return f"Application '{safe_app}' is not in my tactical whitelist. Would you like me to search for it?"
 
     def close_app(self, params):
         app_name = params.get("app_name", "")
@@ -118,9 +122,7 @@ class SystemControl:
         msg = params.get("message", "Tactical Update")
         title = params.get("title", "VEDA")
         try:
-            # Using basic PowerShell notification for zero-dep W11 integration
-            cmd = f'powershell -Command "New-BurntToastNotification -Text \'{title}\', \'{msg}\'"'
-            # Fallback if BurntToast isn't installed
+            # Fallback PowerShell notification
             fallback_cmd = f'powershell -Command "[Reflection.Assembly]::LoadWithPartialName(\'System.Windows.Forms\'); [System.Windows.Forms.MessageBox]::Show(\'{msg}\', \'{title}\')"'
             subprocess.run(fallback_cmd, shell=True)
             return "Notification dispatched."
