@@ -1,52 +1,62 @@
 import sys
-import threading
-from veda.ui.gui import VedaGUI
-from veda.core.assistant import VedaAssistant
+import os
+import subprocess
+import ctypes
 
-class VedaController:
-    def __init__(self):
-        # 1. Initialize GUI first with empty callbacks
-        self.gui = VedaGUI(
-            on_send_callback=self.on_send,
-            on_voice_callback=self.on_voice
-        )
+def show_error(title, message):
+    """Shows a native Windows message box."""
+    try:
+        ctypes.windll.user32.MessageBoxW(0, message, title, 0x10)
+    except:
+        print(f"\n[CRITICAL ERROR]: {title}\n{message}")
 
-        # 2. Initialize Assistant with real GUI reference
-        self.assistant = VedaAssistant(self.gui)
+def pre_flight_check():
+    """Verifies critical modules before attempting to load the UI."""
+    required = ["customtkinter", "PIL", "psutil", "cv2"]
+    missing = []
 
-        # 3. Finalize setup
-        self.setup_wake_word()
-        print(f"[SYSTEM]: {self.assistant.ctx.get_summary()} | Intelligence Linked.")
+    for module in required:
+        try:
+            __import__(module if module != "cv2" else "cv2")
+        except ImportError:
+            missing.append(module)
 
-    def on_send(self, message):
-        return self.assistant.process_command(message)
-
-    def on_voice(self):
-        self.assistant.listen_and_process()
-
-    def setup_wake_word(self):
-        def background_listener():
-            while True:
-                try:
-                    if self.assistant.voice.listen_for_wake_word("veda"):
-                        self.gui.after(0, self.gui.trigger_voice)
-                except: pass
-
-        # threading.Thread(target=background_listener, daemon=True).start()
-
-    def run(self):
-        self.gui.mainloop()
+    if missing:
+        msg = f"Critical Tactical Links Missing: {', '.join(missing)}\n\nPlease run 'python install_deps.py' or 'repair_veda.bat' to re-establish connections."
+        show_error("VEDA CORE - LINK FAILURE", msg)
+        return False
+    return True
 
 def main():
+    if not pre_flight_check():
+        sys.exit(1)
+
     try:
+        # Import core only after flight check
+        from veda.ui.gui import VedaGUI
+        from veda.core.assistant import VedaAssistant
+
+        class VedaController:
+            def __init__(self):
+                self.gui = VedaGUI(on_send_callback=self.on_send, on_voice_callback=self.on_voice)
+                self.assistant = VedaAssistant(self.gui)
+                print(f"[SYSTEM]: Intelligence Linked.")
+
+            def on_send(self, message):
+                return self.assistant.process_command(message)
+
+            def on_voice(self):
+                self.assistant.listen_and_process()
+
+            def run(self):
+                self.gui.mainloop()
+
         controller = VedaController()
         controller.run()
+
     except Exception as e:
-        print(f"[CRITICAL]: Neural link collapsed: {e}")
+        show_error("VEDA CORE - KERNEL PANIC", f"An unexpected error collapsed the neural link:\n{str(e)}")
         sys.exit(1)
-    except KeyboardInterrupt:
-        print("\n[SYSTEM]: Veda interface offline. Terminating links...")
-        sys.exit()
 
 if __name__ == "__main__":
     main()
