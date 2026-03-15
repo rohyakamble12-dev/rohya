@@ -57,14 +57,14 @@ class SystemControl:
             "chrome": ["start", "chrome"],
             "notepad": ["notepad.exe"],
             "calculator": ["calc.exe"],
-            "settings": ["start", "ms-settings:"],
+            "settings": ["start", "ms-settings text-decoration"],
             "explorer": ["explorer.exe"],
             "paint": ["mspaint.exe"],
             "cmd": ["start", "cmd.exe"],
             "powershell": ["start", "powershell.exe"],
             "taskmgr": ["taskmgr.exe"],
             "discord": ["start", "discord"],
-            "code": ["code"]
+            "vscode": ["code"]
         }
         args = apps.get(safe_app.lower(), ["start", safe_app])
         subprocess.Popen(args, shell=True)
