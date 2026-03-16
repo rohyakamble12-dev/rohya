@@ -19,6 +19,10 @@ class VedaAssistant:
         self.plugin_manager = PluginManager(self)
         self.plugin_manager.discover_and_load()
 
+    def get_protocols(self):
+        """Public getter for protocol states."""
+        return self.gui.state.protocols
+
     def process_command(self, user_input):
         """Processes a user command via the tiered pipeline."""
         if user_input == "system_stats_internal":
