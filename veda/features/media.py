@@ -27,6 +27,9 @@ class MediaPlugin:
             "previous": "prevtrack"
         }
         try:
+            from veda.features.system_control import PYAUTOGUI_AVAILABLE
+            if not PYAUTOGUI_AVAILABLE:
+                return "Media control offline: pyautogui not installed."
             import pyautogui
             pyautogui.press(key_map.get(action, "playpause"))
             return f"Media {action} command sent."
