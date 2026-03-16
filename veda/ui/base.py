@@ -16,6 +16,7 @@ class VedaPanel(ctk.CTkFrame):
         super().__init__(master, **params)
         self.theme = theme
         self.state_ref = state_ref
+        self.accent_color = theme.idle
         self.accent_widgets = []
 
         # Panel Header
@@ -41,6 +42,7 @@ class VedaPanel(ctk.CTkFrame):
 
     def refresh_theme(self, new_color: str):
         """Standard interface to update every registered accent widget."""
+        self.accent_color = new_color
         for widget, attr in self.accent_widgets:
             try:
                 if attr == "text":

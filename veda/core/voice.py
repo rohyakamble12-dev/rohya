@@ -1,4 +1,5 @@
 import asyncio
+import time
 try:
     import edge_tts
     EDGE_TTS_AVAILABLE = True
@@ -135,14 +136,21 @@ class VedaVoice:
             stream.start_stream()
 
             rec = KaldiRecognizer(self.vosk_model, 16000)
-            while True:
+            start_time = time.time()
+            while time.time() - start_time < 10:  # 10s timeout
                 data = stream.read(4000, exception_on_overflow=False)
                 if rec.AcceptWaveform(data):
                     result = json.loads(rec.Result())
                     return result.get("text", "None")
+            return "None"
         except:
             return "None"
-        return "None"
+        finally:
+            try:
+                stream.stop_stream()
+                stream.close()
+                p.terminate()
+            except: pass
 
     def listen_for_wake_word(self, wake_word="veda"):
         query = self.listen().lower()

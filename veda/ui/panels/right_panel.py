@@ -24,7 +24,7 @@ class RightPanel(VedaPanel):
 
         self.entry = ctk.CTkEntry(self, placeholder_text="COMMAND >>", font=theme.font_chat, border_width=1, corner_radius=0)
         self.entry.pack(fill="x", padx=10, pady=15); self.register_accent_widget(self.entry, "border")
-        self.entry.bind("<Return>", lambda e: master.send_command())
+        self.entry.bind("<Return>", lambda e: self.winfo_toplevel().send_command())
 
         self.after(100, self._drain_stream_queue)
 

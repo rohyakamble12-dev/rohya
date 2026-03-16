@@ -29,6 +29,7 @@ class VedaTheme:
     font_label: Tuple = ("Orbitron", 8)
     font_metrics: Tuple = ("Consolas", 9, "bold")
     font_chat: Tuple = ("Consolas", 11)
+    font_data: Tuple = ("Consolas", 10)
     font_timestamp: Tuple = ("Consolas", 7)
 
     # Sizes

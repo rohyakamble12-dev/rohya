@@ -25,7 +25,7 @@ class CenterPanel(VedaPanel):
         self.btn_cam = ctk.CTkButton(self.controls, text="CAM", width=50, font=theme.font_header, border_width=1, command=self._toggle_cam)
         self.btn_cam.pack(side="left", padx=10); self.register_accent_widget(self.btn_cam, "border")
 
-        self.btn_mic = ctk.CTkButton(self.controls, text="MIC", width=50, font=theme.font_header, border_width=1)
+        self.btn_mic = ctk.CTkButton(self.controls, text="MIC", width=50, font=theme.font_header, border_width=1, command=lambda: self.winfo_toplevel().on_voice_callback())
         self.btn_mic.pack(side="left", padx=5); self.register_accent_widget(self.btn_mic, "border")
 
         self.points = []; self.neighbors = []; self.angle_y = 0; self.angle_x = 0

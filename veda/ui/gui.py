@@ -49,6 +49,13 @@ class VedaGUI(ctk.CTk):
         self.right = RightPanel(self.main_content, None, self.theme, self.state_ref)
         self.right.grid(row=0, column=2, sticky="nsew", padx=2, pady=2)
 
+    def link_assistant(self, assistant):
+        """Injects assistant reference after bidirectional initialization."""
+        self.assistant = assistant
+        self.left.assistant = assistant
+        self.center.assistant = assistant
+        self.right.assistant = assistant
+
         # 3. Interactivity
         self.top_bar.bind("<Button-1>", self._start_drag)
         self.top_bar.bind("<B1-Motion>", self._drag)

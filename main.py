@@ -40,6 +40,7 @@ def main():
             def __init__(self):
                 self.gui = VedaGUI(on_send_callback=self.on_send, on_voice_callback=self.on_voice)
                 self.assistant = VedaAssistant(self.gui)
+                self.gui.link_assistant(self.assistant)
                 print(f"[SYSTEM]: Intelligence Linked.")
 
             def on_send(self, message):
