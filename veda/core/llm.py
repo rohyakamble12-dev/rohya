@@ -1,4 +1,8 @@
-import ollama
+try:
+    import ollama
+    OLLAMA_AVAILABLE = True
+except ImportError:
+    OLLAMA_AVAILABLE = False
 import json
 
 class VedaLLM:
@@ -20,6 +24,9 @@ class VedaLLM:
         """Generates a response from the LLM based on user input."""
         self.messages.append({"role": "user", "content": user_input})
 
+        if not OLLAMA_AVAILABLE:
+            return "Neural link offline: Ollama library not found. Operating in restricted survival mode."
+
         try:
             response = ollama.chat(
                 model=self.model,
@@ -37,6 +44,8 @@ class VedaLLM:
 
     def check_link(self):
         """Proactively checks if the Ollama link is active."""
+        if not OLLAMA_AVAILABLE:
+            return False
         try:
             ollama.list()
             return True
@@ -45,6 +54,9 @@ class VedaLLM:
 
     def extract_intent(self, user_input):
         """Extracts system intents via LLM."""
+        if not OLLAMA_AVAILABLE:
+            return {"intent": "none", "params": {}}
+
         intent_prompt = (
             "Analyze input for tactical system action. Output ONLY raw JSON. "
             "Intents: open_app, close_app, set_volume, set_brightness, web_search, weather, screenshot, "

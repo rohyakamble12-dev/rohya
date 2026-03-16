@@ -29,7 +29,7 @@ class TacticalFastPath:
                 r"where is ([\w\s.-]+)"
             ],
             "move": [
-                r"move ([\w\s./\\]+) to ([\w\s./\\]+)"
+                r"move ([\w\s.:/\\]+) to ([\w\s.:/\\]+)"
             ],
             "add_task": [
                 r"add ([\w\s.-]+) to my tasks",

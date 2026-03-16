@@ -1,8 +1,28 @@
 import asyncio
-import edge_tts
-import pyttsx3
-import speech_recognition as sr
-import pygame
+try:
+    import edge_tts
+    EDGE_TTS_AVAILABLE = True
+except ImportError:
+    EDGE_TTS_AVAILABLE = False
+
+try:
+    import pyttsx3
+    PYTTSX3_AVAILABLE = True
+except ImportError:
+    PYTTSX3_AVAILABLE = False
+
+try:
+    import speech_recognition as sr
+    SPEECH_REC_AVAILABLE = True
+except ImportError:
+    SPEECH_REC_AVAILABLE = False
+
+try:
+    import pygame
+    PYGAME_AVAILABLE = True
+except ImportError:
+    PYGAME_AVAILABLE = False
+
 import os
 import tempfile
 import threading
@@ -19,15 +39,25 @@ class VedaVoice:
     def __init__(self, online_voice="en-US-AvaNeural"):
         self.online_voice = online_voice
         self.speech_lock = threading.Lock()
-        self.recognizer = sr.Recognizer()
+
+        if SPEECH_REC_AVAILABLE:
+            self.recognizer = sr.Recognizer()
+        else:
+            self.recognizer = None
 
         # Resilient Audio Init
-        try:
-            self.offline_engine = pyttsx3.init()
-            pygame.mixer.init()
-        except Exception as e:
-            print(f"[SYSTEM]: Audio hardware link failed: {e}")
-            self.offline_engine = None
+        self.offline_engine = None
+        if PYTTSX3_AVAILABLE:
+            try:
+                self.offline_engine = pyttsx3.init()
+            except Exception as e:
+                print(f"[SYSTEM]: pyttsx3 init failed: {e}")
+
+        if PYGAME_AVAILABLE:
+            try:
+                pygame.mixer.init()
+            except Exception as e:
+                print(f"[SYSTEM]: Audio hardware link failed: {e}")
 
         # Load Vosk model if available
         self.vosk_model = None
@@ -40,6 +70,9 @@ class VedaVoice:
 
     async def _speak_online(self, text):
         """Uses Edge TTS to generate and play speech."""
+        if not EDGE_TTS_AVAILABLE:
+            raise ImportError("edge_tts not available")
+
         communicate = edge_tts.Communicate(text, self.online_voice)
         with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as tmp_file:
             await communicate.save(tmp_file.name)
@@ -56,6 +89,8 @@ class VedaVoice:
 
     def play_audio(self, file_path):
         """Plays an audio file using pygame."""
+        if not PYGAME_AVAILABLE:
+            return
         try:
             pygame.mixer.music.load(file_path)
             pygame.mixer.music.play()
@@ -75,6 +110,9 @@ class VedaVoice:
 
     def listen(self):
         """Tiered recognition: Google (Online) -> Vosk (Offline)."""
+        if not SPEECH_REC_AVAILABLE:
+            return "None"
+
         try:
             with sr.Microphone() as source:
                 print("[LISTENING]...")

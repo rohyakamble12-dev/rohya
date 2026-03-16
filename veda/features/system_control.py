@@ -1,10 +1,15 @@
 import os
 import subprocess
-import pyautogui
 import time
 import shutil
 import ctypes
 from veda.utils.sanitizer import VedaSanitizer
+
+try:
+    import pyautogui
+    PYAUTOGUI_AVAILABLE = True
+except ImportError:
+    PYAUTOGUI_AVAILABLE = False
 
 try:
     import pygetwindow as gw
@@ -129,6 +134,8 @@ class SystemControl:
         except: return "Notification link failed."
 
     def screenshot(self, params=None):
+        if not PYAUTOGUI_AVAILABLE:
+            return "Screenshot capability offline: pyautogui not installed."
         try:
             pic_dir = os.path.join(os.path.expanduser("~"), "Pictures")
             if not os.path.exists(pic_dir): os.makedirs(pic_dir)

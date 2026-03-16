@@ -11,8 +11,8 @@ from veda.ui.theme import VedaTheme, VedaState
 logger = logging.getLogger("VEDA")
 
 class CenterPanel(VedaPanel):
-    def __init__(self, master, assistant, theme: VedaTheme, state_ref: VedaState):
-        super().__init__(master, "Neural Core", theme, state_ref)
+    def __init__(self, master, assistant, theme: VedaTheme, state_ref: VedaState, **kwargs):
+        super().__init__(master, "Neural Core", theme, state_ref, **kwargs)
         self.assistant = assistant
         self.colors = {"idle": theme.idle, "thinking": theme.thinking, "speaking": theme.speaking, "alert": theme.alert}
 

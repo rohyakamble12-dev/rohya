@@ -21,7 +21,7 @@ class VedaAssistant:
 
     def get_protocols(self):
         """Public getter for protocol states."""
-        return self.gui.state.protocols
+        return self.gui.state_ref.protocols
 
     def process_command(self, user_input):
         """Processes a user command via the tiered pipeline."""

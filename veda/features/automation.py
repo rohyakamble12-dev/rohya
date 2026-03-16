@@ -1,8 +1,18 @@
-import pyperclip
+try:
+    import pyperclip
+    PYPERCLIP_AVAILABLE = True
+except ImportError:
+    PYPERCLIP_AVAILABLE = False
+
+try:
+    from pynput import mouse, keyboard
+    PYNPUT_AVAILABLE = True
+except ImportError:
+    PYNPUT_AVAILABLE = False
+
 import json
 import os
 import threading
-from pynput import mouse, keyboard
 
 class AutomationPlugin:
     def __init__(self, assistant):
@@ -21,11 +31,15 @@ class AutomationPlugin:
         }
 
     def copy_to_clipboard(self, params):
+        if not PYPERCLIP_AVAILABLE:
+            return "Clipboard capability offline: pyperclip not installed."
         text = params.get("text", "")
         pyperclip.copy(text)
         return "Copied to clipboard."
 
     def get_clipboard(self, params=None):
+        if not PYPERCLIP_AVAILABLE:
+            return "Clipboard capability offline: pyperclip not installed."
         return f"Clipboard content: {pyperclip.paste()}"
 
     def start_recording(self, params=None):

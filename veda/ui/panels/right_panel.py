@@ -7,8 +7,8 @@ from veda.ui.theme import VedaTheme, VedaState
 logger = logging.getLogger("VEDA")
 
 class RightPanel(VedaPanel):
-    def __init__(self, master, assistant, theme: VedaTheme, state_ref: VedaState):
-        super().__init__(master, "Tactical Feed", theme, state_ref)
+    def __init__(self, master, assistant, theme: VedaTheme, state_ref: VedaState, **kwargs):
+        super().__init__(master, "Tactical Feed", theme, state_ref, **kwargs)
         self.assistant = assistant
         self.token_queue = queue.Queue()
         self.active_textbox = None
@@ -38,7 +38,6 @@ class RightPanel(VedaPanel):
         label = ctk.CTkLabel(frame, text=sender.upper(), font=self.theme.font_header, text_color=self.accent_color)
         label.pack(anchor="w", padx=15, pady=(8,0))
 
-        # O(1) text insertion system using CTkTextbox
         txt = ctk.CTkTextbox(frame, font=self.theme.font_chat, height=20, border_width=0, fg_color="transparent", wrap="word")
         txt.pack(fill="both", expand=True, padx=10, pady=5)
 

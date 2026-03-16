@@ -1,4 +1,8 @@
-import wikipedia
+try:
+    import wikipedia
+    WIKIPEDIA_AVAILABLE = True
+except ImportError:
+    WIKIPEDIA_AVAILABLE = False
 
 class KnowledgePlugin:
     def __init__(self, assistant):
@@ -10,6 +14,8 @@ class KnowledgePlugin:
         }
 
     def search_wikipedia(self, params):
+        if not WIKIPEDIA_AVAILABLE:
+            return "Knowledge link offline: wikipedia library not installed."
         query = params.get("query", "")
         if not query: return "Topic missing."
 
