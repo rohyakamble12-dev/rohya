@@ -3,14 +3,17 @@ from veda.ui.theme import VedaTheme, VedaState
 
 class VedaPanel(ctk.CTkFrame):
     def __init__(self, master, title: str, theme: VedaTheme, state_ref: VedaState, **kwargs):
-        super().__init__(
-            master,
-            fg_color=theme.bg_panel,
-            border_color=theme.border_main,
-            border_width=1,
-            corner_radius=0,
-            **kwargs
-        )
+        # Establish default tactical parameters
+        params = {
+            "fg_color": theme.bg_panel,
+            "border_color": theme.border_main,
+            "border_width": 1,
+            "corner_radius": 0
+        }
+        # Allow kwargs to override defaults (prevents multiple values for same key)
+        params.update(kwargs)
+
+        super().__init__(master, **params)
         self.theme = theme
         self.state_ref = state_ref
         self.accent_widgets = []
