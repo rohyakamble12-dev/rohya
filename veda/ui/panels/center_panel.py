@@ -11,8 +11,8 @@ from veda.ui.theme import VedaTheme, VedaState
 logger = logging.getLogger("VEDA")
 
 class CenterPanel(VedaPanel):
-    def __init__(self, master, assistant, theme: VedaTheme, state: VedaState):
-        super().__init__(master, "Neural Core", theme, state)
+    def __init__(self, master, assistant, theme: VedaTheme, state_ref: VedaState):
+        super().__init__(master, "Neural Core", theme, state_ref)
         self.assistant = assistant
         self.colors = {"idle": theme.idle, "thinking": theme.thinking, "speaking": theme.speaking, "alert": theme.alert}
 
@@ -49,8 +49,6 @@ class CenterPanel(VedaPanel):
                 self._draw_hex(x + offset, y, size)
 
     def _draw_hex(self, x, y, size):
-        pts = [x + size * math.cos(math.radians(i*60+30)) for i in range(6) for _ in (0,1)]
-        # flat zip alternative
         pts = []
         for i in range(6):
             ang = math.radians(i*60+30)
@@ -69,12 +67,14 @@ class CenterPanel(VedaPanel):
 
     def _animate(self):
         self.canvas.delete("globe"); self.canvas.delete("status")
-        color = self.colors.get(self.state.status, self.theme.idle)
-        speed = {"idle": 0.01, "thinking": 0.06, "speaking": 0.02, "alert": 0.15}.get(self.state.status, 0.01)
+        color = self.colors.get(self.state_ref.status, self.theme.idle)
+        speed = {"idle": 0.01, "thinking": 0.06, "speaking": 0.02, "alert": 0.15}.get(self.state_ref.status, 0.01)
         self.angle_y += speed
 
         t = time.time(); pulse = 1.0
-        if self.state.status == "idle": pulse = 1.0 + 0.05 * (math.pow(math.sin(t*2), 10) + math.pow(math.sin(t*2.1), 10))
+        if self.state_ref.status == "idle": pulse = 1.0 + 0.05 * (math.pow(math.sin(t*2), 10) + math.pow(math.sin(t*2.1), 10))
+        if self.state_ref.pulse_active: pulse *= 1.1 # Secondary pulse check
+
         scale = min(self.globe_cx, self.globe_cy) * 0.7 * pulse
 
         proj = []
@@ -89,12 +89,12 @@ class CenterPanel(VedaPanel):
             for n_idx in self.neighbors[i]:
                 n_pt = proj[n_idx]
                 if n_pt[2] < -0.2: continue
-                self.canvas.create_line(pt[0], pt[1], n_pt[0], n_pt[1], fill=color, tags="globe", stipple="gray50" if pt[2] < 0.2 else "")
+                self.canvas.create_line(pt[0], pt[1], n_pt[0], n_pt[1], fill=color, tags="globe")
             self.canvas.create_oval(pt[0]-2, pt[1]-2, pt[0]+2, pt[1]+2, fill=color, outline="", tags="globe")
 
         if random.random() > 0.99: self.canvas.create_rectangle(0,0,1000,1000, fill="white", tags="globe")
         self.after(40, self._animate)
 
     def _toggle_cam(self):
-        self.state.camera_active = not self.state.camera_active
-        self.btn_cam.configure(text_color=self.theme.idle if self.state.camera_active else "grey")
+        self.state_ref.camera_active = not self.state_ref.camera_active
+        self.btn_cam.configure(text_color=self.accent_color if self.state_ref.camera_active else "grey")

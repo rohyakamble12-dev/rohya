@@ -15,18 +15,21 @@ class VedaGUI(ctk.CTk):
     def __init__(self, on_send_callback, on_voice_callback):
         super().__init__()
         self.theme = VedaTheme()
-        self.state = VedaState()
+        self.state_ref = VedaState()
         self.on_send_callback = on_send_callback
         self.on_voice_callback = on_voice_callback
 
-        # 1. MCU Stark-Inspired HUD Configuration
+        # 1. Frameless HUD Config
         self.overrideredirect(True)
         self.attributes("-alpha", 0.92)
         self.geometry(f"{self.theme.window_width}x{self.theme.window_height}")
         self.configure(fg_color=self.theme.bg_main)
 
-        # 2. Main Layout Containers
-        self.top_bar = TopBar(self, self.theme, self.state)
+        # Initial state setup
+        self.attributes("-topmost", self.state_ref.topmost)
+
+        # 2. Structure
+        self.top_bar = TopBar(self, self.theme, self.state_ref)
         self.top_bar.pack(fill="x", side="top")
 
         self.main_content = ctk.CTkFrame(self, fg_color="transparent")
@@ -37,33 +40,53 @@ class VedaGUI(ctk.CTk):
         self.main_content.grid_columnconfigure(2, weight=1, minsize=340)
         self.main_content.grid_rowconfigure(0, weight=1)
 
-        # 3. Panels
-        self.left = LeftPanel(self.main_content, None, self.theme, self.state)
+        self.left = LeftPanel(self.main_content, None, self.theme, self.state_ref)
         self.left.grid(row=0, column=0, sticky="nsew", padx=2, pady=2)
 
-        self.center = CenterPanel(self.main_content, None, self.theme, self.state)
+        self.center = CenterPanel(self.main_content, None, self.theme, self.state_ref)
         self.center.grid(row=0, column=1, sticky="nsew", padx=2, pady=2)
 
-        self.right = RightPanel(self.main_content, None, self.theme, self.state)
+        self.right = RightPanel(self.main_content, None, self.theme, self.state_ref)
         self.right.grid(row=0, column=2, sticky="nsew", padx=2, pady=2)
 
-        # 4. Interaction Bindings
+        # 3. Interactivity
         self.top_bar.bind("<Button-1>", self._start_drag)
         self.top_bar.bind("<B1-Motion>", self._drag)
         self.bind("<Button-1>", self._start_drag)
         self.bind("<B1-Motion>", self._drag)
 
-        # 5. Initialization
         self.after(1000, self._start_background_tasks)
 
     def _start_drag(self, event):
-        self.x = event.x; self.y = event.y
+        self.drag_x = event.x; self.drag_y = event.y
 
     def _drag(self, event):
         try:
-            dx = event.x - self.x; dy = event.y - self.y
+            dx = event.x - self.drag_x; dy = event.y - self.drag_y
             self.geometry(f"+{self.winfo_x() + dx}+{self.winfo_y() + dy}")
         except: pass
+
+    def run_boot_sequence(self):
+        self.fade_in(0)
+        steps = [
+            "INITIALIZING VEDA KERNEL v4.2.0...",
+            "LINKING NEURAL ARCHITECTURE: [OK]",
+            "MOUNTING Modular Feature Set (18 Active)",
+            "CALIBRATING OPTICAL SENSORS...",
+            "SYSTEM READY. TACTICAL CORE ONLINE."
+        ]
+        overlay = ctk.CTkFrame(self, fg_color="#08080a", corner_radius=0)
+        overlay.place(relx=0, rely=0, relwidth=1, relheight=1)
+        txt = ctk.CTkTextbox(overlay, fg_color="transparent", font=("Consolas", 10), text_color="#00d4ff")
+        txt.pack(expand=True, fill="both", padx=50, pady=50)
+
+        def display_step(idx):
+            if idx < len(steps):
+                txt.insert("end", f"> {steps[idx]}\n")
+                self.after(400, lambda: display_step(idx + 1))
+            else:
+                self.after(500, overlay.destroy)
+        display_step(0)
 
     def _start_background_tasks(self):
         self.left.start_background_tasks()
@@ -73,14 +96,14 @@ class VedaGUI(ctk.CTk):
         while True:
             try:
                 socket.create_connection(("8.8.8.8", 53), timeout=2)
-                self.state.network_up = True
+                self.state_ref.network_up = True
             except:
-                self.state.network_up = False
-            self.after(0, lambda: self.right.update_ticker(f"LINK: {'ONLINE' if self.state.network_up else 'OFFLINE'}"))
+                self.state_ref.network_up = False
+            self.after(0, lambda: self.right.update_ticker(f"LINK: {'ONLINE' if self.state_ref.network_up else 'OFFLINE'}"))
             threading.Event().wait(10)
 
     def set_state(self, status):
-        self.state.status = status
+        self.state_ref.status = status
         color = getattr(self.theme, status, self.theme.idle)
         self.set_theme_color(color)
         if status == "thinking": self.right.show_typing(True)
@@ -91,6 +114,20 @@ class VedaGUI(ctk.CTk):
         self.left.refresh_theme(color)
         self.center.refresh_theme(color)
         self.right.refresh_theme(color)
+
+    def fade_in(self, alpha):
+        if alpha < 0.92:
+            alpha += 0.05
+            self.attributes("-alpha", alpha)
+            self.after(50, lambda: self.fade_in(alpha))
+
+    def fade_out(self, alpha):
+        if alpha > 0:
+            alpha -= 0.05
+            self.attributes("-alpha", alpha)
+            self.after(30, lambda: self.fade_out(alpha))
+        else:
+            self.destroy(); sys.exit(0)
 
     def update_chat(self, sender, message):
         is_user = sender.lower() in ["operator", "you"]
@@ -104,6 +141,6 @@ class VedaGUI(ctk.CTk):
             threading.Thread(target=self.on_send_callback, args=(cmd,), daemon=True).start()
 
     def terminate(self):
-        self.left.release_camera()
-        print("[SYSTEM]: Core offloaded. Terminating link.")
-        self.destroy(); sys.exit(0)
+        self.left.stop()
+        print("[SYSTEM]: Termination sequence complete.")
+        self.fade_out(0.92)

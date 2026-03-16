@@ -7,8 +7,8 @@ from veda.ui.theme import VedaTheme, VedaState
 logger = logging.getLogger("VEDA")
 
 class RightPanel(VedaPanel):
-    def __init__(self, master, assistant, theme: VedaTheme, state: VedaState):
-        super().__init__(master, "Tactical Feed", theme, state)
+    def __init__(self, master, assistant, theme: VedaTheme, state_ref: VedaState):
+        super().__init__(master, "Tactical Feed", theme, state_ref)
         self.assistant = assistant
         self.token_queue = queue.Queue()
         self.active_textbox = None
@@ -38,7 +38,7 @@ class RightPanel(VedaPanel):
         label = ctk.CTkLabel(frame, text=sender.upper(), font=self.theme.font_header, text_color=self.accent_color)
         label.pack(anchor="w", padx=15, pady=(8,0))
 
-        # Scrollable bubble logic
+        # O(1) text insertion system using CTkTextbox
         txt = ctk.CTkTextbox(frame, font=self.theme.font_chat, height=20, border_width=0, fg_color="transparent", wrap="word")
         txt.pack(fill="both", expand=True, padx=10, pady=5)
 
@@ -51,14 +51,16 @@ class RightPanel(VedaPanel):
         return txt
 
     def _resize_bubble(self, txt):
-        line_count = int(txt.index('end-1c').split('.')[0])
-        height = min(300, max(45, line_count * 22))
-        txt.configure(height=height)
+        try:
+            line_count = int(txt.index('end-1c').split('.')[0])
+            height = min(300, max(45, line_count * 22))
+            txt.configure(height=height)
+        except: pass
 
     def start_streaming(self, sender):
         self.show_typing(False)
         self.add_message(sender, text="")
-        self.active_textbox.configure(state="normal")
+        if self.active_textbox: self.active_textbox.configure(state="normal")
 
     def queue_token(self, token):
         self.token_queue.put(token)
@@ -86,3 +88,6 @@ class RightPanel(VedaPanel):
             self.typing_dots = {"·  ": "·· ", "·· ": "···", "···": "·  "}[self.typing_dots]
             self.typing_label.configure(text=self.typing_dots)
             self.after(400, self._animate_typing)
+
+    def update_ticker(self, text):
+        self.ticker.configure(text=text.upper())
