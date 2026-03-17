@@ -21,3 +21,8 @@ Pillow
 schedule
 opencv-python
 numpy
+deep-translator
+comtypes
+win10toast
+darkdetect
+keyboard

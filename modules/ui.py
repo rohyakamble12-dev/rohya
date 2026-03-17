@@ -42,23 +42,33 @@ class VedaHUD(ctk.CTk):
         self.side = ctk.CTkFrame(self, fg_color="#08080c", corner_radius=0, border_width=1, border_color="#1a1a25")
         self.side.grid(row=0, column=0, sticky="nsew", padx=2, pady=2)
 
-        ctk.CTkLabel(self.side, text="SYSTEM INTEGRITY", font=("Orbitron", 14, "bold"), text_color="#00d4ff").pack(pady=20)
+        # 1. Optic Feed Placeholder
+        self.cam_f = ctk.CTkFrame(self.side, fg_color="black", height=140, border_width=1, border_color="#1a1a25")
+        self.cam_f.pack(fill="x", padx=10, pady=10)
+        ctk.CTkLabel(self.cam_f, text="OPTIC FEED", font=("Orbitron", 8), text_color="#333333").place(relx=0.5, rely=0.5, anchor="center")
 
+        # 2. System Links
         self.links = {}
         for link in ["NEURAL", "OPTIC", "VOICE", "DATA"]:
             f = ctk.CTkFrame(self.side, fg_color="transparent")
-            f.pack(fill="x", padx=20, pady=8)
-            ctk.CTkLabel(f, text=link + " LINK", font=("Consolas", 10), text_color="#666666").pack(side="left")
-            val = ctk.CTkLabel(f, text="READY", font=("Consolas", 10), text_color="#00ffcc")
+            f.pack(fill="x", padx=20, pady=4)
+            ctk.CTkLabel(f, text=link, font=("Consolas", 9), text_color="#666666").pack(side="left")
+            val = ctk.CTkLabel(f, text="READY", font=("Consolas", 9), text_color="#00ffcc")
             val.pack(side="right")
             self.links[link] = val
 
-        # High-Density Metrics Bar
+        # 3. Hardware Metrics
         self.metrics_f = ctk.CTkFrame(self.side, fg_color="transparent")
-        self.metrics_f.pack(fill="both", expand=True, padx=20, pady=30)
-
+        self.metrics_f.pack(fill="x", padx=20, pady=10)
         self.cpu_bar = self._add_metric("CORE LOAD")
         self.ram_bar = self._add_metric("MEM ALLOC")
+
+        # 4. Protocol Toggles
+        ctk.CTkLabel(self.side, text="PROTOCOLS", font=("Orbitron", 10, "bold"), text_color="#00d4ff").pack(pady=(20, 5))
+        for proto in ["STEALTH", "FOCUS", "GAMING"]:
+            cb = ctk.CTkCheckBox(self.side, text=proto, font=("Orbitron", 8), border_width=1, corner_radius=0,
+                                 checkbox_height=14, checkbox_width=14, text_color="#cccccc")
+            cb.pack(anchor="w", padx=30, pady=3)
 
     def _add_metric(self, label):
         ctk.CTkLabel(self.metrics_f, text=label, font=("Orbitron", 8), text_color="#666666").pack(anchor="w", pady=(10, 2))
@@ -77,7 +87,6 @@ class VedaHUD(ctk.CTk):
 
         self.canvas = tk.Canvas(self.core_f, bg="#050508", highlightthickness=0)
         self.canvas.place(relx=0.5, rely=0.5, anchor="center", width=500, height=500)
-        self.canvas.config(bg="") # Transparency mask
 
         self.points = []; self.neighbors = []; self.angle_y = 0
         self.globe_cx = 250; self.globe_cy = 250
@@ -112,26 +121,36 @@ class VedaHUD(ctk.CTk):
     def add_message(self, role, text):
         align = "e" if role == "User" else "w"
         # WhatsApp/Gemini Colors
-        bg_color = "#128C7E" if role == "User" else "#1f1f2e"
+        bg_color = "#056162" if role == "User" else "#1f1f2e"
         text_color = "#ffffff"
 
-        frame = ctk.CTkFrame(self.chat_scroll, fg_color="transparent")
-        frame.pack(fill="x", pady=8, padx=10)
+        timestamp = time.strftime("%H:%M")
 
-        bubble = ctk.CTkFrame(frame, fg_color=bg_color, corner_radius=15)
+        frame = ctk.CTkFrame(self.chat_scroll, fg_color="transparent")
+        frame.pack(fill="x", pady=4, padx=10)
+
+        bubble = ctk.CTkFrame(frame, fg_color=bg_color, corner_radius=12)
         bubble.pack(anchor=align, padx=5)
 
         if role != "User":
-            # Gemini-style label
-            ctk.CTkLabel(bubble, text="VEDA", font=("Orbitron", 8, "bold"), text_color="#00d4ff").pack(anchor="w", padx=12, pady=(5, 0))
+            # Gemini-style Gradient Label (Simulated with Cyan)
+            ctk.CTkLabel(bubble, text="✦ VEDA", font=("Orbitron", 8, "bold"), text_color="#00d4ff").pack(anchor="w", padx=12, pady=(5, 0))
 
         msg = ctk.CTkLabel(bubble, text=text, font=("Segoe UI", 11), text_color=text_color, wraplength=220, justify="left")
-        msg.pack(padx=12, pady=8)
+        msg.pack(padx=12, pady=(2, 5))
+
+        # WhatsApp style timestamp and ticks
+        meta_f = ctk.CTkFrame(bubble, fg_color="transparent")
+        meta_f.pack(anchor="e", padx=10, pady=(0, 5))
+        ctk.CTkLabel(meta_f, text=timestamp, font=("Segoe UI", 7), text_color="#888888").pack(side="left")
+        if role == "User":
+            ctk.CTkLabel(meta_f, text=" ✓✓", font=("Segoe UI", 7), text_color="#34B7F1").pack(side="left")
 
         self.chat_scroll._parent_canvas.yview_moveto(1.0)
 
     def set_state(self, status):
-        self.status = status
+        valid_states = ["idle", "thinking", "speaking", "alert"]
+        self.status = status if status in valid_states else "idle"
 
     def _animate_aura(self):
         self.aura.delete("glow")

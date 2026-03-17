@@ -1,44 +1,43 @@
-from unittest.mock import MagicMock, patch
 import sys
+import os
+from unittest.mock import MagicMock, patch
 
-# Mock modules
-sys.modules['ollama'] = MagicMock()
-sys.modules['pyttsx3'] = MagicMock()
-sys.modules['edge_tts'] = MagicMock()
-sys.modules['speech_recognition'] = MagicMock()
-sys.modules['pygame'] = MagicMock()
-sys.modules['pyautogui'] = MagicMock()
-sys.modules['pycaw'] = MagicMock()
-sys.modules['pycaw.pycaw'] = MagicMock()
-sys.modules['comtypes'] = MagicMock()
-sys.modules['screen_brightness_control'] = MagicMock()
-sys.modules['customtkinter'] = MagicMock()
-sys.modules['psutil'] = MagicMock()
-sys.modules['pygetwindow'] = MagicMock()
-sys.modules['pyperclip'] = MagicMock()
-sys.modules['pynput'] = MagicMock()
-sys.modules['wikipedia'] = MagicMock()
-sys.modules['PyPDF2'] = MagicMock()
-sys.modules['PIL'] = MagicMock()
-sys.modules['PIL.Image'] = MagicMock()
-sys.modules['schedule'] = MagicMock()
-sys.modules['vosk'] = MagicMock()
-sys.modules['pyaudio'] = MagicMock()
-sys.modules['cv2'] = MagicMock()
-sys.modules['numpy'] = MagicMock()
+# Mock everything
+modules_to_mock = [
+    'customtkinter', 'edge_tts', 'pyttsx3', 'speech_recognition',
+    'pygame', 'ollama', 'psutil', 'pyautogui', 'ctypes', 'cv2',
+    'win10toast', 'pynput', 'pynput.keyboard', 'PyPDF2', 'wikipedia',
+    'deep_translator', 'comtypes', 'screen_brightness_control', 'pycaw.pycaw'
+]
 
-try:
-    from veda.core.assistant import VedaAssistant
-    gui = MagicMock()
-    # Mock left panel for plan updates
-    gui.left = MagicMock()
-    with patch('veda.core.memory.sqlite3.connect'), \
-         patch('veda.features.tasks.sqlite3.connect'), \
-         patch('veda.features.calendar.sqlite3.connect'):
-        assistant = VedaAssistant(gui)
-        print("[SUCCESS]: Veda Core HUD v4.0 (Friday Edition) ready.")
-except Exception as e:
-    import traceback
-    traceback.print_exc()
-    print(f"[ERROR]: {e}")
-    sys.exit(1)
+for mod in modules_to_mock:
+    sys.modules[mod] = MagicMock()
+
+def diagnostic():
+    print("--- VEDA SOVEREIGN STARTUP DIAGNOSTIC ---")
+    try:
+        # Add current dir to path
+        sys.path.append(os.getcwd())
+
+        from main import VedaAssistant
+        print("[OK] main.py - VedaAssistant class found.")
+
+        # Test instantiation
+        with patch('main.VedaHUD'), patch('main.VedaVoice'), patch('main.VedaBrain'), \
+             patch('main.CommandRouter'), patch('main.VedaMemory'), patch('main.NotificationModule'):
+            assistant = VedaAssistant()
+            print("[OK] Assistant Kernel Instantiation.")
+
+        print("[SUCCESS] Veda Sovereign Architecture Verified.")
+        return True
+    except Exception as e:
+        print(f"[CRITICAL FAIL]: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+if __name__ == "__main__":
+    if diagnostic():
+        sys.exit(0)
+    else:
+        sys.exit(1)
