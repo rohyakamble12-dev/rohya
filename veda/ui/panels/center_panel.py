@@ -34,6 +34,9 @@ class CenterPanel(VedaPanel):
         self.canvas.bind("<Configure>", self._on_resize)
         self.canvas.create_text(200, 200, text="CALIBRATING NEURAL MESH...", fill=theme.idle, font=theme.font_data, tags="status")
 
+        # Glitch effect variables
+        self.glitch_active = False
+
         threading.Thread(target=self._init_sphere, daemon=True).start()
 
     def _on_resize(self, event):
@@ -86,14 +89,34 @@ class CenterPanel(VedaPanel):
 
         for i, pt in enumerate(proj):
             if pt[2] < -0.2: continue
+
+            # Draw particle flicker
+            if random.random() > 0.95:
+                offset = random.uniform(-10, 10)
+                self.canvas.create_oval(pt[0]+offset-1, pt[1]+offset-1, pt[0]+offset+1, pt[1]+offset+1, fill="white", outline="", tags="globe")
+
             for n_idx in self.neighbors[i]:
                 n_pt = proj[n_idx]
                 if n_pt[2] < -0.2: continue
-                self.canvas.create_line(pt[0], pt[1], n_pt[0], n_pt[1], fill=color, tags="globe")
+                self.canvas.create_line(pt[0], pt[1], n_pt[0], n_pt[1], fill=color, tags="globe", width=1)
             self.canvas.create_oval(pt[0]-2, pt[1]-2, pt[0]+2, pt[1]+2, fill=color, outline="", tags="globe")
 
-        if random.random() > 0.99: self.canvas.create_rectangle(0,0,1000,1000, fill="white", tags="globe")
+        # Random Digital Glitch
+        if random.random() > 0.98 or self.glitch_active:
+            self._draw_glitch()
+
         self.after(40, self._animate)
+
+    def _draw_glitch(self):
+        self.glitch_active = not self.glitch_active
+        if not self.glitch_active: return
+
+        for _ in range(3):
+            x1 = random.randint(0, int(self.globe_cx*2))
+            y1 = random.randint(0, int(self.globe_cy*2))
+            w = random.randint(50, 150)
+            h = random.randint(1, 4)
+            self.canvas.create_rectangle(x1, y1, x1+w, y1+h, fill=self.accent_color, outline="", tags="globe")
 
     def _toggle_cam(self):
         self.state_ref.camera_active = not self.state_ref.camera_active

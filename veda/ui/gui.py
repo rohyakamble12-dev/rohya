@@ -13,6 +13,12 @@ logger = logging.getLogger("VEDA")
 
 class VedaGUI(ctk.CTk):
     def __init__(self, on_send_callback, on_voice_callback):
+        # Apply Stark Theme before init
+        ctk.set_appearance_mode("Dark")
+        theme_path = os.path.join(os.path.dirname(__file__), "stark_theme.json")
+        if os.path.exists(theme_path):
+            ctk.set_default_color_theme(theme_path)
+
         super().__init__()
         self.theme = VedaTheme()
         self.state_ref = VedaState()
@@ -76,10 +82,12 @@ class VedaGUI(ctk.CTk):
     def run_boot_sequence(self):
         self.fade_in(0)
         steps = [
-            "INITIALIZING VEDA KERNEL v4.2.0...",
+            "INITIALIZING VEDA KERNEL v4.2.1...",
+            "ESTABLISHING SECURE STARK PROTOCOL...",
             "LINKING NEURAL ARCHITECTURE: [OK]",
-            "MOUNTING Modular Feature Set (18 Active)",
+            "MOUNTING MODULAR FEATURE SET (46 INTENTS)",
             "CALIBRATING OPTICAL SENSORS...",
+            "SYNCHRONIZING VOICELINE (AVA-NEURAL)...",
             "SYSTEM READY. TACTICAL CORE ONLINE."
         ]
         overlay = ctk.CTkFrame(self, fg_color="#08080a", corner_radius=0)
@@ -89,10 +97,11 @@ class VedaGUI(ctk.CTk):
 
         def display_step(idx):
             if idx < len(steps):
-                txt.insert("end", f"> {steps[idx]}\n")
+                txt.insert("end", f"[ {idx*15}% ] > {steps[idx]}\n")
+                txt.see("end")
                 self.after(400, lambda: display_step(idx + 1))
             else:
-                self.after(500, overlay.destroy)
+                self.after(800, overlay.destroy)
         display_step(0)
 
     def _start_background_tasks(self):

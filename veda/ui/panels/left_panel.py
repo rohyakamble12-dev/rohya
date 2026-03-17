@@ -35,10 +35,14 @@ class LeftPanel(VedaPanel):
         self._create_metric("DSK", "dsk")
         self._create_metric("NET", "net")
 
-        # 3. Subsystem Metrics
-        self.obs_box = ctk.CTkTextbox(self, height=100, font=theme.font_chat, fg_color="#050507", border_width=1, border_color=theme.border_main)
-        self.obs_box.pack(fill="x", padx=10, pady=10)
-        self.obs_box.configure(state="disabled")
+        # 3. Subsystem Metrics (Link Status)
+        self.link_frame = ctk.CTkFrame(self, fg_color="#050507", border_width=1, border_color=theme.border_main)
+        self.link_frame.pack(fill="x", padx=10, pady=10)
+        self.link_labels = {}
+        self._add_link_status("NEURAL LINK", "neural")
+        self._add_link_status("OPTIC LINK", "optic")
+        self._add_link_status("VOICE LINK", "voice")
+        self._add_link_status("DATA LINK", "data")
 
         # 4. Tactical Plan
         self.plan_label = ctk.CTkLabel(self, text="TACTICAL PLAN", font=theme.font_header)
@@ -90,14 +94,30 @@ class LeftPanel(VedaPanel):
                 logger.warning(f"Metrics worker error: {e}")
             time.sleep(2)
 
+    def _add_link_status(self, text, key):
+        f = ctk.CTkFrame(self.link_frame, fg_color="transparent")
+        f.pack(fill="x", padx=10, pady=2)
+        ctk.CTkLabel(f, text=text, font=self.theme.font_terminal, text_color="#666666").pack(side="left")
+        status = ctk.CTkLabel(f, text="LINKING...", font=self.theme.font_terminal, text_color=self.theme.thinking)
+        status.pack(side="right")
+        self.link_labels[key] = status
+
     def _update_ui(self, cpu, ram, dsk, net):
         self.bars['cpu'].set(cpu/100); self.bars['ram'].set(ram/100)
         self.bars['dsk'].set(dsk/100); self.bars['net'].set(net)
 
-        self.obs_box.configure(state="normal")
-        self.obs_box.delete("1.0", "end")
-        self.obs_box.insert("1.0", f"THREADS: {threading.active_count()} ACTIVE\nGOVERNANCE: PASSIVE\nSELF-HEAL: ENABLED\nROLLBACK: READY")
-        self.obs_box.configure(state="disabled")
+        # Update Link Statuses
+        self._update_link("neural", self.state_ref.neural_link)
+        self._update_link("optic", self.state_ref.camera_active)
+        self._update_link("voice", self.state_ref.mic_active)
+        self._update_link("data", self.state_ref.network_up)
+
+    def _update_link(self, key, active):
+        label = self.link_labels.get(key)
+        if label:
+            text = "ACTIVE" if active else "OFFLINE"
+            color = self.accent_color if active else self.theme.alert
+            label.configure(text=text, text_color=color)
 
     def _camera_worker(self):
         backend = cv2.CAP_DSHOW if sys.platform == "win32" else cv2.CAP_ANY

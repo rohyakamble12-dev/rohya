@@ -38,6 +38,7 @@ class VedaAssistant:
 
         # Update UI to thinking state
         self.gui.set_state("thinking")
+        self.gui.state_ref.neural_link = self.llm.check_link()
 
         # 1. Update Execution Plan Visualizer
         self.gui.left.update_plan(f"Resolving intent: {cleaned_input[:20]}...")

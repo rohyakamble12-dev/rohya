@@ -12,24 +12,25 @@ class VedaTheme:
     border_main: str = "#1a1a20"
     border_grid: str = "#1a1a25"
 
-    # State Colors
-    idle: str = "#00d4ff"
-    thinking: str = "#ffcc00"
-    speaking: str = "#00ff7f"
-    alert: str = "#ff4b2b"
+    # State Colors (Friday Holographic Palette)
+    idle: str = "#00d4ff"      # Tactical Teal
+    thinking: str = "#ff8c00"  # Holographic Orange
+    speaking: str = "#00ffcc"  # Neural Mint
+    alert: str = "#ff3e3e"     # Hazard Red
 
     # Bubble Colors
     user_bubble: str = "#1a1a25"
     assistant_bubble: str = "#0a0a15"
     system_bubble: str = "#201010"
 
-    # Fonts
+    # Fonts (High-Density Tactical Design)
     # Orbitron for headers/labels, Consolas for data/chat
-    font_header: Tuple = ("Orbitron", 9, "bold")
-    font_label: Tuple = ("Orbitron", 8)
+    font_header: Tuple = ("Orbitron", 10, "bold")
+    font_label: Tuple = ("Orbitron", 8, "normal")
     font_metrics: Tuple = ("Consolas", 9, "bold")
     font_chat: Tuple = ("Consolas", 11)
     font_data: Tuple = ("Consolas", 10)
+    font_terminal: Tuple = ("Consolas", 8)
     font_timestamp: Tuple = ("Consolas", 7)
 
     # Sizes
