@@ -3,17 +3,23 @@ import speech_recognition as sr
 
 class VedaVoice:
     def __init__(self, config):
-        self.online_voice = config['preferences']['voice']['online_voice']
+        # Force high-quality female voice
+        self.online_voice = "en-US-AvaNeural"
         self.wake_word = config['preferences']['voice']['wake_word']
         self.recognizer = sr.Recognizer()
         self.mic = sr.Microphone()
 
-        # Pre-calibrate ambient noise
         with self.mic as source:
             self.recognizer.adjust_for_ambient_noise(source, duration=1)
 
         try:
             self.offline_engine = pyttsx3.init()
+            # Find a female offline voice
+            voices = self.offline_engine.getProperty('voices')
+            for voice in voices:
+                if "female" in voice.name.lower() or "zira" in voice.name.lower():
+                    self.offline_engine.setProperty('voice', voice.id)
+                    break
             pygame.mixer.init()
         except: self.offline_engine = None
 
@@ -42,5 +48,4 @@ class VedaVoice:
         except: return ""
 
     def listen_passive(self):
-        """Optimized passive listener with minimal overhead."""
         return self.wake_word in self.listen(timeout=2).lower()
