@@ -1,64 +1,101 @@
 import sys
 import os
-import subprocess
-import ctypes
+import json
+import logging
+import threading
+import time
+from modules.ui import VedaHUD
+from modules.voice import VedaVoice
+from modules.brain import VedaBrain
+from modules.commands import CommandRouter
+from modules.memory import VedaMemory
+from modules.notifications import NotificationModule
 
-def show_error(title, message):
-    """Shows a native Windows message box."""
-    try:
-        ctypes.windll.user32.MessageBoxW(0, message, title, 0x10)
-    except:
-        print(f"\n[CRITICAL ERROR]: {title}\n{message}")
+class VedaAssistant:
+    def __init__(self):
+        self.load_config()
+        self.setup_logging()
 
-def pre_flight_check():
-    """Verifies critical modules before attempting to load the UI."""
-    required = ["customtkinter", "PIL", "psutil", "cv2"]
-    missing = []
+        # Core Subsystems
+        self.memory = VedaMemory()
+        self.brain = VedaBrain()
+        self.voice = VedaVoice(self.config)
+        self.gui = VedaHUD(self.config, self.process_command)
+        self.notif = NotificationModule(self.gui)
+        self.router = CommandRouter(self)
 
-    for module in required:
-        try:
-            __import__(module if module != "cv2" else "cv2")
-        except ImportError:
-            missing.append(module)
+        # Post-init link
+        self.brain.ensure_ollama()
 
-    if missing:
-        msg = f"Critical Tactical Links Missing: {', '.join(missing)}\n\nPlease run 'python install_deps.py' or 'repair_veda.bat' to re-establish connections."
-        show_error("VEDA CORE - LINK FAILURE", msg)
-        return False
-    return True
+    def load_config(self):
+        if not os.path.exists("config.json"):
+            # Fallback default config
+            self.config = {
+                "identity": {"name": "Veda", "version": "5.0.0"},
+                "preferences": {
+                    "appearance": {"transparency": 0.92, "always_on_top": True},
+                    "voice": {"online_voice": "en-US-AvaNeural", "wake_word": "hey veda", "offline_rate": 180}
+                }
+            }
+        else:
+            with open("config.json", "r") as f:
+                self.config = json.load(f)
 
-def main():
-    if not pre_flight_check():
-        sys.exit(1)
+    def setup_logging(self):
+        logging.basicConfig(
+            filename="veda.log",
+            level=logging.INFO,
+            format="%(asctime)s [%(levelname)s] %(message)s"
+        )
 
-    try:
-        # Import core only after flight check
-        from veda.ui.gui import VedaGUI
-        from veda.core.assistant import VedaAssistant
+    def process_command(self, user_input):
+        logging.info(f"User Input: {user_input}")
 
-        class VedaController:
-            def __init__(self):
-                self.gui = VedaGUI(on_send_callback=self.on_send, on_voice_callback=self.on_voice)
-                self.assistant = VedaAssistant(self.gui)
-                self.gui.link_assistant(self.assistant)
-                print(f"[SYSTEM]: Intelligence Linked.")
+        # 1. Classify Intent
+        category = self.brain.classify_intent(user_input)
 
-            def on_send(self, message):
-                return self.assistant.process_command(message)
+        response = None
+        if category in ["command", "search", "productivity", "calculation"]:
+            # 2. Extract specific intent and params via LLM
+            intent_data = self.brain.extract_params(user_input)
+            response = self.router.route(intent_data)
 
-            def on_voice(self):
-                self.assistant.listen_and_process()
+        # 3. Fallback to Conversation
+        if not response:
+            history = self.memory.get_context()
+            response = self.brain.chat(user_input, history)
 
-            def run(self):
-                self.gui.run_boot_sequence()
-                self.gui.mainloop()
+        # 4. Finalize
+        self.memory.log_interaction("user", user_input)
+        self.memory.log_interaction("assistant", response)
 
-        controller = VedaController()
-        controller.run()
+        # Thread-safe UI update
+        self.gui.after(0, lambda: self.gui.add_message("Veda", response))
 
-    except Exception as e:
-        show_error("VEDA CORE - KERNEL PANIC", f"An unexpected error collapsed the neural link:\n{str(e)}")
-        sys.exit(1)
+        # Vocalize
+        self.voice.speak(response)
+        logging.info(f"Veda Response: {response}")
+
+    def run(self):
+        self.notif.notify("Systems initialized. Stark Protocol active.", "VEDA ONLINE")
+        # Start passive wake word listener in background
+        threading.Thread(target=self.wake_word_loop, daemon=True).start()
+        self.gui.start()
+
+    def wake_word_loop(self):
+        while True:
+            if self.voice.listen_passive():
+                self.gui.after(0, lambda: self.gui.add_message("System", "Wake word detected."))
+                # Future: trigger active listening state
+            time.sleep(0.5)
+
+    def notify(self, message):
+        self.notif.notify(message)
 
 if __name__ == "__main__":
-    main()
+    try:
+        assistant = VedaAssistant()
+        assistant.run()
+    except Exception as e:
+        logging.critical(f"KERNEL PANIC: {e}")
+        print(f"CRITICAL ERROR: {e}")

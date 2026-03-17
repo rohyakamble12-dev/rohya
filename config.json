@@ -1,0 +1,31 @@
+{
+    "identity": {
+        "name": "Veda",
+        "persona": "Professional, concise, Jarvis-inspired artificial intelligence.",
+        "version": "5.0.0"
+    },
+    "preferences": {
+        "hotkeys": {
+            "trigger": "ctrl+alt+v"
+        },
+        "appearance": {
+            "theme": "Stark",
+            "transparency": 0.92,
+            "always_on_top": true,
+            "mini_mode": false
+        },
+        "voice": {
+            "wake_word": "hey veda",
+            "online_voice": "en-US-AvaNeural",
+            "offline_rate": 180
+        }
+    },
+    "webhooks": {
+        "iot_device_1": "http://192.168.1.100/trigger"
+    },
+    "paths": {
+        "storage": "storage/",
+        "captures": "captures/",
+        "logs": "veda.log"
+    }
+}
