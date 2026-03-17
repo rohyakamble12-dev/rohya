@@ -21,7 +21,7 @@ class VedaAssistant:
         self.memory = VedaMemory()
         self.brain = VedaBrain()
         self.voice = VedaVoice(self.config)
-        self.gui = VedaHUD(self.config, self.process_command)
+        self.gui = VedaHUD(self.config, self)
         self.notif = NotificationModule(self.gui)
         self.router = CommandRouter(self)
 
@@ -73,6 +73,7 @@ class VedaAssistant:
 
     def process_command(self, user_input):
         logging.info(f"Command Received: {user_input}")
+        self.gui.after(0, lambda: self.gui.set_state("thinking"))
 
         # 1. Classification
         category = self.brain.classify_intent(user_input)
@@ -95,13 +96,33 @@ class VedaAssistant:
         self.memory.log_interaction("assistant", response)
 
         # UI & Voice
+        self.gui.after(0, lambda: self.gui.set_state("speaking"))
         self.gui.after(0, lambda: self.gui.add_message("Veda", response))
         self.voice.speak(response)
+        self.gui.after(0, lambda: self.gui.set_state("idle"))
 
     def run(self):
         self.notif.notify("Interface online. Stark Protocol active.", "VEDA v5.0")
         threading.Thread(target=self.wake_word_loop, daemon=True).start()
+        threading.Thread(target=self._metrics_updater, daemon=True).start()
         self.gui.start()
+
+    def _metrics_updater(self):
+        while True:
+            try:
+                import psutil
+                cpu = psutil.cpu_percent()
+                ram = psutil.virtual_memory().percent
+                self.gui.after(0, lambda c=cpu, r=ram: (self.gui.cpu_bar.set(c/100), self.gui.ram_bar.set(r/100)))
+            except: pass
+            time.sleep(2)
+
+    def _trigger_mic(self):
+        self.gui.after(0, lambda: self.gui.add_message("System", "LISTENING..."))
+        query = self.voice.listen()
+        if query:
+            self.gui.after(0, lambda: self.gui.add_message("User", query))
+            self.process_command(query)
 
     def wake_word_loop(self):
         while True:
