@@ -9,8 +9,7 @@ try:
 except: gw = None
 
 class SystemModule:
-    @staticmethod
-    def open_app(app_name):
+    def open_app(self, app_name):
         try:
             app = app_name.lower().strip()
             aliases = {"chrome": "chrome", "notepad": "notepad", "calculator": "calc"}
@@ -19,8 +18,7 @@ class SystemModule:
             return f"Executing {app_name}."
         except Exception as e: return f"Execution failed: {e}"
 
-    @staticmethod
-    def close_app(app_name):
+    def close_app(self, app_name):
         if not gw: return "Window management offline."
         try:
             wins = gw.getWindowsWithTitle(app_name)
@@ -30,20 +28,17 @@ class SystemModule:
             return "Interface not found."
         except Exception as e: return f"Closure failed: {e}"
 
-    @staticmethod
-    def screenshot():
-        path = f"veda/captures/shot_{int(ctypes.windll.kernel32.GetTickCount64())}.png"
-        os.makedirs("veda/captures", exist_ok=True)
+    def screenshot(self):
+        os.makedirs("captures", exist_ok=True)
+        path = f"captures/shot_{int(ctypes.windll.kernel32.GetTickCount64())}.png"
         pyautogui.screenshot(path)
         return f"Tactical capture saved to {path}."
 
-    @staticmethod
-    def get_health():
+    def get_health(self):
         cpu = psutil.cpu_percent()
         ram = psutil.virtual_memory().percent
         return f"System Integrity: CPU {cpu}% | RAM {ram}%"
 
-    @staticmethod
-    def lock_pc():
+    def lock_pc(self):
         ctypes.windll.user32.LockWorkStation()
         return "OS Locked."

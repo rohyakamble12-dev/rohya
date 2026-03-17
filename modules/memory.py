@@ -4,7 +4,7 @@ import logging
 from datetime import datetime
 
 class VedaMemory:
-    def __init__(self, db_path="veda/veda.db"):
+    def __init__(self, db_path="storage/veda.db"):
         self.db_path = db_path
         self._init_db()
 

@@ -1,3 +1,4 @@
+import requests
 import sys
 import os
 import json
@@ -24,12 +25,12 @@ class VedaAssistant:
         self.notif = NotificationModule(self.gui)
         self.router = CommandRouter(self)
 
-        # Post-init link
+        # Initial Connectivity Check
+        self._check_links()
         self.brain.ensure_ollama()
 
     def load_config(self):
         if not os.path.exists("config.json"):
-            # Fallback default config
             self.config = {
                 "identity": {"name": "Veda", "version": "5.0.0"},
                 "preferences": {
@@ -48,46 +49,62 @@ class VedaAssistant:
             format="%(asctime)s [%(levelname)s] %(message)s"
         )
 
-    def process_command(self, user_input):
-        logging.info(f"User Input: {user_input}")
+    def _check_links(self):
+        def _worker():
+            while True:
+                # 1. Neural Link
+                neural = self.brain.ensure_ollama() is not False
+                # 2. Data Link
+                try:
+                    import requests
+                    requests.get("https://google.com", timeout=2)
+                    data = True
+                except: data = False
 
-        # 1. Classify Intent
+                self.gui.after(0, lambda n=neural, d=data: self._update_gui_links(n, d))
+                time.sleep(30)
+
+        threading.Thread(target=_worker, daemon=True).start()
+
+    def _update_gui_links(self, neural, data):
+        self.gui.links["NEURAL"].configure(text="ACTIVE" if neural else "OFFLINE", text_color="#00d4ff" if neural else "#ff3e3e")
+        self.gui.links["DATA"].configure(text="ACTIVE" if data else "OFFLINE", text_color="#00d4ff" if data else "#ff3e3e")
+        self.gui.links["VOICE"].configure(text="ACTIVE", text_color="#00d4ff") # Simplified for now
+
+    def process_command(self, user_input):
+        logging.info(f"Command Received: {user_input}")
+
+        # Classification
         category = self.brain.classify_intent(user_input)
 
         response = None
         if category in ["command", "search", "productivity", "calculation"]:
-            # 2. Extract specific intent and params via LLM
             intent_data = self.brain.extract_params(user_input)
             response = self.router.route(intent_data)
 
-        # 3. Fallback to Conversation
+        # Fallback
         if not response:
             history = self.memory.get_context()
             response = self.brain.chat(user_input, history)
 
-        # 4. Finalize
+        # Logging & State
         self.memory.log_interaction("user", user_input)
         self.memory.log_interaction("assistant", response)
 
-        # Thread-safe UI update
+        # UI & Voice
         self.gui.after(0, lambda: self.gui.add_message("Veda", response))
-
-        # Vocalize
         self.voice.speak(response)
-        logging.info(f"Veda Response: {response}")
 
     def run(self):
-        self.notif.notify("Systems initialized. Stark Protocol active.", "VEDA ONLINE")
-        # Start passive wake word listener in background
+        self.notif.notify("Interface online. Stark Protocol active.", "VEDA v5.0")
         threading.Thread(target=self.wake_word_loop, daemon=True).start()
         self.gui.start()
 
     def wake_word_loop(self):
         while True:
             if self.voice.listen_passive():
-                self.gui.after(0, lambda: self.gui.add_message("System", "Wake word detected."))
-                # Future: trigger active listening state
-            time.sleep(0.5)
+                self.gui.after(0, lambda: self.gui.add_message("System", "Holographic interface active."))
+            time.sleep(0.1)
 
     def notify(self, message):
         self.notif.notify(message)
@@ -97,5 +114,5 @@ if __name__ == "__main__":
         assistant = VedaAssistant()
         assistant.run()
     except Exception as e:
-        logging.critical(f"KERNEL PANIC: {e}")
-        print(f"CRITICAL ERROR: {e}")
+        print(f"CRITICAL KERNEL ERROR: {e}")
+        logging.critical(f"Panic: {e}")

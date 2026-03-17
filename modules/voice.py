@@ -6,6 +6,11 @@ class VedaVoice:
         self.online_voice = config['preferences']['voice']['online_voice']
         self.wake_word = config['preferences']['voice']['wake_word']
         self.recognizer = sr.Recognizer()
+        self.mic = sr.Microphone()
+
+        # Pre-calibrate ambient noise
+        with self.mic as source:
+            self.recognizer.adjust_for_ambient_noise(source, duration=1)
 
         try:
             self.offline_engine = pyttsx3.init()
@@ -29,12 +34,13 @@ class VedaVoice:
                 self.offline_engine.say(text)
                 self.offline_engine.runAndWait()
 
-    def listen(self):
+    def listen(self, timeout=5):
         try:
-            with sr.Microphone() as source:
-                audio = self.recognizer.listen(source, timeout=5, phrase_time_limit=10)
+            with self.mic as source:
+                audio = self.recognizer.listen(source, timeout=timeout, phrase_time_limit=10)
             return self.recognizer.recognize_google(audio)
         except: return ""
 
     def listen_passive(self):
-        return self.wake_word in self.listen().lower()
+        """Optimized passive listener with minimal overhead."""
+        return self.wake_word in self.listen(timeout=2).lower()
