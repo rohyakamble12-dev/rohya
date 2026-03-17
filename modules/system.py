@@ -3,18 +3,33 @@ import subprocess
 import psutil
 import pyautogui
 import ctypes
+import logging
 
 try:
     import pygetwindow as gw
 except: gw = None
 
+try:
+    from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
+    from comtypes import CLSCTX_ALL
+    from ctypes import cast, POINTER
+    HAS_PYCAW = True
+except: HAS_PYCAW = False
+
+try:
+    import screen_brightness_control as sbc
+    HAS_SBC = True
+except: HAS_SBC = False
+
 class SystemModule:
     def open_app(self, app_name):
         try:
+            if not app_name: return "App name required."
             app = app_name.lower().strip()
-            aliases = {"chrome": "chrome", "notepad": "notepad", "calculator": "calc"}
-            app = aliases.get(app, app)
-            subprocess.Popen(f"start {app}", shell=True)
+            # Common aliases
+            aliases = {"chrome": "chrome", "notepad": "notepad", "calculator": "calc", "explorer": "explorer"}
+            cmd = aliases.get(app, app)
+            subprocess.Popen(f"start {cmd}", shell=True)
             return f"Executing {app_name}."
         except Exception as e: return f"Execution failed: {e}"
 
@@ -23,22 +38,49 @@ class SystemModule:
         try:
             wins = gw.getWindowsWithTitle(app_name)
             if wins:
-                wins[0].close()
+                for win in wins:
+                    win.close()
                 return f"Closing {app_name}."
-            return "Interface not found."
+            return f"No active interface for {app_name} found."
         except Exception as e: return f"Closure failed: {e}"
 
+    def set_volume(self, level):
+        if not HAS_PYCAW: return "Audio interface link broken."
+        try:
+            level = max(0, min(100, int(level)))
+            devices = AudioUtilities.GetSpeakers()
+            interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
+            volume = cast(interface, POINTER(IAudioEndpointVolume))
+            volume.SetMasterVolumeLevelScalar(level / 100.0, None)
+            return f"Audio output optimized to {level}%."
+        except Exception as e: return f"Audio adjustment failed: {e}"
+
+    def set_brightness(self, level):
+        if not HAS_SBC: return "Optic brightness link broken."
+        try:
+            level = max(0, min(100, int(level)))
+            sbc.set_brightness(level)
+            return f"Display brightness synchronized to {level}%."
+        except Exception as e: return f"Brightness adjustment failed: {e}"
+
     def screenshot(self):
-        os.makedirs("captures", exist_ok=True)
-        path = f"captures/shot_{int(ctypes.windll.kernel32.GetTickCount64())}.png"
-        pyautogui.screenshot(path)
-        return f"Tactical capture saved to {path}."
+        try:
+            os.makedirs("captures", exist_ok=True)
+            path = f"captures/shot_{int(ctypes.windll.kernel32.GetTickCount64())}.png"
+            pyautogui.screenshot(path)
+            return f"Tactical capture saved to {path}."
+        except Exception as e: return f"Capture failed: {e}"
 
     def get_health(self):
-        cpu = psutil.cpu_percent()
-        ram = psutil.virtual_memory().percent
-        return f"System Integrity: CPU {cpu}% | RAM {ram}%"
+        try:
+            cpu = psutil.cpu_percent()
+            ram = psutil.virtual_memory().percent
+            disk = psutil.disk_usage('/').percent
+            return f"INTEGRITY: CPU {cpu}% | RAM {ram}% | DSK {disk}%"
+        except Exception as e: return f"Diagnostic failure: {e}"
 
     def lock_pc(self):
-        ctypes.windll.user32.LockWorkStation()
-        return "OS Locked."
+        try:
+            ctypes.windll.user32.LockWorkStation()
+            return "OS Locked. Tactical security engaged."
+        except Exception as e: return f"Lock failed: {e}"

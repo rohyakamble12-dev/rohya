@@ -35,6 +35,10 @@ class CommandRouter:
             return self.system.get_health()
         elif intent == "lock_pc":
             return self.system.lock_pc()
+        elif intent == "set_volume":
+            return self.system.set_volume(params.get("level", 50))
+        elif intent == "set_brightness":
+            return self.system.set_brightness(params.get("level", 50))
 
         # 2. Intel & Search
         elif intent == "web_search":

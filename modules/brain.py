@@ -19,10 +19,16 @@ class VedaBrain:
     def ensure_ollama(self):
         try:
             ollama.list()
+            return True
         except Exception:
             logging.info("[SYSTEM]: Ollama not detected. Attempting auto-launch...")
-            subprocess.Popen(["ollama", "serve"], shell=True)
-            time.sleep(5)
+            try:
+                subprocess.Popen(["ollama", "serve"], shell=True)
+                time.sleep(5)
+                ollama.list()
+                return True
+            except:
+                return False
 
     def classify_intent(self, text):
         """Classifies intent BEFORE full LLM processing to optimize speed."""

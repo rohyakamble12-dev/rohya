@@ -74,11 +74,14 @@ class VedaAssistant:
     def process_command(self, user_input):
         logging.info(f"Command Received: {user_input}")
 
-        # Classification
+        # 1. Classification
         category = self.brain.classify_intent(user_input)
 
-        response = None
-        if category in ["command", "search", "productivity", "calculation"]:
+        # 2. Survival Mode Check (Direct regex for core commands)
+        response = self._handle_survival_mode(user_input)
+
+        if not response and category in ["command", "search", "productivity", "calculation"]:
+            # 3. Full Intelligence Route
             intent_data = self.brain.extract_params(user_input)
             response = self.router.route(intent_data)
 
@@ -105,6 +108,23 @@ class VedaAssistant:
             if self.voice.listen_passive():
                 self.gui.after(0, lambda: self.gui.add_message("System", "Holographic interface active."))
             time.sleep(0.1)
+
+    def _handle_survival_mode(self, text):
+        """Instant offline processing for core intents."""
+        text = text.lower()
+        if "open" in text:
+            app = text.split("open")[-1].strip()
+            return self.router.system.open_app(app)
+        if "volume" in text:
+            import re
+            match = re.search(r"\d+", text)
+            level = match.group() if match else 50
+            return self.router.system.set_volume(level)
+        if "screenshot" in text:
+            return self.router.system.screenshot()
+        if "health" in text:
+            return self.router.system.get_health()
+        return None
 
     def notify(self, message):
         self.notif.notify(message)

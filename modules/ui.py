@@ -130,5 +130,12 @@ class VedaHUD(ctk.CTk):
     def _drag(self, event):
         self.geometry(f"+{self.winfo_x() + event.x - self.x}+{self.winfo_y() + event.y - self.y}")
 
+    def _send_command(self, event):
+        cmd = self.input_entry.get()
+        if cmd:
+            self.input_entry.delete(0, "end")
+            self.add_message("User", cmd)
+            threading.Thread(target=self.on_command, args=(cmd,), daemon=True).start()
+
     def start(self):
         self.mainloop()
