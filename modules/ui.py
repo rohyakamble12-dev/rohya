@@ -1,5 +1,7 @@
 import customtkinter as ctk
 import tkinter as tk
+import math
+import random
 import threading
 import time
 import os
@@ -10,151 +12,188 @@ class VedaHUD(ctk.CTk):
         self.config = config
         self.assistant = assistant
 
-        # 1. Production Stable Configuration
+        # Base UI Config
         self.overrideredirect(True)
-        self.attributes("-alpha", 0.98)
+        self.attributes("-alpha", 0.95)
         self.attributes("-topmost", True)
-        self.geometry("1100x680")
+        self.geometry("1400x850")
         self.configure(fg_color="#050508")
 
-        # 2. Optimized Grid Layout (Stability over Complexity)
-        self.grid_columnconfigure(0, weight=1, minsize=260) # Side Dashboard
-        self.grid_columnconfigure(1, weight=3) # Command/Chat Terminal
+        # Grid System
+        self.grid_columnconfigure(0, weight=1, minsize=350)
+        self.grid_columnconfigure(1, weight=2, minsize=650)
+        self.grid_columnconfigure(2, weight=1, minsize=400)
         self.grid_rowconfigure(0, weight=1)
 
-        self._init_top_header()
-        self._init_sidebar()
-        self._init_main_terminal()
+        self._init_left_sidebar()
+        self._init_center_core()
+        self._init_right_log()
 
-        # Interaction Logic
         self.bind("<Button-1>", self._start_drag)
         self.bind("<B1-Motion>", self._drag)
-
         self.status = "idle"
+        self._animate_loop()
 
-    def _init_top_header(self):
-        self.header = ctk.CTkFrame(self, fg_color="#08080c", height=32, corner_radius=0)
-        self.header.place(relx=0, rely=0, relwidth=1)
+    def _init_left_sidebar(self):
+        self.left_f = ctk.CTkFrame(self, fg_color="transparent")
+        self.left_f.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
 
-        ctk.CTkLabel(self.header, text="VEDA SOVEREIGN EDITION v5.2", font=("Orbitron", 9, "bold"), text_color="#00d4ff").pack(side="left", padx=20)
+        # Optical Feed
+        self._add_section_header(self.left_f, "OPTICAL FEED")
+        self.cam_box = ctk.CTkFrame(self.left_f, height=180, fg_color="black", border_width=1, border_color="#1a1a25")
+        self.cam_box.pack(fill="x", pady=(5, 20))
 
-        # Window Controls
-        ctk.CTkButton(self.header, text="✕", width=32, height=32, fg_color="transparent", hover_color="#ff3e3e",
-                       text_color="#666666", corner_radius=0, command=self.destroy).pack(side="right")
-        ctk.CTkButton(self.header, text="—", width=32, height=32, fg_color="transparent", hover_color="#1a1a25",
-                       text_color="#666666", corner_radius=0, command=self.iconify).pack(side="right")
+        # Observability
+        self._add_section_header(self.left_f, "OBSERVABILITY")
+        self.obs_box = ctk.CTkFrame(self.left_f, fg_color="#08080c", border_width=1, border_color="#1a1a25")
+        self.obs_box.pack(fill="x", pady=5)
 
-    def _init_sidebar(self):
-        self.side = ctk.CTkFrame(self, fg_color="#08080c", corner_radius=0, border_width=1, border_color="#1a1a25")
-        self.side.grid(row=0, column=0, sticky="nsew", padx=(2, 0), pady=(34, 2))
+        self.cpu_bar = self._add_metric(self.obs_box, "CPU", "22.1%", "#00d4ff")
+        self.ram_bar = self._add_metric(self.obs_box, "RAM", "51.0%", "#b026ff")
 
-        # 1. System Link Dashboard (Real-time telemetry)
-        ctk.CTkLabel(self.side, text="SYSTEM TELEMETRY", font=("Orbitron", 10, "bold"), text_color="#00d4ff").pack(pady=(20, 10))
-        self.links = {}
-        for link in ["NEURAL", "OPTIC", "VOICE", "DATA"]:
-            f = ctk.CTkFrame(self.side, fg_color="transparent")
-            f.pack(fill="x", padx=20, pady=4)
-            ctk.CTkLabel(f, text=link, font=("Consolas", 9), text_color="#666666").pack(side="left")
-            val = ctk.CTkLabel(f, text="SYNCING...", font=("Consolas", 9, "bold"), text_color="#ff8c00")
-            val.pack(side="right")
-            self.links[link] = val
+        self.stats_labels = {}
+        stats = [("THREADS", "11", "#00ffcc"), ("PLUGINS", "19", "#00ffcc"),
+                 ("GOVERNANCE", "NOMINAL", "#00ffcc"), ("QUEUE", "0", "#ffcc00")]
+        for label, val, color in stats:
+            f = ctk.CTkFrame(self.obs_box, fg_color="transparent")
+            f.pack(fill="x", padx=15, pady=2)
+            ctk.CTkLabel(f, text=f"{label}:", font=("Orbitron", 8), text_color=color).pack(side="left")
+            v = ctk.CTkLabel(f, text=val, font=("Consolas", 9, "bold"), text_color=color)
+            v.pack(side="left", padx=5)
+            self.stats_labels[label] = v
 
-        # 2. Hardware Resource Metrics
-        self.metrics_f = ctk.CTkFrame(self.side, fg_color="transparent")
-        self.metrics_f.pack(fill="x", padx=20, pady=20)
-        self.cpu_bar = self._add_metric("CPU LOAD")
-        self.ram_bar = self._add_metric("MEM ALLOC")
+        # Passive stats
+        for p in ["ROLLBACK: INACTIVE", "SELF-HEAL: INACTIVE"]:
+            ctk.CTkLabel(self.obs_box, text=p, font=("Consolas", 8), text_color="#444444").pack(anchor="w", padx=15)
 
-        # 3. Verified System Commands
-        ctk.CTkLabel(self.side, text="TACTICAL OVERRIDE", font=("Orbitron", 10, "bold"), text_color="#00d4ff").pack(pady=(20, 5))
-        self._add_btn("SYSTEM DIAGNOSTIC", lambda: self.assistant.process_command("mark 42 status"))
-        self._add_btn("CLEAN SLATE", lambda: self.assistant.process_command("clean slate protocol"))
-        self._add_btn("TAKE SCREENSHOT", lambda: self.assistant.process_command("screenshot"), "#1f1f2e", "#ff8c00")
-        self._add_btn("REBOOT KERNEL", lambda: self.assistant.process_command("restart"), "#201010", "#ff3e3e")
+        # Execution Core
+        self._add_section_header(self.left_f, "EXECUTION CORE")
+        self.exec_box = ctk.CTkFrame(self.left_f, height=150, fg_color="black", border_width=1, border_color="#1a1a25")
+        self.exec_box.pack(fill="x", pady=(5, 20))
 
-    def _add_btn(self, text, cmd, fg="#121217", hover="#1a1a25"):
-        ctk.CTkButton(self.side, text=text, font=("Orbitron", 8), width=220, fg_color=fg, border_width=1, border_color="#1a1a25",
-                       hover_color=hover, command=cmd).pack(pady=4)
+        # Protocols
+        self._add_section_header(self.left_f, "PROTOCOLS")
+        self.proto_box = ctk.CTkFrame(self.left_f, height=100, fg_color="black", border_width=1, border_color="#1a1a25")
+        self.proto_box.pack(fill="x", pady=5)
 
-    def _add_metric(self, label):
-        ctk.CTkLabel(self.metrics_f, text=label, font=("Orbitron", 8), text_color="#666666").pack(anchor="w", pady=(8, 2))
-        bar = ctk.CTkProgressBar(self.metrics_f, height=6, progress_color="#00d4ff", fg_color="#121217")
-        bar.pack(fill="x")
-        bar.set(0.1)
-        return bar
+    def _init_center_core(self):
+        self.center_f = ctk.CTkFrame(self, fg_color="transparent")
+        self.center_f.grid(row=0, column=1, sticky="nsew")
 
-    def _init_main_terminal(self):
-        self.main_f = ctk.CTkFrame(self, fg_color="#0a0a0f", corner_radius=0, border_width=1, border_color="#1a1a25")
-        self.main_f.grid(row=0, column=1, sticky="nsew", padx=(0, 2), pady=(34, 2))
+        self.canvas = tk.Canvas(self.center_f, bg="#050508", highlightthickness=0)
+        self.canvas.pack(expand=True, fill="both")
 
-        # Header with utility controls
-        self.main_h = ctk.CTkFrame(self.main_f, fg_color="transparent", height=40)
-        self.main_h.pack(fill="x")
+        # Bottom Controls
+        self.ctrl_bar = ctk.CTkFrame(self.center_f, fg_color="transparent")
+        self.ctrl_bar.pack(side="bottom", pady=30)
 
-        # New: Help button
-        ctk.CTkButton(self.main_h, text="COMMAND LIST", font=("Orbitron", 7), width=100, height=22, fg_color="transparent", border_width=1, border_color="#1a1a25",
-                       command=lambda: self.add_message("System", "Available commands: open [app], volume [n], screenshot, health, restart, wikipedia [topic], search [query], translate [text] to [lang], add todo [task], show todo, mark 42 status, clean slate.")).pack(side="left", padx=10, pady=10)
+        ctk.CTkButton(self.ctrl_bar, text="💻 OFF", width=100, height=40, fg_color="#121217", border_width=1, border_color="#1a1a25", font=("Orbitron", 8), command=lambda: self.set_state("idle")).pack(side="left", padx=10)
+        ctk.CTkButton(self.ctrl_bar, text="📁", width=50, height=40, fg_color="#121217", border_width=1, border_color="#1a1a25", command=lambda: self.assistant.process_command("open documents")).pack(side="left", padx=10)
+        ctk.CTkButton(self.ctrl_bar, text="U N L O A D", width=120, height=45, fg_color="#121217", border_width=1, border_color="#ff3e3e",
+                       font=("Orbitron", 10, "bold"), text_color="#ffffff", command=self.destroy).pack(side="left", padx=10)
+        ctk.CTkButton(self.ctrl_bar, text="🎤", width=50, height=40, fg_color="#121217", border_width=1, border_color="#1a1a25", command=self._on_voice).pack(side="left", padx=10)
 
-        ctk.CTkButton(self.main_h, text="PURGE LOG", font=("Orbitron", 7), width=80, height=22, fg_color="transparent", border_width=1, border_color="#1a1a25",
-                       command=self._clear_chat).pack(side="right", padx=10, pady=10)
+        # Earth mesh setup
+        self.points = []; self.angle_y = 0; self.globe_cx = 325; self.globe_cy = 350
+        self._init_earth_mesh()
 
-        # Chat Stream
-        self.chat_scroll = ctk.CTkScrollableFrame(self.main_f, fg_color="transparent")
-        self.chat_scroll.pack(expand=True, fill="both", padx=15, pady=5)
+    def _init_right_log(self):
+        self.right_f = ctk.CTkFrame(self, fg_color="transparent")
+        self.right_f.grid(row=0, column=2, sticky="nsew", padx=10, pady=10)
 
-        # Optimized Input Section
-        self.bottom_bar = ctk.CTkFrame(self.main_f, fg_color="#08080c", height=70, corner_radius=0)
-        self.bottom_bar.pack(fill="x", side="bottom")
+        self._add_section_header(self.right_f, "COMMUNICATION LOG")
+        self.chat_scroll = ctk.CTkScrollableFrame(self.right_f, fg_color="#08080c", border_width=1, border_color="#1a1a25")
+        self.chat_scroll.pack(expand=True, fill="both", pady=5)
 
-        self.input_entry = ctk.CTkEntry(self.bottom_bar, placeholder_text="Awaiting operator command...", font=("Consolas", 12),
-                                        fg_color="#121217", border_color="#1a1a25", corner_radius=8)
-        self.input_entry.place(relx=0.45, rely=0.5, relwidth=0.82, anchor="center")
+        self.status_box = ctk.CTkFrame(self.right_f, height=80, fg_color="#08080c", border_width=1, border_color="#1a1a25")
+        self.status_box.pack(fill="x", pady=15)
+        self.status_label = ctk.CTkLabel(self.status_box, text="TACTICAL STATUS: NOMINAL", font=("Orbitron", 8), text_color="#00d4ff")
+        self.status_label.place(relx=0.5, rely=0.5, anchor="center")
+
+        self.input_entry = ctk.CTkEntry(self.right_f, placeholder_text="Enter command...", font=("Consolas", 12),
+                                        fg_color="#08080c", border_color="#00d4ff", border_width=2, corner_radius=0, height=45)
+        self.input_entry.pack(fill="x", pady=(0, 10))
         self.input_entry.bind("<Return>", self._send_command)
 
-        self.typing_label = ctk.CTkLabel(self.main_f, text="", font=("Segoe UI", 9, "italic"), text_color="#666666")
-        self.typing_label.pack(side="bottom", anchor="w", padx=25, pady=2)
+    def _add_section_header(self, parent, text):
+        ctk.CTkLabel(parent, text=text, font=("Orbitron", 10, "bold"), text_color="#00d4ff").pack(anchor="w", pady=(0, 5))
 
-        self.mic_btn = ctk.CTkButton(self.bottom_bar, text="🎤", width=40, height=40, corner_radius=8, fg_color="#121217", hover_color="#1a1a25",
-                                     text_color="#00d4ff", font=("Segoe UI", 16), command=self._on_voice)
-        self.mic_btn.place(relx=0.93, rely=0.5, anchor="center")
+    def _add_metric(self, parent, label, val_text, color):
+        f = ctk.CTkFrame(parent, fg_color="transparent")
+        f.pack(fill="x", padx=15, pady=(10, 2))
+        ctk.CTkLabel(f, text=label, font=("Orbitron", 8), text_color="#666666").pack(side="left")
+        ctk.CTkLabel(f, text=val_text, font=("Consolas", 8), text_color=color).pack(side="right")
+        bar = ctk.CTkProgressBar(parent, height=8, progress_color=color, fg_color="#1a1a25")
+        bar.pack(fill="x", padx=15, pady=(0, 10))
+        bar.set(0.3)
+        return bar
 
-    def _clear_chat(self):
-        for widget in self.chat_scroll.winfo_children():
-            widget.destroy()
+    def _init_earth_mesh(self):
+        lats = 12; longs = 18
+        for i in range(lats):
+            lat = math.pi * i / (lats - 1)
+            for j in range(longs):
+                lon = 2 * math.pi * j / longs
+                self.points.append([math.sin(lat) * math.cos(lon), math.cos(lat), math.sin(lat) * math.sin(lon)])
 
-    def _on_voice(self):
-        threading.Thread(target=self.assistant._trigger_mic, daemon=True).start()
+    def _animate_loop(self):
+        self._draw_hex_grid()
+        self._draw_earth()
+        self.after(40, self._animate_loop)
+
+    def _draw_hex_grid(self):
+        self.canvas.delete("grid")
+        size = 30
+        for x in range(0, 700, int(size * 1.5)):
+            for y in range(0, 750, int(size * math.sqrt(3))):
+                offset = (size * 0.75) if (y // int(size * math.sqrt(3))) % 2 == 1 else 0
+                self._draw_hex(x + offset, y, size)
+
+    def _draw_hex(self, x, y, size):
+        pts = []
+        for i in range(6):
+            ang = math.radians(i * 60)
+            pts.extend([x + size * math.cos(ang), y + size * math.sin(ang)])
+        self.canvas.create_polygon(pts, outline="#1a1a25", fill="", tags="grid")
+
+    def _draw_earth(self):
+        self.canvas.delete("globe")
+        speed = 0.05 if self.status == "thinking" else 0.02
+        self.angle_y += speed
+        scale = 160 if self.status == "speaking" else 150
+        proj = []
+        for p in self.points:
+            x, y, z = p
+            nx = x * math.cos(self.angle_y) - z * math.sin(self.angle_y)
+            nz = x * math.sin(self.angle_y) + z * math.cos(self.angle_y)
+            proj.append((nx * scale + self.globe_cx, y * scale + self.globe_cy, nz))
+        for i, pt in enumerate(proj):
+            if pt[2] < 0: continue
+            next_lon = (i + 1) if (i + 1) % 18 != 0 else i - 17
+            self.canvas.create_line(pt[0], pt[1], proj[next_lon][0], proj[next_lon][1], fill="#00d4ff", tags="globe", width=1)
+            next_lat = i + 18
+            if next_lat < len(proj):
+                self.canvas.create_line(pt[0], pt[1], proj[next_lat][0], proj[next_lat][1], fill="#00d4ff", tags="globe", width=1)
+            self.canvas.create_oval(pt[0]-1, pt[1]-1, pt[0]+1, pt[1]+1, fill="#00d4ff", outline="", tags="globe")
 
     def add_message(self, role, text):
-        align = "e" if role == "User" else "w"
-        bg_color = "#1a1a20" if role == "User" else "#0a0a0f" # Deep colors for professional look
-        text_color = "#ffffff"
+        bg = "#08080c"; border = "#1a1a25"
+        if role == "Veda": border = "#00d4ff"
 
-        frame = ctk.CTkFrame(self.chat_scroll, fg_color="transparent")
-        frame.pack(fill="x", pady=4, padx=10)
+        f = ctk.CTkFrame(self.chat_scroll, fg_color=bg, border_width=1, border_color=border, corner_radius=5)
+        f.pack(fill="x", pady=5, padx=5)
 
-        bubble = ctk.CTkFrame(frame, fg_color=bg_color, corner_radius=8, border_width=1, border_color="#1a1a25")
-        bubble.pack(anchor=align, padx=5)
+        h = ctk.CTkFrame(f, fg_color="transparent")
+        h.pack(fill="x", padx=10, pady=(5, 0))
+        ctk.CTkLabel(h, text=role.upper(), font=("Orbitron", 8, "bold"), text_color="#00d4ff").pack(side="left")
+        ctk.CTkLabel(h, text=time.strftime("%H:%M"), font=("Consolas", 7), text_color="#444444").pack(side="right")
 
-        if role != "User":
-            label = "✦ VEDA" if role == "Veda" else f"◈ {role.upper()}"
-            ctk.CTkLabel(bubble, text=label, font=("Orbitron", 8, "bold"), text_color="#00d4ff").pack(anchor="w", padx=12, pady=(6, 0))
-
-        msg = ctk.CTkLabel(bubble, text=text, font=("Segoe UI", 11), text_color=text_color, wraplength=480, justify="left")
-        msg.pack(padx=12, pady=(2, 8))
-
+        ctk.CTkLabel(f, text=text, font=("Consolas", 10), text_color="#cccccc", wraplength=320, justify="left").pack(padx=10, pady=(2, 10), anchor="w")
         self.chat_scroll._parent_canvas.yview_moveto(1.0)
 
     def set_state(self, status):
-        valid_states = ["idle", "thinking", "speaking", "alert"]
-        self.status = status if status in valid_states else "idle"
-
-        if self.status == "thinking":
-            self.typing_label.configure(text="Veda is analyzing tactical data...")
-        elif self.status == "speaking":
-            self.typing_label.configure(text="Veda is formulating response...")
-        else:
-            self.typing_label.configure(text="")
+        self.status = status
+        self.status_label.configure(text=f"TACTICAL STATUS: {status.upper()}")
 
     def _send_command(self, event):
         cmd = self.input_entry.get()
@@ -165,9 +204,7 @@ class VedaHUD(ctk.CTk):
 
     def _start_drag(self, event):
         self.x = event.x; self.y = event.y
-
     def _drag(self, event):
         self.geometry(f"+{self.winfo_x() + event.x - self.x}+{self.winfo_y() + event.y - self.y}")
-
     def start(self):
         self.mainloop()

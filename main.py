@@ -124,6 +124,13 @@ class VedaAssistant:
         if hasattr(self.gui, 'ram_bar'):
             self.gui.ram_bar.set(ram/100)
 
+        # Image-specific labels from cmd.png
+        if hasattr(self.gui, 'stats_labels'):
+            self.gui.stats_labels["THREADS"].configure(text=str(threading.active_count()))
+            # Plugins count - from router
+            plugin_count = len([m for m in dir(self.router) if not m.startswith("_")])
+            self.gui.stats_labels["PLUGINS"].configure(text=str(plugin_count))
+
     def _trigger_mic(self):
         self.gui.after(0, lambda: self.gui.add_message("System", "LISTENING..."))
         self.gui.after(0, lambda: self.gui.set_state("speaking")) # Visual feedback
