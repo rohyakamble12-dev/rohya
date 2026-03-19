@@ -21,78 +21,82 @@ class CommandRouter:
         self.protocols = ProtocolModule(assistant)
 
     def route(self, intent_data):
-        intent = intent_data.get("intent", "none")
-        params = intent_data.get("params", {})
+        try:
+            intent = intent_data.get("intent", "none")
+            params = intent_data.get("params", {})
 
-        # 1. System Controls
-        if intent == "open_app":
-            return self.system.open_app(params.get("app_name"))
-        elif intent == "close_app":
-            return self.system.close_app(params.get("app_name"))
-        elif intent == "screenshot":
-            return self.system.screenshot()
-        elif intent == "system_health":
-            return self.system.get_health()
-        elif intent == "lock_pc":
-            return self.system.lock_pc()
-        elif intent == "move_file":
-            return self.system.move_file(params.get("source"), params.get("destination"))
-        elif intent == "set_volume":
-            return self.system.set_volume(params.get("level", 50))
-        elif intent == "set_brightness":
-            return self.system.set_brightness(params.get("level", 50))
+            # 1. System Controls
+            if intent == "open_app":
+                return self.system.open_app(params.get("app_name"))
+            elif intent == "close_app":
+                return self.system.close_app(params.get("app_name"))
+            elif intent == "screenshot":
+                return self.system.screenshot()
+            elif intent == "system_health":
+                return self.system.get_health()
+            elif intent == "lock_pc":
+                return self.system.lock_pc()
+            elif intent == "move_file":
+                return self.system.move_file(params.get("source"), params.get("destination"))
+            elif intent == "set_volume":
+                return self.system.set_volume(params.get("level", 50))
+            elif intent == "set_brightness":
+                return self.system.set_brightness(params.get("level", 50))
 
-        # 2. Intel & Search
-        elif intent == "web_search":
-            return self.intel.search(params.get("query"))
-        elif intent == "wikipedia":
-            return self.intel.get_wiki(params.get("topic"))
-        elif intent == "weather":
-            return self.intel.get_weather(params.get("city"))
+            # 2. Intel & Search
+            elif intent == "web_search":
+                return self.intel.search(params.get("query"))
+            elif intent == "wikipedia":
+                return self.intel.get_wiki(params.get("topic"))
+            elif intent == "weather":
+                return self.intel.get_weather(params.get("city"))
 
-        # 3. Media
-        elif intent == "play_music":
-            return self.media.play_youtube(params.get("song"))
-        elif intent == "media_control":
-            return self.media.control(params.get("action"))
-        elif intent == "translate":
-            return self.media.translate(params.get("text"), params.get("target_lang", "en"))
+            # 3. Media
+            elif intent == "play_music":
+                return self.media.play_youtube(params.get("song"))
+            elif intent == "media_control":
+                return self.media.control(params.get("action"))
+            elif intent == "translate":
+                return self.media.translate(params.get("text"), params.get("target_lang", "en"))
 
-        # 4. Productivity
-        elif intent == "add_todo":
-            self.assistant.memory.add_todo(params.get("task"))
-            return f"Task added: {params.get('task')}"
-        elif intent == "show_todo":
-            todos = self.assistant.memory.get_todos()
-            return "\n".join([f"{t[0]}. {t[1]}" for t in todos]) if todos else "Clear schedule."
-        elif intent == "pomodoro":
-            return self.prod.start_pomodoro(int(params.get("minutes", 25)))
-        elif intent == "reminder":
-            return self.prod.remind_me(params.get("task"), int(params.get("minutes", 5)))
+            # 4. Productivity
+            elif intent == "add_todo":
+                self.assistant.memory.add_todo(params.get("task"))
+                return f"Task added: {params.get('task')}"
+            elif intent == "show_todo":
+                todos = self.assistant.memory.get_todos()
+                return "\n".join([f"{t[0]}. {t[1]}" for t in todos]) if todos else "Clear schedule."
+            elif intent == "pomodoro":
+                return self.prod.start_pomodoro(int(params.get("minutes", 25)))
+            elif intent == "reminder":
+                return self.prod.remind_me(params.get("task"), int(params.get("minutes", 5)))
 
-        # 5. Vision
-        elif intent == "vision_describe":
-            return self.vision.capture_and_describe()
-        elif intent == "vision_face":
-            return self.vision.face_detect()
+            # 5. Vision
+            elif intent == "vision_describe":
+                return self.vision.capture_and_describe()
+            elif intent == "vision_face":
+                return self.vision.face_detect()
 
-        # 6. Files
-        elif intent == "read_pdf":
-            return self.files.read_pdf(params.get("path"))
-        elif intent == "open_doc":
-            return self.files.open_document(params.get("name"))
-        elif intent == "file_find":
-            return self.files.find_file(params.get("filename"))
+            # 6. Files
+            elif intent == "read_pdf":
+                return self.files.read_pdf(params.get("path"))
+            elif intent == "open_doc":
+                return self.files.open_document(params.get("name"))
+            elif intent == "file_find":
+                return self.files.find_file(params.get("filename"))
 
-        # 7. Protocols
-        elif intent == "protocol":
-            p_name = params.get("protocol_name", "").lower()
-            if "party" in p_name: return self.protocols.house_party()
-            if "slate" in p_name: return self.protocols.clean_slate()
-            if "mark" in p_name: return self.protocols.mark_42()
+            # 7. Protocols
+            elif intent == "protocol":
+                p_name = params.get("protocol_name", "").lower()
+                if "party" in p_name: return self.protocols.house_party()
+                if "slate" in p_name: return self.protocols.clean_slate()
+                if "mark" in p_name: return self.protocols.mark_42()
 
-        # 8. IOT
-        elif intent == "iot_trigger":
-            return self.iot.trigger(params.get("device"))
+            # 8. IOT
+            elif intent == "iot_trigger":
+                return self.iot.trigger(params.get("device"))
 
-        return None
+            return None
+        except Exception as e:
+            logging.error(f"Routing error: {e}")
+            return f"Kernel routing failed: {e}"

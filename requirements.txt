@@ -26,3 +26,5 @@ comtypes
 win10toast
 darkdetect
 keyboard
+vosk
+pyaudio

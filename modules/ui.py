@@ -14,17 +14,18 @@ class VedaHUD(ctk.CTk):
 
         # Base UI Config
         self.overrideredirect(True)
-        self.attributes("-alpha", 0.92)
+        self.attributes("-alpha", 0.90)
         self.attributes("-topmost", True)
-        self.geometry("1100x700")
+        self.geometry("950x650")
         self.configure(fg_color="#050508")
 
         # Grid System
-        self.grid_columnconfigure(0, weight=1, minsize=280)
-        self.grid_columnconfigure(1, weight=2, minsize=500)
-        self.grid_columnconfigure(2, weight=1, minsize=320)
+        self.grid_columnconfigure(0, weight=1, minsize=240)
+        self.grid_columnconfigure(1, weight=2, minsize=400)
+        self.grid_columnconfigure(2, weight=1, minsize=280)
         self.grid_rowconfigure(0, weight=1)
 
+        self.links = {}
         self._init_left_sidebar()
         self._init_center_core()
         self._init_right_log()
@@ -74,6 +75,19 @@ class VedaHUD(ctk.CTk):
         self.exec_box = ctk.CTkFrame(self.left_f, height=150, fg_color="black", border_width=1, border_color="#1a1a25")
         self.exec_box.pack(fill="x", pady=(5, 20))
 
+        # Connectivity Links
+        self._add_section_header(self.left_f, "CONNECTIVITY")
+        self.conn_box = ctk.CTkFrame(self.left_f, fg_color="#08080c", border_width=1, border_color="#1a1a25")
+        self.conn_box.pack(fill="x", pady=5)
+
+        for link in ["NEURAL", "DATA", "VOICE", "OPTIC"]:
+            f = ctk.CTkFrame(self.conn_box, fg_color="transparent")
+            f.pack(fill="x", padx=15, pady=2)
+            ctk.CTkLabel(f, text=f"{link} LINK:", font=("Orbitron", 8), text_color="#666666").pack(side="left")
+            l = ctk.CTkLabel(f, text="OFFLINE", font=("Consolas", 8, "bold"), text_color="#ff3e3e")
+            l.pack(side="right")
+            self.links[link] = l
+
         # Protocols
         self._add_section_header(self.left_f, "PROTOCOLS")
         self.proto_box = ctk.CTkFrame(self.left_f, height=100, fg_color="black", border_width=1, border_color="#1a1a25")
@@ -88,16 +102,16 @@ class VedaHUD(ctk.CTk):
 
         # Bottom Controls
         self.ctrl_bar = ctk.CTkFrame(self.center_f, fg_color="transparent")
-        self.ctrl_bar.pack(side="bottom", pady=30)
+        self.ctrl_bar.pack(side="bottom", pady=25)
 
-        ctk.CTkButton(self.ctrl_bar, text="💻 OFF", width=100, height=40, fg_color="#121217", border_width=1, border_color="#1a1a25", font=("Orbitron", 8), command=lambda: self.set_state("idle")).pack(side="left", padx=10)
-        ctk.CTkButton(self.ctrl_bar, text="📁", width=50, height=40, fg_color="#121217", border_width=1, border_color="#1a1a25", command=lambda: self.assistant.process_command("open documents")).pack(side="left", padx=10)
-        ctk.CTkButton(self.ctrl_bar, text="U N L O A D", width=120, height=45, fg_color="#121217", border_width=1, border_color="#ff3e3e",
-                       font=("Orbitron", 10, "bold"), text_color="#ffffff", command=self.destroy).pack(side="left", padx=10)
-        ctk.CTkButton(self.ctrl_bar, text="🎤", width=50, height=40, fg_color="#121217", border_width=1, border_color="#1a1a25", command=self._on_voice).pack(side="left", padx=10)
+        ctk.CTkButton(self.ctrl_bar, text="💻 OFF", width=80, height=35, fg_color="#121217", border_width=1, border_color="#1a1a25", font=("Orbitron", 7), command=lambda: self.set_state("idle")).pack(side="left", padx=5)
+        ctk.CTkButton(self.ctrl_bar, text="📁", width=40, height=35, fg_color="#121217", border_width=1, border_color="#1a1a25", command=lambda: self.assistant.process_command("open documents")).pack(side="left", padx=5)
+        ctk.CTkButton(self.ctrl_bar, text="U N L O A D", width=100, height=40, fg_color="#121217", border_width=1, border_color="#ff3e3e",
+                       font=("Orbitron", 9, "bold"), text_color="#ffffff", command=self.destroy).pack(side="left", padx=5)
+        ctk.CTkButton(self.ctrl_bar, text="🎤", width=40, height=35, fg_color="#121217", border_width=1, border_color="#1a1a25", command=self._on_voice).pack(side="left", padx=5)
 
         # Earth mesh setup
-        self.points = []; self.angle_y = 0; self.globe_cx = 250; self.globe_cy = 280
+        self.points = []; self.angle_y = 0; self.globe_cx = 210; self.globe_cy = 240
         self._init_earth_mesh()
 
     def _init_right_log(self):
@@ -163,7 +177,7 @@ class VedaHUD(ctk.CTk):
         self.canvas.delete("globe")
         speed = 0.05 if self.status == "thinking" else 0.02
         self.angle_y += speed
-        scale = 130 if self.status == "speaking" else 120
+        scale = 110 if self.status == "speaking" else 100
         proj = []
         for p in self.points:
             x, y, z = p
