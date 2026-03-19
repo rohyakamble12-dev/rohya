@@ -135,10 +135,18 @@ class SystemModule:
 
     def get_health(self):
         try:
+            import socket
             cpu = psutil.cpu_percent()
             ram = psutil.virtual_memory().percent
             disk = psutil.disk_usage('/').percent
-            return f"INTEGRITY: CPU {cpu}% | RAM {ram}% | DSK {disk}%"
+
+            # Additional Telemetry
+            battery = psutil.sensors_battery()
+            bat_str = f" | BAT {battery.percent}%" if battery else ""
+
+            ip = socket.gethostbyname(socket.gethostname())
+
+            return f"INTEGRITY: CPU {cpu}% | RAM {ram}% | DSK {disk}%{bat_str} | IP {ip}"
         except Exception as e: return f"Diagnostic failure: {e}"
 
     def lock_pc(self):
@@ -146,3 +154,17 @@ class SystemModule:
             ctypes.windll.user32.LockWorkStation()
             return "OS Locked. Tactical security engaged."
         except Exception as e: return f"Lock failed: {e}"
+
+    def get_sys_info(self):
+        """Comprehensive Windows 11 system report."""
+        try:
+            import platform
+            info = {
+                "OS": platform.system(),
+                "Version": platform.version(),
+                "Processor": platform.processor(),
+                "Machine": platform.machine(),
+                "Uptime": f"{int(psutil.boot_time())}"
+            }
+            return f"SYSTEM REPORT:\nOS: {info['OS']} {platform.release()}\nProcessor: {info['Processor']}\nArchitecture: {info['Machine']}"
+        except Exception as e: return f"Telemetry error: {e}"

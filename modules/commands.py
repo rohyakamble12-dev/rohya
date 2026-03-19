@@ -34,6 +34,8 @@ class CommandRouter:
                 return self.system.screenshot()
             elif intent == "system_health":
                 return self.system.get_health()
+            elif intent == "system_info":
+                return self.system.get_sys_info()
             elif intent == "lock_pc":
                 return self.system.lock_pc()
             elif intent == "move_file":

@@ -14,15 +14,15 @@ class VedaHUD(ctk.CTk):
 
         # Base UI Config
         self.overrideredirect(True)
-        self.attributes("-alpha", 0.90)
+        self.attributes("-alpha", 0.88)
         self.attributes("-topmost", True)
-        self.geometry("950x650")
+        self.geometry("850x550")
         self.configure(fg_color="#050508")
 
         # Grid System
-        self.grid_columnconfigure(0, weight=1, minsize=240)
-        self.grid_columnconfigure(1, weight=2, minsize=400)
-        self.grid_columnconfigure(2, weight=1, minsize=280)
+        self.grid_columnconfigure(0, weight=1, minsize=220)
+        self.grid_columnconfigure(1, weight=2, minsize=350)
+        self.grid_columnconfigure(2, weight=1, minsize=260)
         self.grid_rowconfigure(0, weight=1)
 
         self.links = {}
@@ -111,7 +111,7 @@ class VedaHUD(ctk.CTk):
         ctk.CTkButton(self.ctrl_bar, text="🎤", width=40, height=35, fg_color="#121217", border_width=1, border_color="#1a1a25", command=self._on_voice).pack(side="left", padx=5)
 
         # Earth mesh setup
-        self.points = []; self.angle_y = 0; self.globe_cx = 210; self.globe_cy = 240
+        self.points = []; self.angle_y = 0; self.globe_cx = 180; self.globe_cy = 200
         self._init_earth_mesh()
 
     def _init_right_log(self):
@@ -177,7 +177,7 @@ class VedaHUD(ctk.CTk):
         self.canvas.delete("globe")
         speed = 0.05 if self.status == "thinking" else 0.02
         self.angle_y += speed
-        scale = 110 if self.status == "speaking" else 100
+        scale = 90 if self.status == "speaking" else 80
         proj = []
         for p in self.points:
             x, y, z = p

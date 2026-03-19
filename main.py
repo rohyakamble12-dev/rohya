@@ -75,32 +75,50 @@ class VedaAssistant:
 
     def process_command(self, user_input):
         logging.info(f"Command Received: {user_input}")
-        self.gui.after(0, lambda: self.gui.set_state("thinking"))
 
-        # 1. Classification
-        category = self.brain.classify_intent(user_input)
+        # Segment multi-commands: "open chrome and set volume to 50"
+        commands = re.split(r'\s+(?:and|then|also)\s+', user_input, flags=re.IGNORECASE)
+        final_responses = []
 
-        # 2. Survival Mode Check (Direct regex for core commands)
-        response = self._handle_survival_mode(user_input)
+        for cmd in commands:
+            cmd = cmd.strip()
+            if not cmd: continue
 
-        if not response and category in ["command", "search", "productivity", "calculation"]:
-            # 3. Full Intelligence Route
-            intent_data = self.brain.extract_params(user_input)
-            response = self.router.route(intent_data)
+            self.gui.after(0, lambda: self.gui.set_state("thinking"))
 
-        # Fallback
-        if not response:
-            history = self.memory.get_context()
-            response = self.brain.chat(user_input, history)
+            # 1. Classification
+            category = self.brain.classify_intent(cmd)
 
-        # Logging & State
+            # 2. Survival Mode Check (Direct regex for core commands)
+            response = self._handle_survival_mode(cmd)
+
+            if not response and category in ["command", "search", "productivity", "calculation"]:
+                # 3. Full Intelligence Route
+                intent_data = self.brain.extract_params(cmd)
+                response = self.router.route(intent_data)
+
+            # Fallback
+            if not response:
+                history = self.memory.get_context()
+                facts = self.memory.search_facts("") # Get all facts
+                fact_str = "\n".join(facts) if facts else ""
+                response = self.brain.chat(cmd, history, facts=fact_str)
+
+                # Pro-Active Learning: if user provides personal info
+                if any(t in cmd.lower() for t in ["my name is", "i like", "call me", "remember that"]):
+                    self.memory.add_fact(cmd)
+
+            final_responses.append(response)
+
+        # Unified Response Handling
+        combined_response = ". ".join(final_responses)
         self.memory.log_interaction("user", user_input)
-        self.memory.log_interaction("assistant", response)
+        self.memory.log_interaction("assistant", combined_response)
 
         # UI & Voice
         self.gui.after(0, lambda: self.gui.set_state("speaking"))
-        self.gui.after(0, lambda: self.gui.add_message("Veda", response))
-        self.voice.speak(response)
+        self.gui.after(0, lambda: self.gui.add_message("Veda", combined_response))
+        self.voice.speak(combined_response)
         self.gui.after(0, lambda: self.gui.set_state("idle"))
 
     def run(self):
@@ -150,8 +168,19 @@ class VedaAssistant:
     def _handle_survival_mode(self, text):
         """Instant offline processing for core intents."""
         text = text.lower().strip()
+
+        # 0. Quick Responses (Survival 3.0)
+        if text in ["hello", "hi", "hey", "veda"]:
+            return "Systems operational. Standing by for command, Operator."
+        if "who are you" in text or "your identity" in text:
+            return "I am Veda. Your personal tactical interface and system guardian."
+        if "how are you" in text:
+            return "My core systems are reporting 100% efficiency. Ready for engagement."
+        if "thank you" in text or "thanks" in text:
+            return "Of course, Operator. Efficiency is my primary directive."
+
         # Remove common wake-word/politeness prefixes
-        text = re.sub(r'^(veda|hey veda|please|could you)\s+', '', text)
+        text = re.sub(r'^(veda|hey veda|please|could you|would you mind|just)\s+', '', text)
 
         # 1. System Controls
         if "open" in text or "launch" in text:
@@ -184,6 +213,8 @@ class VedaAssistant:
             return self.router.system.screenshot()
         if "health" in text or "status" in text:
             return self.router.system.get_health()
+        if "system info" in text or "system report" in text:
+            return self.router.system.get_sys_info()
         if "lock" in text and "pc" in text:
             return self.router.system.lock_pc()
 

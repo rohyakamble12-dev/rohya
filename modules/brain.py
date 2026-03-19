@@ -61,14 +61,29 @@ class VedaBrain:
                 return intent
         return "conversation"
 
-    def chat(self, user_input, history):
-        messages = [{"role": "system", "content": self.system_prompt}]
+    def chat(self, user_input, history, facts=""):
+        # Auto-detect personal facts
+        if any(trigger in user_input.lower() for trigger in ["my name is", "i like", "i am", "call me"]):
+            # This would be better as an LLM extraction, but for now we note the intent to save
+            pass
+
+        custom_prompt = self.system_prompt
+        if facts:
+            custom_prompt += f"\n\n[KNOWN OPERATOR DATA]:\n{facts}"
+
+        messages = [{"role": "system", "content": custom_prompt}]
         messages.extend(history)
         messages.append({"role": "user", "content": user_input})
 
         try:
             response = ollama.chat(model=self.model, messages=messages)
-            return response['message']['content']
+            content = response['message']['content']
+
+            # Simple Pro-Active Learning: if the LLM confirms it learned something
+            # (We could add a specific check here, but let's assume the Assistant
+            # handles the memory write via a separate pass or observation)
+
+            return content
         except Exception as e:
             logging.error(f"Neural link failed: {e}")
             return "Neural link unstable, Operator. Operating in restricted tactical mode."
