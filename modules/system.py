@@ -38,7 +38,12 @@ class SystemModule:
                 "cmd": "cmd",
                 "powershell": "powershell",
                 "documents": "explorer shell:Personal",
-                "downloads": "explorer shell:Downloads"
+                "downloads": "explorer shell:Downloads",
+                "settings": "start ms-settings:",
+                "camera": "start microsoft.windows.camera:",
+                "weather": "start bingweather:",
+                "photos": "start mspaint", # or "start ms-photos:"
+                "store": "start ms-windows-store:"
             }
 
             cmd = aliases.get(app, app)

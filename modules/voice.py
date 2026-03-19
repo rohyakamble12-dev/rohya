@@ -41,11 +41,30 @@ class VedaVoice:
             os.unlink(tmp.name)
 
     def speak(self, text):
-        try: asyncio.run(self._speak_online(text))
-        except:
+        """Unified speech output with priority for high-quality online TTS."""
+        try:
+            # Check if event loop is already running (e.g. within an async context)
+            try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+
+            if loop.is_running():
+                # If loop is already running (which shouldn't happen here but for safety)
+                # we can't use run_until_complete easily without nesting.
+                # But typically main.py calls this from a thread.
+                future = asyncio.run_coroutine_threadsafe(self._speak_online(text), loop)
+                future.result()
+            else:
+                loop.run_until_complete(self._speak_online(text))
+        except Exception:
+            # Fallback to offline pyttsx3 (SAPI5 on Windows)
             if self.offline_engine:
-                self.offline_engine.say(text)
-                self.offline_engine.runAndWait()
+                try:
+                    self.offline_engine.say(text)
+                    self.offline_engine.runAndWait()
+                except: pass
 
     def listen(self, timeout=5):
         try:
