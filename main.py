@@ -2,6 +2,7 @@ import requests
 import sys
 import os
 import json
+import re
 import logging
 import threading
 import time
@@ -148,19 +149,44 @@ class VedaAssistant:
 
     def _handle_survival_mode(self, text):
         """Instant offline processing for core intents."""
-        text = text.lower()
-        if "open" in text:
-            app = text.split("open")[-1].strip()
+        text = text.lower().strip()
+        # Remove common wake-word/politeness prefixes
+        text = re.sub(r'^(veda|hey veda|please|could you)\s+', '', text)
+
+        # 1. System Controls
+        if "open" in text or "launch" in text:
+            app = re.sub(r'.*(open|launch)\s+', '', text).strip()
             return self.router.system.open_app(app)
+        if "close" in text:
+            app = text.split("close")[-1].strip()
+            return self.router.system.close_app(app)
         if "volume" in text:
-            import re
-            match = re.search(r"\d+", text)
-            level = match.group() if match else 50
+            match = re.search(r"(\d+)", text)
+            level = match.group(1) if match else (0 if "mute" in text else 50)
             return self.router.system.set_volume(level)
-        if "screenshot" in text:
+        if "brightness" in text:
+            match = re.search(r"(\d+)", text)
+            level = match.group(1) if match else 50
+            return self.router.system.set_brightness(level)
+
+        # 2. File Operations
+        if "move" in text:
+            # Simple regex: move [src] to [dst]
+            match = re.search(r"move\s+(.+)\s+to\s+(.+)", text)
+            if match:
+                return self.router.system.move_file(match.group(1).strip(), match.group(2).strip())
+        if "find" in text or "search for file" in text:
+            filename = re.sub(r'.*(find|search for file)\s+', '', text).strip()
+            return self.router.files.find_file(filename)
+
+        # 3. Utilities
+        if "screenshot" in text or "capture" in text:
             return self.router.system.screenshot()
-        if "health" in text:
+        if "health" in text or "status" in text:
             return self.router.system.get_health()
+        if "lock" in text and "pc" in text:
+            return self.router.system.lock_pc()
+
         return None
 
     def notify(self, message):

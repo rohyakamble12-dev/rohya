@@ -26,25 +26,68 @@ class SystemModule:
         try:
             if not app_name: return "App name required."
             app = app_name.lower().strip()
-            # Strict normalization to prevent command injection
+
+            # Common aliases for Windows
+            aliases = {
+                "chrome": "chrome",
+                "notepad": "notepad",
+                "calculator": "calc",
+                "explorer": "explorer",
+                "edge": "msedge",
+                "task manager": "taskmgr",
+                "cmd": "cmd",
+                "powershell": "powershell",
+                "documents": "explorer shell:Personal",
+                "downloads": "explorer shell:Downloads"
+            }
+
+            cmd = aliases.get(app, app)
+
+            # Sanitization (allow letters, numbers, spaces, and certain safe chars)
             import re
-            safe_app = re.sub(r'[^a-zA-Z0-9\s.:/-]', '', app)
+            if not re.match(r'^[a-zA-Z0-9\s.:/\\_-]+$', cmd):
+                return "Security violation: Invalid command characters detected."
 
-            aliases = {"chrome": "chrome", "notepad": "notepad", "calculator": "calc", "explorer": "explorer"}
-            cmd = aliases.get(safe_app, safe_app)
+            # Try launching with 'start'
+            try:
+                # Use list-based Popen to avoid shell injection when possible,
+                # but 'start' is a shell builtin.
+                subprocess.Popen(["cmd", "/c", f"start {cmd}"],
+                               shell=False,
+                               creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
+                return f"Executing {app_name}."
+            except Exception:
+                # Fallback: try direct execution
+                subprocess.Popen([cmd], shell=False)
+                return f"Executing {app_name} via direct link."
 
-            # Using start command safely on Windows
-            subprocess.Popen(f"start {cmd}", shell=True)
-            return f"Executing {app_name}."
         except Exception as e: return f"Execution failed: {e}"
 
     def move_file(self, src, dst):
         try:
             import shutil
-            if os.path.exists(src):
-                shutil.move(src, dst)
-                return f"Relocated {os.path.basename(src)} to target destination."
-            return "Source archive not found."
+
+            # Resolve common folder aliases
+            user_home = os.path.expanduser("~")
+            aliases = {
+                "documents": os.path.join(user_home, "Documents"),
+                "desktop": os.path.join(user_home, "Desktop"),
+                "downloads": os.path.join(user_home, "Downloads"),
+                "music": os.path.join(user_home, "Music"),
+                "pictures": os.path.join(user_home, "Pictures")
+            }
+
+            resolved_src = aliases.get(src.lower(), src)
+            resolved_dst = aliases.get(dst.lower(), dst)
+
+            if os.path.exists(resolved_src):
+                # Ensure destination directory exists
+                if not os.path.exists(resolved_dst) and "." not in os.path.basename(resolved_dst):
+                    os.makedirs(resolved_dst, exist_ok=True)
+
+                shutil.move(resolved_src, resolved_dst)
+                return f"Relocated {os.path.basename(resolved_src)} to {os.path.basename(resolved_dst) or resolved_dst}."
+            return f"Source archive '{src}' not found in active sectors."
         except Exception as e: return f"Relocation failed: {e}"
 
     def close_app(self, app_name):

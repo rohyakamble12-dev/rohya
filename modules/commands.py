@@ -81,6 +81,8 @@ class CommandRouter:
             return self.files.read_pdf(params.get("path"))
         elif intent == "open_doc":
             return self.files.open_document(params.get("name"))
+        elif intent == "file_find":
+            return self.files.find_file(params.get("filename"))
 
         # 7. Protocols
         elif intent == "protocol":

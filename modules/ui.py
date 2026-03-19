@@ -29,6 +29,9 @@ class VedaHUD(ctk.CTk):
         self._init_center_core()
         self._init_right_log()
 
+        # Security for attributes used in async threads
+        self.speech_lock = threading.Lock()
+
         self.bind("<Button-1>", self._start_drag)
         self.bind("<B1-Motion>", self._drag)
         self.status = "idle"
@@ -201,6 +204,9 @@ class VedaHUD(ctk.CTk):
             self.input_entry.delete(0, "end")
             self.add_message("User", cmd)
             threading.Thread(target=self.assistant.process_command, args=(cmd,), daemon=True).start()
+
+    def _on_voice(self):
+        threading.Thread(target=self.assistant._trigger_mic, daemon=True).start()
 
     def _start_drag(self, event):
         self.x = event.x; self.y = event.y

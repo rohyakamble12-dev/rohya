@@ -18,15 +18,30 @@ class VedaBrain:
 
     def ensure_ollama(self):
         try:
+            # Check if ollama is reachable with a short timeout
+            # Note: ollama-python doesn't expose timeout easily in list()
+            # but we can assume if it fails it's down.
             ollama.list()
             return True
         except Exception:
             logging.info("[SYSTEM]: Ollama not detected. Attempting auto-launch...")
             try:
-                subprocess.Popen(["ollama", "serve"], shell=True)
-                time.sleep(5)
-                ollama.list()
-                return True
+                # Use subprocess to start server without blocking
+                if os.name == 'nt':
+                    subprocess.Popen(["ollama", "serve"],
+                                   creationflags=subprocess.CREATE_NO_WINDOW,
+                                   shell=False)
+                else:
+                    subprocess.Popen(["ollama", "serve"], shell=False)
+
+                # Check 3 times with 2s delay
+                for _ in range(3):
+                    time.sleep(2)
+                    try:
+                        ollama.list()
+                        return True
+                    except: continue
+                return False
             except:
                 return False
 
@@ -59,7 +74,7 @@ class VedaBrain:
             return "Neural link unstable, Operator. Operating in restricted tactical mode."
 
     def extract_params(self, user_input):
-        """Uses LLM to extract JSON parameters for commands."""
+        """Uses LLM to extract JSON parameters for commands with regex fallback."""
         prompt = (
             "Analyze the command and extract parameters into a raw JSON object. "
             "Include 'intent' and 'params'. "
@@ -69,12 +84,32 @@ class VedaBrain:
             response = ollama.chat(
                 model=self.model,
                 messages=[{"role": "system", "content": "Parameter Extractor. Raw JSON only."},
-                          {"role": "user", "content": prompt}]
+                          {"role": "user", "content": prompt}],
+                options={"num_predict": 128} # Limit token length for speed
             )
             content = response['message']['content']
             match = re.search(r'\{.*\}', content, re.DOTALL)
             if match:
                 return json.loads(match.group())
-            return {"intent": "none", "params": {}}
         except:
-            return {"intent": "none", "params": {}}
+            pass # Fallback to regex below
+
+        return self._regex_extract_fallback(user_input)
+
+    def _regex_extract_fallback(self, text):
+        """Offline fallback for intent extraction when LLM is unavailable."""
+        text = text.lower()
+        if "open" in text:
+            app = re.sub(r'^(open|launch)\s+', '', text).strip()
+            return {"intent": "open_app", "params": {"app_name": app}}
+        if "volume" in text:
+            match = re.search(r"(\d+)", text)
+            return {"intent": "set_volume", "params": {"level": match.group(1) if match else 50}}
+        if "move" in text:
+            match = re.search(r"move\s+(.+)\s+to\s+(.+)", text)
+            if match:
+                return {"intent": "move_file", "params": {"source": match.group(1), "destination": match.group(2)}}
+        if "find" in text:
+            name = re.sub(r'^find\s+', '', text).strip()
+            return {"intent": "file_find", "params": {"filename": name}}
+        return {"intent": "none", "params": {}}
