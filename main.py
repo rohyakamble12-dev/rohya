@@ -67,9 +67,10 @@ class VedaAssistant:
         threading.Thread(target=_worker, daemon=True).start()
 
     def _update_gui_links(self, neural, data):
-        self.gui.links["NEURAL"].configure(text="ACTIVE" if neural else "OFFLINE", text_color="#00d4ff" if neural else "#ff3e3e")
-        self.gui.links["DATA"].configure(text="ACTIVE" if data else "OFFLINE", text_color="#00d4ff" if data else "#ff3e3e")
-        self.gui.links["VOICE"].configure(text="ACTIVE", text_color="#00d4ff") # Simplified for now
+        self.gui.links["NEURAL"].configure(text="ACTIVE" if neural else "OFFLINE", text_color="#00ffcc" if neural else "#ff3e3e")
+        self.gui.links["DATA"].configure(text="ACTIVE" if data else "OFFLINE", text_color="#00ffcc" if data else "#ff3e3e")
+        self.gui.links["VOICE"].configure(text="ACTIVE", text_color="#00ffcc")
+        self.gui.links["OPTIC"].configure(text="ACTIVE", text_color="#00ffcc") # Assuming system camera is detected
 
     def process_command(self, user_input):
         logging.info(f"Command Received: {user_input}")
