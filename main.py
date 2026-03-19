@@ -114,16 +114,24 @@ class VedaAssistant:
                 import psutil
                 cpu = psutil.cpu_percent()
                 ram = psutil.virtual_memory().percent
-                self.gui.after(0, lambda c=cpu, r=ram: (self.gui.cpu_bar.set(c/100), self.gui.ram_bar.set(r/100)))
+                self.gui.after(0, lambda c=cpu, r=ram: self._ui_metrics_sync(c, r))
             except: pass
             time.sleep(2)
 
+    def _ui_metrics_sync(self, cpu, ram):
+        if hasattr(self.gui, 'cpu_bar'):
+            self.gui.cpu_bar.set(cpu/100)
+        if hasattr(self.gui, 'ram_bar'):
+            self.gui.ram_bar.set(ram/100)
+
     def _trigger_mic(self):
         self.gui.after(0, lambda: self.gui.add_message("System", "LISTENING..."))
+        self.gui.after(0, lambda: self.gui.set_state("speaking")) # Visual feedback
         query = self.voice.listen()
         if query:
             self.gui.after(0, lambda: self.gui.add_message("User", query))
             self.process_command(query)
+        self.gui.after(0, lambda: self.gui.set_state("idle"))
 
     def wake_word_loop(self):
         while True:

@@ -10,7 +10,7 @@ except ImportError:
 
 class VedaVoice:
     def __init__(self, config):
-        # Force high-quality female voice
+        # Forced high-quality female profile
         self.online_voice = "en-US-AvaNeural"
         self.wake_word = config['preferences']['voice']['wake_word']
         self.recognizer = sr.Recognizer()
@@ -21,7 +21,7 @@ class VedaVoice:
 
         try:
             self.offline_engine = pyttsx3.init()
-            # Find a female offline voice
+            # Enforce female offline identity
             voices = self.offline_engine.getProperty('voices')
             for voice in voices:
                 if "female" in voice.name.lower() or "zira" in voice.name.lower():
@@ -49,27 +49,24 @@ class VedaVoice:
 
     def listen(self, timeout=5):
         try:
-            # 1. Attempt Online
+            # Tier 1: Online
             with self.mic as source:
                 audio = self.recognizer.listen(source, timeout=timeout, phrase_time_limit=10)
             return self.recognizer.recognize_google(audio)
         except:
-            # 2. Offline Fallback
-            if VOSK_AVAILABLE:
-                return self._listen_vosk()
+            # Tier 2: Offline
+            if VOSK_AVAILABLE: return self._listen_vosk()
             return ""
 
     def _listen_vosk(self):
         try:
             model_path = "storage/vosk-model-small-en-us-0.15"
             if not os.path.exists(model_path): return ""
-
             model = Model(model_path)
             rec = KaldiRecognizer(model, 16000)
             p = pyaudio.PyAudio()
             stream = p.open(format=pyaudio.paInt16, channels=1, rate=16000, input=True, frames_per_buffer=8000)
             stream.start_stream()
-
             start_time = time.time()
             while time.time() - start_time < 8:
                 data = stream.read(4000, exception_on_overflow=False)
