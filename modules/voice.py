@@ -1,5 +1,12 @@
-import asyncio, edge_tts, pyttsx3, os, tempfile, pygame, time
+import asyncio, edge_tts, pyttsx3, os, tempfile, pygame, time, json
 import speech_recognition as sr
+
+try:
+    from vosk import Model, KaldiRecognizer
+    import pyaudio
+    VOSK_AVAILABLE = True
+except ImportError:
+    VOSK_AVAILABLE = False
 
 class VedaVoice:
     def __init__(self, config):
@@ -42,9 +49,34 @@ class VedaVoice:
 
     def listen(self, timeout=5):
         try:
+            # 1. Attempt Online
             with self.mic as source:
                 audio = self.recognizer.listen(source, timeout=timeout, phrase_time_limit=10)
             return self.recognizer.recognize_google(audio)
+        except:
+            # 2. Offline Fallback
+            if VOSK_AVAILABLE:
+                return self._listen_vosk()
+            return ""
+
+    def _listen_vosk(self):
+        try:
+            model_path = "storage/vosk-model-small-en-us-0.15"
+            if not os.path.exists(model_path): return ""
+
+            model = Model(model_path)
+            rec = KaldiRecognizer(model, 16000)
+            p = pyaudio.PyAudio()
+            stream = p.open(format=pyaudio.paInt16, channels=1, rate=16000, input=True, frames_per_buffer=8000)
+            stream.start_stream()
+
+            start_time = time.time()
+            while time.time() - start_time < 8:
+                data = stream.read(4000, exception_on_overflow=False)
+                if rec.AcceptWaveform(data):
+                    res = json.loads(rec.Result())
+                    return res.get("text", "")
+            return ""
         except: return ""
 
     def listen_passive(self):

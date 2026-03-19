@@ -26,12 +26,26 @@ class SystemModule:
         try:
             if not app_name: return "App name required."
             app = app_name.lower().strip()
-            # Common aliases
+            # Strict normalization to prevent command injection
+            import re
+            safe_app = re.sub(r'[^a-zA-Z0-9\s.:/-]', '', app)
+
             aliases = {"chrome": "chrome", "notepad": "notepad", "calculator": "calc", "explorer": "explorer"}
-            cmd = aliases.get(app, app)
+            cmd = aliases.get(safe_app, safe_app)
+
+            # Using start command safely on Windows
             subprocess.Popen(f"start {cmd}", shell=True)
             return f"Executing {app_name}."
         except Exception as e: return f"Execution failed: {e}"
+
+    def move_file(self, src, dst):
+        try:
+            import shutil
+            if os.path.exists(src):
+                shutil.move(src, dst)
+                return f"Relocated {os.path.basename(src)} to target destination."
+            return "Source archive not found."
+        except Exception as e: return f"Relocation failed: {e}"
 
     def close_app(self, app_name):
         if not gw: return "Window management offline."

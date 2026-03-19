@@ -35,6 +35,8 @@ class CommandRouter:
             return self.system.get_health()
         elif intent == "lock_pc":
             return self.system.lock_pc()
+        elif intent == "move_file":
+            return self.system.move_file(params.get("source"), params.get("destination"))
         elif intent == "set_volume":
             return self.system.set_volume(params.get("level", 50))
         elif intent == "set_brightness":
