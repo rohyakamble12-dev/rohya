@@ -34,10 +34,14 @@ class CommandRouter:
                 return self.system.screenshot()
             elif intent == "system_health":
                 return self.system.get_health()
-            elif intent == "system_info":
-                return self.system.get_sys_info()
             elif intent == "lock_pc":
                 return self.system.lock_pc()
+            elif intent == "active_window":
+                return self.system.get_active_window()
+            elif intent == "window_control":
+                return self.system.manipulate_window(params.get("action"), params.get("title"))
+            elif intent == "set_theme":
+                return self.system.set_dark_mode(params.get("mode", "dark") == "dark")
             elif intent == "move_file":
                 return self.system.move_file(params.get("source"), params.get("destination"))
             elif intent == "set_volume":

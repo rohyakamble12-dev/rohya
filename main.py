@@ -12,6 +12,7 @@ from modules.brain import VedaBrain
 from modules.commands import CommandRouter
 from modules.memory import VedaMemory
 from modules.notifications import NotificationModule
+from modules.monitor import MonitorModule
 
 class VedaAssistant:
     def __init__(self):
@@ -24,6 +25,7 @@ class VedaAssistant:
         self.voice = VedaVoice(self.config)
         self.gui = VedaHUD(self.config, self)
         self.notif = NotificationModule(self.gui)
+        self.monitor = MonitorModule(self)
         self.router = CommandRouter(self)
 
         # Initial Connectivity Check
@@ -75,54 +77,37 @@ class VedaAssistant:
 
     def process_command(self, user_input):
         logging.info(f"Command Received: {user_input}")
+        self.gui.after(0, lambda: self.gui.set_state("thinking"))
 
-        # Segment multi-commands: "open chrome and set volume to 50"
-        commands = re.split(r'\s+(?:and|then|also)\s+', user_input, flags=re.IGNORECASE)
-        final_responses = []
+        # 1. Classification
+        category = self.brain.classify_intent(user_input)
 
-        for cmd in commands:
-            cmd = cmd.strip()
-            if not cmd: continue
+        # 2. Survival Mode Check (Direct regex for core commands)
+        response = self._handle_survival_mode(user_input)
 
-            self.gui.after(0, lambda: self.gui.set_state("thinking"))
+        if not response and category in ["command", "search", "productivity", "calculation"]:
+            # 3. Full Intelligence Route
+            intent_data = self.brain.extract_params(user_input)
+            response = self.router.route(intent_data)
 
-            # 1. Classification
-            category = self.brain.classify_intent(cmd)
+        # Fallback
+        if not response:
+            history = self.memory.get_context()
+            response = self.brain.chat(user_input, history)
 
-            # 2. Survival Mode Check (Direct regex for core commands)
-            response = self._handle_survival_mode(cmd)
-
-            if not response and category in ["command", "search", "productivity", "calculation"]:
-                # 3. Full Intelligence Route
-                intent_data = self.brain.extract_params(cmd)
-                response = self.router.route(intent_data)
-
-            # Fallback
-            if not response:
-                history = self.memory.get_context()
-                facts = self.memory.search_facts("") # Get all facts
-                fact_str = "\n".join(facts) if facts else ""
-                response = self.brain.chat(cmd, history, facts=fact_str)
-
-                # Pro-Active Learning: if user provides personal info
-                if any(t in cmd.lower() for t in ["my name is", "i like", "call me", "remember that"]):
-                    self.memory.add_fact(cmd)
-
-            final_responses.append(response)
-
-        # Unified Response Handling
-        combined_response = ". ".join(final_responses)
+        # Logging & State
         self.memory.log_interaction("user", user_input)
-        self.memory.log_interaction("assistant", combined_response)
+        self.memory.log_interaction("assistant", response)
 
         # UI & Voice
         self.gui.after(0, lambda: self.gui.set_state("speaking"))
-        self.gui.after(0, lambda: self.gui.add_message("Veda", combined_response))
-        self.voice.speak(combined_response)
+        self.gui.after(0, lambda: self.gui.add_message("Veda", response))
+        self.voice.speak(response)
         self.gui.after(0, lambda: self.gui.set_state("idle"))
 
     def run(self):
         self.notif.notify("Interface online. Stark Protocol active.", "VEDA v5.0")
+        self.monitor.start()
         threading.Thread(target=self.wake_word_loop, daemon=True).start()
         threading.Thread(target=self._metrics_updater, daemon=True).start()
         self.gui.start()
@@ -169,7 +154,7 @@ class VedaAssistant:
         """Instant offline processing for core intents."""
         text = text.lower().strip()
 
-        # 0. Quick Responses (Survival 3.0)
+        # 0. Quick Responses (Survival 4.0)
         if text in ["hello", "hi", "hey", "veda"]:
             return "Systems operational. Standing by for command, Operator."
         if "who are you" in text or "your identity" in text:
@@ -178,6 +163,12 @@ class VedaAssistant:
             return "My core systems are reporting 100% efficiency. Ready for engagement."
         if "thank you" in text or "thanks" in text:
             return "Of course, Operator. Efficiency is my primary directive."
+        if "time" in text and "what" in text:
+            return f"Current tactical time is {time.strftime('%H:%M:%S')}."
+        if "date" in text and "what" in text:
+            return f"Today's date is {time.strftime('%A, %B %d, %Y')}."
+        if "active" in text and "window" in text:
+            return self.router.system.get_active_window()
 
         # Remove common wake-word/politeness prefixes
         text = re.sub(r'^(veda|hey veda|please|could you|would you mind|just)\s+', '', text)
@@ -213,8 +204,6 @@ class VedaAssistant:
             return self.router.system.screenshot()
         if "health" in text or "status" in text:
             return self.router.system.get_health()
-        if "system info" in text or "system report" in text:
-            return self.router.system.get_sys_info()
         if "lock" in text and "pc" in text:
             return self.router.system.lock_pc()
 
@@ -222,6 +211,10 @@ class VedaAssistant:
 
     def notify(self, message):
         self.notif.notify(message)
+        self.gui.after(0, lambda: self.gui.add_message("System", message))
+        if "ALERT" in message:
+            self.gui.after(0, lambda: self.gui.set_state("thinking")) # Visual pulse
+            self.voice.speak(message)
 
 if __name__ == "__main__":
     try:

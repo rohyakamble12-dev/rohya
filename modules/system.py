@@ -55,16 +55,26 @@ class SystemModule:
 
             # Try launching with 'start'
             try:
-                # Use list-based Popen to avoid shell injection when possible,
-                # but 'start' is a shell builtin.
+                # Use list-based Popen to avoid shell injection
                 subprocess.Popen(["cmd", "/c", f"start {cmd}"],
                                shell=False,
                                creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
                 return f"Executing {app_name}."
             except Exception:
-                # Fallback: try direct execution
-                subprocess.Popen([cmd], shell=False)
-                return f"Executing {app_name} via direct link."
+                # Advance Search Fallback
+                try:
+                    # Using where command to find path
+                    res = subprocess.check_output(f"where {cmd}", shell=True).decode().split('\n')[0].strip()
+                    if res:
+                        subprocess.Popen([res], shell=False)
+                        return f"Executing {app_name} via system search."
+                except: pass
+
+                # Try direct execution
+                try:
+                    subprocess.Popen([cmd], shell=False)
+                    return f"Executing {app_name} via direct link."
+                except: return f"Failed to acquire execution path for {app_name}."
 
         except Exception as e: return f"Execution failed: {e}"
 
@@ -135,18 +145,10 @@ class SystemModule:
 
     def get_health(self):
         try:
-            import socket
             cpu = psutil.cpu_percent()
             ram = psutil.virtual_memory().percent
             disk = psutil.disk_usage('/').percent
-
-            # Additional Telemetry
-            battery = psutil.sensors_battery()
-            bat_str = f" | BAT {battery.percent}%" if battery else ""
-
-            ip = socket.gethostbyname(socket.gethostname())
-
-            return f"INTEGRITY: CPU {cpu}% | RAM {ram}% | DSK {disk}%{bat_str} | IP {ip}"
+            return f"INTEGRITY: CPU {cpu}% | RAM {ram}% | DSK {disk}%"
         except Exception as e: return f"Diagnostic failure: {e}"
 
     def lock_pc(self):
@@ -155,16 +157,31 @@ class SystemModule:
             return "OS Locked. Tactical security engaged."
         except Exception as e: return f"Lock failed: {e}"
 
-    def get_sys_info(self):
-        """Comprehensive Windows 11 system report."""
+    def get_active_window(self):
+        if not gw: return "Window management offline."
         try:
-            import platform
-            info = {
-                "OS": platform.system(),
-                "Version": platform.version(),
-                "Processor": platform.processor(),
-                "Machine": platform.machine(),
-                "Uptime": f"{int(psutil.boot_time())}"
-            }
-            return f"SYSTEM REPORT:\nOS: {info['OS']} {platform.release()}\nProcessor: {info['Processor']}\nArchitecture: {info['Machine']}"
-        except Exception as e: return f"Telemetry error: {e}"
+            win = gw.getActiveWindow()
+            return f"Current focus: {win.title}" if win else "No active interface detected."
+        except: return "Failed to acquire active focus."
+
+    def manipulate_window(self, action, title=None):
+        if not gw: return "Window management offline."
+        try:
+            target = gw.getActiveWindow() if not title else gw.getWindowsWithTitle(title)[0]
+            if not target: return "Target window not found."
+
+            if action == "maximize": target.maximize()
+            elif action == "minimize": target.minimize()
+            elif action == "restore": target.restore()
+            elif action == "close": target.close()
+            return f"Window {action} protocol executed."
+        except Exception as e: return f"Window manipulation failed: {e}"
+
+    def set_dark_mode(self, enabled=True):
+        """Toggle Windows Dark/Light mode via Registry."""
+        try:
+            val = 0 if enabled else 1
+            cmd = f'powershell -Command "Set-ItemProperty -Path HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize -Name AppsUseLightTheme -Value {val}"'
+            subprocess.run(cmd, shell=True)
+            return f"OS Visual Interface synchronized to {'Dark' if enabled else 'Light'} mode."
+        except Exception as e: return f"Theme sync failed: {e}"

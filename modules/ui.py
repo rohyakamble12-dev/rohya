@@ -14,15 +14,15 @@ class VedaHUD(ctk.CTk):
 
         # Base UI Config
         self.overrideredirect(True)
-        self.attributes("-alpha", 0.88)
+        self.attributes("-alpha", 0.90)
         self.attributes("-topmost", True)
-        self.geometry("850x550")
+        self.geometry("950x650")
         self.configure(fg_color="#050508")
 
         # Grid System
-        self.grid_columnconfigure(0, weight=1, minsize=220)
-        self.grid_columnconfigure(1, weight=2, minsize=350)
-        self.grid_columnconfigure(2, weight=1, minsize=260)
+        self.grid_columnconfigure(0, weight=1, minsize=240)
+        self.grid_columnconfigure(1, weight=2, minsize=400)
+        self.grid_columnconfigure(2, weight=1, minsize=280)
         self.grid_rowconfigure(0, weight=1)
 
         self.links = {}
@@ -111,7 +111,7 @@ class VedaHUD(ctk.CTk):
         ctk.CTkButton(self.ctrl_bar, text="🎤", width=40, height=35, fg_color="#121217", border_width=1, border_color="#1a1a25", command=self._on_voice).pack(side="left", padx=5)
 
         # Earth mesh setup
-        self.points = []; self.angle_y = 0; self.globe_cx = 180; self.globe_cy = 200
+        self.points = []; self.angle_y = 0; self.globe_cx = 210; self.globe_cy = 240
         self._init_earth_mesh()
 
     def _init_right_log(self):
@@ -177,7 +177,14 @@ class VedaHUD(ctk.CTk):
         self.canvas.delete("globe")
         speed = 0.05 if self.status == "thinking" else 0.02
         self.angle_y += speed
-        scale = 90 if self.status == "speaking" else 80
+        scale = 110 if self.status == "speaking" else 100
+
+        # Color Sync
+        color = "#00d4ff" # Idle
+        if self.status == "thinking": color = "#b026ff" # Purple
+        if self.status == "speaking": color = "#00ffcc" # Mint
+        if "ALERT" in self.status_label.cget("text"): color = "#ff3e3e" # Red
+
         proj = []
         for p in self.points:
             x, y, z = p
@@ -187,11 +194,11 @@ class VedaHUD(ctk.CTk):
         for i, pt in enumerate(proj):
             if pt[2] < 0: continue
             next_lon = (i + 1) if (i + 1) % 18 != 0 else i - 17
-            self.canvas.create_line(pt[0], pt[1], proj[next_lon][0], proj[next_lon][1], fill="#00d4ff", tags="globe", width=1)
+            self.canvas.create_line(pt[0], pt[1], proj[next_lon][0], proj[next_lon][1], fill=color, tags="globe", width=1)
             next_lat = i + 18
             if next_lat < len(proj):
-                self.canvas.create_line(pt[0], pt[1], proj[next_lat][0], proj[next_lat][1], fill="#00d4ff", tags="globe", width=1)
-            self.canvas.create_oval(pt[0]-1, pt[1]-1, pt[0]+1, pt[1]+1, fill="#00d4ff", outline="", tags="globe")
+                self.canvas.create_line(pt[0], pt[1], proj[next_lat][0], proj[next_lat][1], fill=color, tags="globe", width=1)
+            self.canvas.create_oval(pt[0]-1, pt[1]-1, pt[0]+1, pt[1]+1, fill=color, outline="", tags="globe")
 
     def add_message(self, role, text):
         bg = "#08080c"; border = "#1a1a25"
