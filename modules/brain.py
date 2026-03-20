@@ -61,8 +61,12 @@ class VedaBrain:
                 return intent
         return "conversation"
 
-    def chat(self, user_input, history):
-        messages = [{"role": "system", "content": self.system_prompt}]
+    def chat(self, user_input, history, facts=""):
+        custom_prompt = self.system_prompt
+        if facts:
+            custom_prompt += f"\n\n[KNOWN OPERATOR DATA]:\n{facts}\n\nYou must proactively use this data to personalize your responses. If you know the operator's name or preferences, refer to them."
+
+        messages = [{"role": "system", "content": custom_prompt}]
         messages.extend(history)
         messages.append({"role": "user", "content": user_input})
 

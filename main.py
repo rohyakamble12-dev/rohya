@@ -77,32 +77,54 @@ class VedaAssistant:
 
     def process_command(self, user_input):
         logging.info(f"Command Received: {user_input}")
-        self.gui.after(0, lambda: self.gui.set_state("thinking"))
 
-        # 1. Classification
-        category = self.brain.classify_intent(user_input)
+        # Segment multi-commands: "open chrome and then set volume to 50"
+        commands = re.split(r'\s+(?:and|then|also|after that)\s+', user_input, flags=re.IGNORECASE)
+        final_responses = []
 
-        # 2. Survival Mode Check (Direct regex for core commands)
-        response = self._handle_survival_mode(user_input)
+        for cmd in commands:
+            cmd = cmd.strip()
+            if not cmd: continue
 
-        if not response and category in ["command", "search", "productivity", "calculation"]:
-            # 3. Full Intelligence Route
-            intent_data = self.brain.extract_params(user_input)
-            response = self.router.route(intent_data)
+            self.gui.after(0, lambda: self.gui.set_state("thinking"))
 
-        # Fallback
-        if not response:
-            history = self.memory.get_context()
-            response = self.brain.chat(user_input, history)
+            # 1. Survival Mode Check (Direct regex for core commands)
+            response = self._handle_survival_mode(cmd)
 
-        # Logging & State
+            if not response:
+                # 2. Semantic Intent Path
+                category = self.brain.classify_intent(cmd)
+                if category in ["command", "search", "productivity", "calculation"]:
+                    intent_data = self.brain.extract_params(cmd)
+                    response = self.router.route(intent_data)
+
+                    # Tactical Failover: if route failed, ask brain for alternative
+                    if not response or "failed" in response.lower() or "not found" in response.lower():
+                        history = self.memory.get_context()
+                        response = self.brain.chat(f"Command '{cmd}' failed. Suggest an alternative to the operator.", history)
+
+            # 3. Neural Fallback (Conversation)
+            if not response:
+                history = self.memory.get_context()
+                facts = self.memory.search_facts("")
+                fact_str = "\n".join(facts) if facts else ""
+                response = self.brain.chat(cmd, history, facts=fact_str)
+
+                # Pro-Active Learning: Store user preferences/facts
+                if any(t in cmd.lower() for t in ["my name is", "i like", "call me", "remember that"]):
+                    self.memory.add_fact(cmd)
+
+            final_responses.append(response)
+
+        # Unified Response Handling
+        combined_response = ". ".join([r for r in final_responses if r])
         self.memory.log_interaction("user", user_input)
-        self.memory.log_interaction("assistant", response)
+        self.memory.log_interaction("assistant", combined_response)
 
         # UI & Voice
         self.gui.after(0, lambda: self.gui.set_state("speaking"))
-        self.gui.after(0, lambda: self.gui.add_message("Veda", response))
-        self.voice.speak(response)
+        self.gui.after(0, lambda: self.gui.add_message("Veda", combined_response))
+        self.voice.speak(combined_response)
         self.gui.after(0, lambda: self.gui.set_state("idle"))
 
     def run(self):

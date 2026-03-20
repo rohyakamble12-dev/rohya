@@ -6,6 +6,7 @@ from modules.vision import VisionModule
 from modules.files import FilesModule
 from modules.protocols import ProtocolModule
 from modules.iot import IOTModule
+from modules.comms import CommsModule
 import logging
 
 class CommandRouter:
@@ -19,6 +20,7 @@ class CommandRouter:
         self.files = FilesModule()
         self.iot = IOTModule(assistant.config)
         self.protocols = ProtocolModule(assistant)
+        self.comms = CommsModule()
 
     def route(self, intent_data):
         try:
@@ -34,6 +36,10 @@ class CommandRouter:
                 return self.system.screenshot()
             elif intent == "system_health":
                 return self.system.get_health()
+            elif intent == "system_info":
+                return self.system.get_sys_info()
+            elif intent == "network_info":
+                return self.system.get_network_info()
             elif intent == "lock_pc":
                 return self.system.lock_pc()
             elif intent == "active_window":
@@ -42,6 +48,14 @@ class CommandRouter:
                 return self.system.manipulate_window(params.get("action"), params.get("title"))
             elif intent == "set_theme":
                 return self.system.set_dark_mode(params.get("mode", "dark") == "dark")
+            elif intent == "send_email":
+                return self.comms.send_email(params.get("recipient"), params.get("subject"), params.get("body"))
+            elif intent == "open_social":
+                return self.comms.open_social(params.get("platform"))
+            elif intent == "list_procs":
+                return self.system.list_processes()
+            elif intent == "kill_proc":
+                return self.system.terminate_process(params.get("process_name"))
             elif intent == "move_file":
                 return self.system.move_file(params.get("source"), params.get("destination"))
             elif intent == "set_volume":

@@ -18,6 +18,7 @@ class VedaHUD(ctk.CTk):
         self.attributes("-topmost", True)
         self.geometry("950x650")
         self.configure(fg_color="#050508")
+        self.title("VEDA CORE")
 
         # Grid System
         self.grid_columnconfigure(0, weight=1, minsize=240)
@@ -105,7 +106,7 @@ class VedaHUD(ctk.CTk):
         self.ctrl_bar.pack(side="bottom", pady=25)
 
         ctk.CTkButton(self.ctrl_bar, text="💻 OFF", width=80, height=35, fg_color="#121217", border_width=1, border_color="#1a1a25", font=("Orbitron", 7), command=lambda: self.set_state("idle")).pack(side="left", padx=5)
-        ctk.CTkButton(self.ctrl_bar, text="📁", width=40, height=35, fg_color="#121217", border_width=1, border_color="#1a1a25", command=lambda: self.assistant.process_command("open documents")).pack(side="left", padx=5)
+        ctk.CTkButton(self.ctrl_bar, text="🗕", width=35, height=35, fg_color="#121217", border_width=1, border_color="#1a1a25", command=lambda: self.iconify()).pack(side="left", padx=5)
         ctk.CTkButton(self.ctrl_bar, text="U N L O A D", width=100, height=40, fg_color="#121217", border_width=1, border_color="#ff3e3e",
                        font=("Orbitron", 9, "bold"), text_color="#ffffff", command=self.destroy).pack(side="left", padx=5)
         ctk.CTkButton(self.ctrl_bar, text="🎤", width=40, height=35, fg_color="#121217", border_width=1, border_color="#1a1a25", command=self._on_voice).pack(side="left", padx=5)
