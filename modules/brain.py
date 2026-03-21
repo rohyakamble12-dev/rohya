@@ -61,7 +61,7 @@ class VedaBrain:
                 return intent
         return "conversation"
 
-    def chat(self, user_input, history, facts=""):
+    def chat(self, user_input, history, facts="", stream=False):
         custom_prompt = self.system_prompt
         if facts:
             custom_prompt += f"\n\n[KNOWN OPERATOR DATA]:\n{facts}\n\nYou must proactively use this data to personalize your responses. If you know the operator's name or preferences, refer to them."
@@ -71,11 +71,17 @@ class VedaBrain:
         messages.append({"role": "user", "content": user_input})
 
         try:
+            if stream:
+                return ollama.chat(model=self.model, messages=messages, stream=True)
             response = ollama.chat(model=self.model, messages=messages)
             return response['message']['content']
         except Exception as e:
             logging.error(f"Neural link failed: {e}")
-            return "Neural link unstable, Operator. Operating in restricted tactical mode."
+            error_msg = "Neural link unstable, Operator. Operating in restricted tactical mode."
+            if stream:
+                def _error_gen(): yield {"message": {"content": error_msg}}
+                return _error_gen()
+            return error_msg
 
     def extract_params(self, user_input):
         """Uses LLM to extract JSON parameters for commands with regex fallback."""

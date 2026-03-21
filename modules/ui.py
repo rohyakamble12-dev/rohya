@@ -96,12 +96,16 @@ class CenterPanel(VedaPanel):
                        font=("Orbitron", 9, "bold"), text_color="#ffffff", command=self.master.destroy).pack(side="left", padx=5)
 
     def _init_earth_mesh(self):
-        lats, longs = 12, 18
-        for i in range(lats):
-            lat = math.pi * i / (lats - 1)
-            for j in range(longs):
-                lon = 2 * math.pi * j / longs
-                self.points.append([math.sin(lat) * math.cos(lon), math.cos(lat), math.sin(lat) * math.sin(lon)])
+        # Fibonacci Sphere (100 points as requested in design spec)
+        n = 100
+        phi = math.pi * (3. - math.sqrt(5.)) # golden angle in radians
+        for i in range(n):
+            y = 1 - (i / float(n - 1)) * 2 # y goes from 1 to -1
+            radius = math.sqrt(1 - y * y) # radius at y
+            theta = phi * i # golden angle increment
+            x = math.cos(theta) * radius
+            z = math.sin(theta) * radius
+            self.points.append([x, y, z])
 
 class LogPanel(VedaPanel):
     def __init__(self, parent, assistant):
@@ -132,8 +136,10 @@ class LogPanel(VedaPanel):
     def add_message(self, role, text):
         f = ctk.CTkFrame(self.chat_scroll, fg_color="#08080c", border_width=1, border_color="#1a1a25" if role=="User" else "#00d4ff")
         f.pack(fill="x", pady=2, padx=5)
-        ctk.CTkLabel(f, text=f"{role.upper()}: {text}", font=("Consolas", 9), text_color="#cccccc", wraplength=250, justify="left").pack(padx=10, pady=5)
+        lbl = ctk.CTkLabel(f, text=f"{role.upper()}: {text}", font=("Consolas", 9), text_color="#cccccc", wraplength=250, justify="left")
+        lbl.pack(padx=10, pady=5)
         self.chat_scroll._parent_canvas.yview_moveto(1.0)
+        return lbl
 
 class VedaHUD(ctk.CTk):
     def __init__(self, config, assistant):
@@ -170,28 +176,41 @@ class VedaHUD(ctk.CTk):
     def _draw_earth(self):
         canvas = self.center.canvas
         canvas.delete("globe")
+
+        # Resize-aware dimensions
+        w, h = canvas.winfo_width(), canvas.winfo_height()
+        if w < 10 or h < 10: return
+        cx, cy = w // 2, h // 2
+
         speed = 0.05 if self.status == "thinking" else 0.02
         self.center.angle_y += speed
 
-        scale = (70 if self.status != "speaking" else 80) + (self.mic_level * 20)
+        scale = (min(w, h) // 4) * (1.0 + self.mic_level * 0.5)
         color = {"idle": "#00d4ff", "thinking": "#b026ff", "speaking": "#00ffcc"}.get(self.status, "#00d4ff")
         if "ALERT" in self.log.status_label.cget("text"): color = "#ff3e3e"
 
-        cx, cy = 175, 200
+        # Projection
         proj = []
         for p in self.center.points:
             x, y, z = p
+            # Rotate Y
             nx = x * math.cos(self.center.angle_y) - z * math.sin(self.center.angle_y)
             nz = x * math.sin(self.center.angle_y) + z * math.cos(self.center.angle_y)
             proj.append((nx * scale + cx, y * scale + cy, nz))
 
+        # Draw Points & Connections (Nearest Neighbor logic)
         for i, pt in enumerate(proj):
-            if pt[2] < 0: continue
-            next_lon = (i + 1) if (i + 1) % 18 != 0 else i - 17
-            canvas.create_line(pt[0], pt[1], proj[next_lon][0], proj[next_lon][1], fill=color, tags="globe", width=1)
-            next_lat = i + 18
-            if next_lat < len(proj):
-                canvas.create_line(pt[0], pt[1], proj[next_lat][0], proj[next_lat][1], fill=color, tags="globe", width=1)
+            if pt[2] < 0: continue # Backface culling
+            canvas.create_oval(pt[0]-1, pt[1]-1, pt[0]+1, pt[1]+1, fill=color, outline="", tags="globe")
+
+            # Simple nearest neighbor connections for the mesh look
+            for j in range(i + 1, min(i + 4, len(proj))):
+                if proj[j][2] > 0:
+                    canvas.create_line(pt[0], pt[1], proj[j][0], proj[j][1], fill=color, tags="globe", width=1, stipple="gray50")
+
+        # Scanline Effect (Requested overlay)
+        for y in range(0, h, 4):
+            canvas.create_line(0, y, w, y, fill="#00ffff", tags="globe", width=1, stipple="gray12")
 
     def set_state(self, status):
         self.status = status

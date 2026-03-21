@@ -72,7 +72,7 @@ class CommandRouter:
             elif intent == "move_file":
                 return self.system.move_file(params.get("source"), params.get("destination"))
             elif intent == "set_volume":
-                return self.system.set_volume(params.get("level", 50))
+                return self.system.set_volume(params.get("level", 50), params.get("app_name"))
             elif intent == "set_brightness":
                 return self.system.set_brightness(params.get("level", 50))
 
@@ -111,6 +111,8 @@ class CommandRouter:
                 return self.vision.capture_and_describe()
             elif intent == "vision_face":
                 return self.vision.face_detect()
+            elif intent == "screen_read":
+                return self.vision.screen_ocr()
 
             # 6. Files
             elif intent == "read_pdf":

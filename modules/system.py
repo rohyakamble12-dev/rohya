@@ -1,6 +1,7 @@
 import os
 import subprocess
 import psutil
+import threading
 import pyautogui
 import ctypes
 import logging
@@ -24,6 +25,31 @@ try:
 except: HAS_SBC = False
 
 class SystemModule:
+    def __init__(self):
+        self.app_cache = {}
+        threading.Thread(target=self.scan_installed_apps, daemon=True).start()
+
+    def scan_installed_apps(self):
+        """Scans Windows Registry for installed application paths."""
+        try:
+            import winreg
+            paths = [
+                (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths"),
+                (winreg.HKEY_CURRENT_USER, r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths")
+            ]
+            for root, subkey in paths:
+                try:
+                    key = winreg.OpenKey(root, subkey)
+                    for i in range(winreg.QueryInfoKey(key)[0]):
+                        try:
+                            name = winreg.EnumKey(key, i)
+                            with winreg.OpenKey(key, name) as sub:
+                                path = winreg.QueryValue(sub, None)
+                                if path: self.app_cache[name.lower().replace(".exe", "")] = path
+                        except: continue
+                except: continue
+        except: pass
+
     def open_app(self, app_name):
         try:
             if not app_name: return "App name required."
@@ -48,6 +74,11 @@ class SystemModule:
                 "downloads": "shell:Downloads", "desktop": "shell:Desktop"
             }
             cmd = aliases.get(app, app)
+
+            # Tier 2.5: Registry Cache Search
+            if app in self.app_cache:
+                os.startfile(self.app_cache[app])
+                return f"Executing {app} from verified path."
 
             # Tier 3: Start Menu & Desktop Shortcut Search
             try:
@@ -106,15 +137,24 @@ class SystemModule:
             return f"No active interface for {app_name} found."
         except Exception as e: return f"Closure failed: {e}"
 
-    def set_volume(self, level):
+    def set_volume(self, level, app_name=None):
         if not HAS_PYCAW: return "Audio interface link broken."
         try:
             level = max(0, min(100, int(level)))
-            devices = AudioUtilities.GetSpeakers()
-            interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
-            volume = cast(interface, POINTER(IAudioEndpointVolume))
-            volume.SetMasterVolumeLevelScalar(level / 100.0, None)
-            return f"Audio output optimized to {level}%."
+            if app_name:
+                sessions = AudioUtilities.GetAllSessions()
+                for session in sessions:
+                    volume = session.SimpleAudioVolume
+                    if session.Process and app_name.lower() in session.Process.name().lower():
+                        volume.SetMasterVolume(level / 100.0, None)
+                        return f"Audio output for {app_name} synchronized to {level}%."
+                return f"No active audio session for {app_name} found."
+            else:
+                devices = AudioUtilities.GetSpeakers()
+                interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
+                volume = cast(interface, POINTER(IAudioEndpointVolume))
+                volume.SetMasterVolumeLevelScalar(level / 100.0, None)
+                return f"Master audio output optimized to {level}%."
         except Exception as e: return f"Audio adjustment failed: {e}"
 
     def set_brightness(self, level):

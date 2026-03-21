@@ -6,6 +6,8 @@ import re
 import logging
 import threading
 import time
+import socket
+import psutil
 from modules.ui import VedaHUD
 from modules.voice import VedaVoice
 from modules.brain import VedaBrain
@@ -57,9 +59,9 @@ class VedaAssistant:
             while True:
                 # 1. Neural Link
                 neural = self.brain.ensure_ollama() is not False
-                # 2. Data Link
+                # 2. Data Link (Using low-level socket for high efficiency)
                 try:
-                    requests.get("https://google.com", timeout=2)
+                    socket.create_connection(("1.1.1.1", 53), timeout=2)
                     data = True
                 except: data = False
 
@@ -97,32 +99,50 @@ class VedaAssistant:
                     intent_data = self.brain.extract_params(cmd)
                     response = self.router.route(intent_data)
 
-                    # Tactical Failover: if route failed, ask brain for alternative
+                    # Tactical Failover: if route failed, check integrity then ask brain
                     if not response or "failed" in response.lower() or "not found" in response.lower():
-                        history = self.memory.get_context()
-                        response = self.brain.chat(f"Command '{cmd}' failed. Suggest an alternative to the operator.", history)
+                        # Proactive Self-Heal
+                        if "app" in cmd.lower():
+                            self.router.system.scan_installed_apps() # Force cache refresh
+                            response = self.router.system.open_app(cmd.split()[-1]) # Try one last time
 
-            # 3. Neural Fallback (Conversation)
+                        if not response or "failed" in response.lower():
+                            history = self.memory.get_context()
+                            response = self.brain.chat(f"Command '{cmd}' failed. Suggest an alternative to the operator.", history)
+
+            # 3. Neural Fallback (Conversation with Streaming)
             if not response:
                 history = self.memory.get_context()
                 facts = self.memory.search_facts("")
                 fact_str = "\n".join(facts) if facts else ""
-                response = self.brain.chat(cmd, history, facts=fact_str)
 
-                # Pro-Active Learning: Store user preferences/facts
+                stream = self.brain.chat(cmd, history, facts=fact_str, stream=True)
+                full_text = ""
+                # We need to capture the label object returned by add_message
+                # But after(0, ...) returns an ID, not the object.
+                # So we run it directly or via a synchronized helper.
+                lbl = self.gui.add_message("Veda", "...")
+
+                for chunk in stream:
+                    content = chunk['message']['content']
+                    full_text += content
+                    # Note: updating UI every token might be heavy, but we want the effect
+                    self.gui.after(0, lambda t=full_text, l=lbl: l.configure(text=f"VEDA: {t}"))
+
+                response = full_text
+
+                # Pro-Active Learning
                 if any(t in cmd.lower() for t in ["my name is", "i like", "call me", "remember that"]):
                     self.memory.add_fact(cmd)
 
             final_responses.append(response)
 
-        # Unified Response Handling
+        # Finalize Multi-Command Interaction
         combined_response = ". ".join([r for r in final_responses if r])
         self.memory.log_interaction("user", user_input)
         self.memory.log_interaction("assistant", combined_response)
 
-        # UI & Voice
         self.gui.after(0, lambda: self.gui.set_state("speaking"))
-        self.gui.after(0, lambda: self.gui.add_message("Veda", combined_response))
         self.voice.speak(combined_response)
         self.gui.after(0, lambda: self.gui.set_state("idle"))
 
@@ -147,7 +167,6 @@ class VedaAssistant:
     def _metrics_updater(self):
         while True:
             try:
-                import psutil
                 cpu = psutil.cpu_percent()
                 ram = psutil.virtual_memory().percent
                 self.gui.after(0, lambda c=cpu, r=ram: self._ui_metrics_sync(c, r))
@@ -188,35 +207,36 @@ class VedaAssistant:
             time.sleep(0.1)
 
     def _handle_survival_mode(self, text):
-        """Instant offline processing for core intents."""
+        """Instant offline processing for core intents (Survival 7.0)."""
         text = text.lower().strip()
 
-        # 0. Quick Responses (Survival 4.0)
-        if text in ["hello", "hi", "hey", "veda"]:
-            return "Systems operational. Standing by for command, Operator."
-        if "who are you" in text or "your identity" in text:
-            return "I am Veda. Your personal tactical interface and system guardian."
-        if "how are you" in text:
-            return "My core systems are reporting 100% efficiency. Ready for engagement."
-        if "thank you" in text or "thanks" in text:
-            return "Of course, Operator. Efficiency is my primary directive."
-        if "time" in text and "what" in text:
-            return f"Current tactical time is {time.strftime('%H:%M:%S')}."
-        if "date" in text and "what" in text:
-            return f"Today's date is {time.strftime('%A, %B %d, %Y')}."
-        if "active" in text and "window" in text:
-            return self.router.system.get_active_window()
-        if re.match(r'^[0-9+\-*/().\s^]+$', text):
-            try:
-                # Safe evaluation for basic math
-                res = eval(text, {"__builtins__": None}, {})
-                return f"Calculation complete: {res}."
+        # Quick Responses (Omni-Router Fast Path)
+        responses = {
+            "hello": "Systems operational. Standing by, Operator.",
+            "who are you": "I am Veda. Your personal tactical interface and system guardian.",
+            "how are you": "Systems reporting 100% efficiency.",
+            "thank you": "Efficiency is my primary directive.",
+            "system report": self.router.system.get_sys_info(),
+            "network status": self.router.system.get_network_info(),
+            "shutdown": self.router.system.open_app("shutdown /s /t 60"),
+            "restart": self.router.system.open_app("shutdown /r /t 60"),
+            "battery": self.router.system.get_health(),
+            "active window": self.router.system.get_active_window()
+        }
+        for trigger, resp in responses.items():
+            if trigger == text or (trigger in text and len(text) < 15): return resp
+
+        # Utilities
+        if "time" in text: return f"Current tactical time is {time.strftime('%H:%M:%S')}."
+        if "date" in text: return f"Today is {time.strftime('%A, %B %d, %Y')}."
+        if re.match(r'^[0-9+\-*/().\s^]+$', text) and len(text) > 1:
+            try: return f"Calculation: {eval(text, {'__builtins__': None}, {})}."
             except: pass
 
-        # Remove common wake-word/politeness prefixes
+        # Prefix Cleanup
         text = re.sub(r'^(veda|hey veda|please|could you|would you mind|just)\s+', '', text)
 
-        # 1. System Controls
+        # Fast Routing
         if "open" in text or "launch" in text:
             app = re.sub(r'.*(open|launch)\s+', '', text).strip()
             return self.router.system.open_app(app)
@@ -263,6 +283,8 @@ class VedaAssistant:
         try:
             import pyaudio
             import numpy as np
+
+            # Use same rate as voice.py for efficiency
             p = pyaudio.PyAudio()
             stream = p.open(format=pyaudio.paInt16, channels=1, rate=16000, input=True, frames_per_buffer=1024)
             while self._mic_viz_active:

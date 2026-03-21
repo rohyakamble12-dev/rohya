@@ -41,3 +41,19 @@ class VisionModule:
             return "Biometric scan complete: No human signatures found in immediate vicinity."
         except:
             return "Facial recognition protocol offline."
+
+    def screen_ocr(self):
+        """Captures screen and extracts text."""
+        try:
+            import pyautogui
+            import numpy as np
+            import pytesseract # Requires Tesseract-OCR installed on Windows
+
+            shot = pyautogui.screenshot()
+            frame = np.array(shot)
+            # OCR processing
+            text = pytesseract.image_to_string(frame)
+            if not text.strip(): return "Visual analysis complete. No legible text detected on current interface."
+            return f"SCREEN INTEGRITY REPORT:\n{text[:500]}..."
+        except Exception as e:
+            return f"Optical character recognition failed: {e}. Ensure Tesseract-OCR is installed."
