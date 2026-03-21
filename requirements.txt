@@ -28,3 +28,4 @@ darkdetect
 keyboard
 vosk
 pyaudio
+winshell

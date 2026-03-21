@@ -59,7 +59,6 @@ class VedaAssistant:
                 neural = self.brain.ensure_ollama() is not False
                 # 2. Data Link
                 try:
-                    import requests
                     requests.get("https://google.com", timeout=2)
                     data = True
                 except: data = False
@@ -70,10 +69,10 @@ class VedaAssistant:
         threading.Thread(target=_worker, daemon=True).start()
 
     def _update_gui_links(self, neural, data):
-        self.gui.links["NEURAL"].configure(text="ACTIVE" if neural else "OFFLINE", text_color="#00ffcc" if neural else "#ff3e3e")
-        self.gui.links["DATA"].configure(text="ACTIVE" if data else "OFFLINE", text_color="#00ffcc" if data else "#ff3e3e")
-        self.gui.links["VOICE"].configure(text="ACTIVE", text_color="#00ffcc")
-        self.gui.links["OPTIC"].configure(text="ACTIVE", text_color="#00ffcc") # Assuming system camera is detected
+        self.gui.sidebar.links["NEURAL"].configure(text="ACTIVE" if neural else "OFFLINE", text_color="#00ffcc" if neural else "#ff3e3e")
+        self.gui.sidebar.links["DATA"].configure(text="ACTIVE" if data else "OFFLINE", text_color="#00ffcc" if data else "#ff3e3e")
+        self.gui.sidebar.links["VOICE"].configure(text="ACTIVE", text_color="#00ffcc")
+        self.gui.sidebar.links["OPTIC"].configure(text="ACTIVE", text_color="#00ffcc")
 
     def process_command(self, user_input):
         logging.info(f"Command Received: {user_input}")
@@ -132,7 +131,18 @@ class VedaAssistant:
         self.monitor.start()
         threading.Thread(target=self.wake_word_loop, daemon=True).start()
         threading.Thread(target=self._metrics_updater, daemon=True).start()
+        threading.Thread(target=self._optical_feed_loop, daemon=True).start()
         self.gui.start()
+
+    def _optical_feed_loop(self):
+        import cv2
+        cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+        while True:
+            ret, frame = cap.read()
+            if ret:
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                self.gui.after(0, lambda f=frame: self.gui.update_camera(f))
+            time.sleep(0.04) # ~25 FPS
 
     def _metrics_updater(self):
         while True:
@@ -145,22 +155,27 @@ class VedaAssistant:
             time.sleep(2)
 
     def _ui_metrics_sync(self, cpu, ram):
-        if hasattr(self.gui, 'cpu_bar'):
-            self.gui.cpu_bar.set(cpu/100)
-        if hasattr(self.gui, 'ram_bar'):
-            self.gui.ram_bar.set(ram/100)
+        if hasattr(self.gui.sidebar, 'cpu_bar'):
+            self.gui.sidebar.cpu_bar.set(cpu/100)
+        if hasattr(self.gui.sidebar, 'ram_bar'):
+            self.gui.sidebar.ram_bar.set(ram/100)
 
-        # Image-specific labels from cmd.png
-        if hasattr(self.gui, 'stats_labels'):
-            self.gui.stats_labels["THREADS"].configure(text=str(threading.active_count()))
-            # Plugins count - from router
+        if hasattr(self.gui.sidebar, 'stats_labels'):
+            self.gui.sidebar.stats_labels["THREADS"].configure(text=str(threading.active_count()))
             plugin_count = len([m for m in dir(self.router) if not m.startswith("_")])
-            self.gui.stats_labels["PLUGINS"].configure(text=str(plugin_count))
+            self.gui.sidebar.stats_labels["PLUGINS"].configure(text=str(plugin_count))
 
     def _trigger_mic(self):
         self.gui.after(0, lambda: self.gui.add_message("System", "LISTENING..."))
         self.gui.after(0, lambda: self.gui.set_state("speaking")) # Visual feedback
+
+        # Start visualization thread
+        self._mic_viz_active = True
+        threading.Thread(target=self._mic_viz_loop, daemon=True).start()
+
         query = self.voice.listen()
+        self._mic_viz_active = False
+
         if query:
             self.gui.after(0, lambda: self.gui.add_message("User", query))
             self.process_command(query)
@@ -191,6 +206,12 @@ class VedaAssistant:
             return f"Today's date is {time.strftime('%A, %B %d, %Y')}."
         if "active" in text and "window" in text:
             return self.router.system.get_active_window()
+        if re.match(r'^[0-9+\-*/().\s^]+$', text):
+            try:
+                # Safe evaluation for basic math
+                res = eval(text, {"__builtins__": None}, {})
+                return f"Calculation complete: {res}."
+            except: pass
 
         # Remove common wake-word/politeness prefixes
         text = re.sub(r'^(veda|hey veda|please|could you|would you mind|just)\s+', '', text)
@@ -237,6 +258,19 @@ class VedaAssistant:
         if "ALERT" in message:
             self.gui.after(0, lambda: self.gui.set_state("thinking")) # Visual pulse
             self.voice.speak(message)
+
+    def _mic_viz_loop(self):
+        try:
+            import pyaudio
+            import numpy as np
+            p = pyaudio.PyAudio()
+            stream = p.open(format=pyaudio.paInt16, channels=1, rate=16000, input=True, frames_per_buffer=1024)
+            while self._mic_viz_active:
+                data = np.frombuffer(stream.read(1024, exception_on_overflow=False), dtype=np.int16)
+                peak = np.abs(data).max() / 32768.0
+                self.gui.mic_level = peak
+            stream.stop_stream(); stream.close(); p.terminate()
+        except: pass
 
 if __name__ == "__main__":
     try:

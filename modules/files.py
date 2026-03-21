@@ -35,8 +35,23 @@ class FilesModule:
         try:
             with open(file_path, 'rb') as f:
                 reader = PyPDF2.PdfReader(f)
-                return "".join([p.extract_text() for p in reader.pages[:5]])
-        except Exception as e: return f"Error: {e}"
+                content = "".join([p.extract_text() for p in reader.pages[:10]])
+                return f"PDF ANALYZED: {os.path.basename(file_path)}\nCONTENT:\n{content[:1500]}..."
+        except Exception as e: return f"Analysis failed: {e}"
+
+    def analyze_found_file(self, filename):
+        """Finds and summarizes a file's content."""
+        search_res = self.find_file(filename)
+        if "Located matches" in search_res:
+            path = search_res.split("\n")[1].strip()
+            if path.endswith(".pdf"):
+                return self.read_pdf(path)
+            elif path.endswith((".txt", ".md", ".py")):
+                try:
+                    with open(path, "r", encoding="utf-8") as f:
+                        return f"ARCHIVE SUMMARY: {os.path.basename(path)}\nDATA:\n{f.read(1500)}..."
+                except: return "Failed to read data sector."
+        return search_res
 
     @staticmethod
     def open_document(name):

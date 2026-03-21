@@ -7,6 +7,7 @@ from modules.files import FilesModule
 from modules.protocols import ProtocolModule
 from modules.iot import IOTModule
 from modules.comms import CommsModule
+from modules.automation import AutomationModule
 import logging
 
 class CommandRouter:
@@ -21,6 +22,7 @@ class CommandRouter:
         self.iot = IOTModule(assistant.config)
         self.protocols = ProtocolModule(assistant)
         self.comms = CommsModule()
+        self.auto = AutomationModule()
 
     def route(self, intent_data):
         try:
@@ -29,7 +31,12 @@ class CommandRouter:
 
             # 1. System Controls
             if intent == "open_app":
-                return self.system.open_app(params.get("app_name"))
+                res = self.system.open_app(params.get("app_name"))
+                if "failed" in res.lower() or "violation" in res.lower():
+                    # App-to-Web Fallback
+                    intel_res = self.intel.search(f"How to open {params.get('app_name')} or official site")
+                    return f"Local interface for {params.get('app_name')} not found. Intelligence report: {intel_res}"
+                return res
             elif intent == "close_app":
                 return self.system.close_app(params.get("app_name"))
             elif intent == "screenshot":
@@ -52,6 +59,12 @@ class CommandRouter:
                 return self.comms.send_email(params.get("recipient"), params.get("subject"), params.get("body"))
             elif intent == "open_social":
                 return self.comms.open_social(params.get("platform"))
+            elif intent == "macro_record":
+                return self.auto.start_recording(params.get("name"))
+            elif intent == "macro_stop":
+                return self.auto.stop_recording()
+            elif intent == "macro_play":
+                return self.auto.play_macro(params.get("name"))
             elif intent == "list_procs":
                 return self.system.list_processes()
             elif intent == "kill_proc":
@@ -89,7 +102,9 @@ class CommandRouter:
             elif intent == "pomodoro":
                 return self.prod.start_pomodoro(int(params.get("minutes", 25)))
             elif intent == "reminder":
-                return self.prod.remind_me(params.get("task"), int(params.get("minutes", 5)))
+                return self.prod.remind_me(params.get("task"), params.get("time_str"))
+            elif intent == "list_schedule":
+                return self.prod.list_schedule()
 
             # 5. Vision
             elif intent == "vision_describe":
@@ -104,6 +119,8 @@ class CommandRouter:
                 return self.files.open_document(params.get("name"))
             elif intent == "file_find":
                 return self.files.find_file(params.get("filename"))
+            elif intent == "file_analyze":
+                return self.files.analyze_found_file(params.get("filename"))
 
             # 7. Protocols
             elif intent == "protocol":
