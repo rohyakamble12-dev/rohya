@@ -188,46 +188,53 @@ class VedaHUD(ctk.CTk):
             canvas = self.center.canvas
             canvas.delete("globe")
 
-            # Ensure dimensions
+            # Use reliable geometry fetching
             w = canvas.winfo_width()
             h = canvas.winfo_height()
-            if w < 10: return
+            if w < 20:
+                canvas.update_idletasks()
+                w = canvas.winfo_width()
+                h = canvas.winfo_height()
+
             cx, cy = w // 2, h // 2
 
-            # Apex Visual Health-Sync
+            # Health Sync Effect
             try:
-                threads = float(self.sidebar.stats_labels["THREADS"].cget("text"))
-                load_glow = threads > 15
+                load_glow = float(self.sidebar.stats_labels["THREADS"].cget("text")) > 15
             except: load_glow = False
 
             speed = 0.05 if self.status == "thinking" else 0.02
             self.center.angle_y += speed
+            angle_x = self.center.angle_y * 0.3 # Secondary rotation axis
 
-            scale = (min(w, h) // 4) * (1.0 + self.mic_level * 0.5)
+            # Base Scale
+            scale = (min(w, h) // 5) * (1.0 + self.mic_level * 0.5)
             color = {"idle": "#00d4ff", "thinking": "#b026ff", "speaking": "#00ffcc"}.get(self.status, "#00d4ff")
             if "ALERT" in self.log.status_label.cget("text") or load_glow: color = "#ff3e3e"
 
             glow_width = 2 if self.status == "thinking" or load_glow else 1
-            angle_x = self.center.angle_y * 0.3
 
             proj = []
             for p in self.center.points:
                 x, y, z = p
-                # Rotation
+                # Rotation Y
                 ry_x = x * math.cos(self.center.angle_y) - z * math.sin(self.center.angle_y)
                 ry_z = x * math.sin(self.center.angle_y) + z * math.cos(self.center.angle_y)
+                # Rotation X
                 rx_y = y * math.cos(angle_x) - ry_z * math.sin(angle_x)
                 rx_z = y * math.sin(angle_x) + ry_z * math.cos(angle_x)
                 proj.append((ry_x * scale + cx, rx_y * scale + cy, rx_z))
 
+            # Render Fibonacci Sphere Mesh
             for i, pt in enumerate(proj):
-                if pt[2] < 0: continue
+                if pt[2] < 0: continue # Backface culling
                 canvas.create_oval(pt[0]-1, pt[1]-1, pt[0]+1, pt[1]+1, fill=color, outline="", tags="globe")
-                for j in range(i + 1, min(i + 4, len(proj))):
-                    if proj[j][2] > 0:
+                # Connect neighbors (fibonacci index logic)
+                for j in [i+1, i+2]:
+                    if j < len(proj) and proj[j][2] > 0:
                         canvas.create_line(pt[0], pt[1], proj[j][0], proj[j][1], fill=color, tags="globe", width=glow_width, stipple="gray50")
 
-            # Scanlines
+            # Scanline Overlay
             for y in range(0, h, 4):
                 canvas.create_line(0, y, w, y, fill="#00ffff", tags="globe", width=1, stipple="gray12")
         except: pass

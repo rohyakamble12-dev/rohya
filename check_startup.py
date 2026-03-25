@@ -7,7 +7,8 @@ modules_to_mock = [
     'customtkinter', 'edge_tts', 'pyttsx3', 'speech_recognition',
     'pygame', 'ollama', 'psutil', 'pyautogui', 'ctypes', 'cv2',
     'win10toast', 'pynput', 'pynput.keyboard', 'PyPDF2', 'wikipedia',
-    'deep_translator', 'comtypes', 'screen_brightness_control', 'pycaw.pycaw'
+    'deep_translator', 'comtypes', 'screen_brightness_control', 'pycaw.pycaw',
+    'schedule', 'winshell', 'pytesseract', 'numpy'
 ]
 
 for mod in modules_to_mock:
