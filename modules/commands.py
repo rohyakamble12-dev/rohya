@@ -130,6 +130,8 @@ class CommandRouter:
                 return self.vision.capture_and_describe()
             elif intent == "vision_face":
                 return self.vision.face_detect()
+            elif intent == "vision_camera":
+                return self.assistant.toggle_camera()
             elif intent == "screen_read":
                 return self.vision.screen_ocr()
 

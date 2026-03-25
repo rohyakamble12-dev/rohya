@@ -19,6 +19,7 @@ from modules.monitor import MonitorModule
 class VedaAssistant:
     def __init__(self):
         self.load_config()
+        self.optical_active = False
         self.setup_logging()
 
         # Core Subsystems
@@ -170,13 +171,26 @@ class VedaAssistant:
 
     def _optical_feed_loop(self):
         import cv2
-        cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+        cap = None
         while True:
-            ret, frame = cap.read()
-            if ret:
-                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                self.gui.after(0, lambda f=frame: self.gui.update_camera(f))
+            if self.optical_active:
+                if cap is None:
+                    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+                ret, frame = cap.read()
+                if ret:
+                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    self.gui.after(0, lambda f=frame: self.gui.update_camera(f))
+            else:
+                if cap is not None:
+                    cap.release()
+                    cap = None
+                    # Clear camera UI
+                    self.gui.after(0, lambda: self.gui.sidebar.cam_label.configure(image="", text="OPTICAL FEED OFFLINE"))
             time.sleep(0.04) # ~25 FPS
+
+    def toggle_camera(self):
+        self.optical_active = not self.optical_active
+        return f"Optical sensors {'engaged' if self.optical_active else 'offline'}."
 
     def _metrics_updater(self):
         while True:

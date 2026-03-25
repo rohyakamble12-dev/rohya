@@ -22,7 +22,7 @@ class SidebarPanel(VedaPanel):
         self._add_section_header("OPTICAL FEED")
         self.cam_box = ctk.CTkFrame(self, height=150, fg_color="black", border_width=1, border_color="#1a1a25")
         self.cam_box.pack(fill="x", pady=(5, 15))
-        self.cam_label = ctk.CTkLabel(self.cam_box, text="")
+        self.cam_label = ctk.CTkLabel(self.cam_box, text="OFFLINE")
         self.cam_label.pack(expand=True, fill="both")
 
         # Observability
@@ -86,6 +86,7 @@ class CenterPanel(VedaPanel):
         btns = [
             ("💻", lambda: self.assistant.set_state("idle")),
             ("🗕", lambda: self.master.iconify()),
+            ("👁️", lambda: self.assistant.process_command("vision camera")),
             ("📁", lambda: self.assistant.process_command("open documents")),
             ("🎤", lambda: self.assistant._trigger_mic())
         ]
@@ -183,66 +184,66 @@ class VedaHUD(ctk.CTk):
         self.after(40, self._animate_loop)
 
     def _draw_earth(self):
-        canvas = self.center.canvas
-        canvas.delete("globe")
-
-        # Apex Visual Health-Sync
         try:
-            cpu_val = float(self.sidebar.stats_labels["THREADS"].cget("text")) # Simulated
-            # If threads > 15, assume high load for visual effect
-            load_glow = cpu_val > 15
-        except: load_glow = False
+            canvas = self.center.canvas
+            canvas.delete("globe")
 
-        # Resize-aware dimensions
-        w, h = canvas.winfo_width(), canvas.winfo_height()
-        if w < 10 or h < 10: return
-        cx, cy = w // 2, h // 2
+            # Ensure dimensions
+            w = canvas.winfo_width()
+            h = canvas.winfo_height()
+            if w < 10: return
+            cx, cy = w // 2, h // 2
 
-        speed = 0.05 if self.status == "thinking" else 0.02
-        self.center.angle_y += speed
+            # Apex Visual Health-Sync
+            try:
+                threads = float(self.sidebar.stats_labels["THREADS"].cget("text"))
+                load_glow = threads > 15
+            except: load_glow = False
 
-        scale = (min(w, h) // 4) * (1.0 + self.mic_level * 0.5)
-        color = {"idle": "#00d4ff", "thinking": "#b026ff", "speaking": "#00ffcc"}.get(self.status, "#00d4ff")
-        if "ALERT" in self.log.status_label.cget("text") or load_glow: color = "#ff3e3e"
+            speed = 0.05 if self.status == "thinking" else 0.02
+            self.center.angle_y += speed
 
-        # Quantum Glow Effect
-        glow_width = 2 if self.status == "thinking" or load_glow else 1
+            scale = (min(w, h) // 4) * (1.0 + self.mic_level * 0.5)
+            color = {"idle": "#00d4ff", "thinking": "#b026ff", "speaking": "#00ffcc"}.get(self.status, "#00d4ff")
+            if "ALERT" in self.log.status_label.cget("text") or load_glow: color = "#ff3e3e"
 
-        # Projection
-        proj = []
-        for p in self.center.points:
-            x, y, z = p
-            # Rotate Y
-            nx = x * math.cos(self.center.angle_y) - z * math.sin(self.center.angle_y)
-            nz = x * math.sin(self.center.angle_y) + z * math.cos(self.center.angle_y)
-            proj.append((nx * scale + cx, y * scale + cy, nz))
+            glow_width = 2 if self.status == "thinking" or load_glow else 1
+            angle_x = self.center.angle_y * 0.3
 
-        # Draw Points & Connections (Nearest Neighbor logic)
-        for i, pt in enumerate(proj):
-            if pt[2] < 0: continue # Backface culling
-            canvas.create_oval(pt[0]-1, pt[1]-1, pt[0]+1, pt[1]+1, fill=color, outline="", tags="globe")
+            proj = []
+            for p in self.center.points:
+                x, y, z = p
+                # Rotation
+                ry_x = x * math.cos(self.center.angle_y) - z * math.sin(self.center.angle_y)
+                ry_z = x * math.sin(self.center.angle_y) + z * math.cos(self.center.angle_y)
+                rx_y = y * math.cos(angle_x) - ry_z * math.sin(angle_x)
+                rx_z = y * math.sin(angle_x) + ry_z * math.cos(angle_x)
+                proj.append((ry_x * scale + cx, rx_y * scale + cy, rx_z))
 
-            # Simple nearest neighbor connections for the mesh look
-            for j in range(i + 1, min(i + 4, len(proj))):
-                if proj[j][2] > 0:
-                    canvas.create_line(pt[0], pt[1], proj[j][0], proj[j][1], fill=color, tags="globe", width=glow_width, stipple="gray50")
+            for i, pt in enumerate(proj):
+                if pt[2] < 0: continue
+                canvas.create_oval(pt[0]-1, pt[1]-1, pt[0]+1, pt[1]+1, fill=color, outline="", tags="globe")
+                for j in range(i + 1, min(i + 4, len(proj))):
+                    if proj[j][2] > 0:
+                        canvas.create_line(pt[0], pt[1], proj[j][0], proj[j][1], fill=color, tags="globe", width=glow_width, stipple="gray50")
 
-        # Scanline Effect (Requested overlay)
-        for y in range(0, h, 4):
-            canvas.create_line(0, y, w, y, fill="#00ffff", tags="globe", width=1, stipple="gray12")
+            # Scanlines
+            for y in range(0, h, 4):
+                canvas.create_line(0, y, w, y, fill="#00ffff", tags="globe", width=1, stipple="gray12")
+        except: pass
 
     def set_state(self, status):
         self.status = status
         self.log.status_label.configure(text=f"TACTICAL STATUS: {status.upper()}")
 
     def add_message(self, role, text):
-        self.log.add_message(role, text)
+        return self.log.add_message(role, text)
 
     def update_camera(self, frame):
         img = Image.fromarray(frame).resize((180, 120))
         imgtk = ImageTk.PhotoImage(image=img)
         self.sidebar.cam_label.imgtk = imgtk
-        self.sidebar.cam_label.configure(image=imgtk)
+        self.sidebar.cam_label.configure(image=imgtk, text="")
 
     def _start_drag(self, event): self.x = event.x; self.y = event.y
     def _drag(self, event): self.geometry(f"+{self.winfo_x() + event.x - self.x}+{self.winfo_y() + event.y - self.y}")

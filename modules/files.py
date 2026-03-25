@@ -55,8 +55,13 @@ class FilesModule:
 
     @staticmethod
     def open_document(name):
-        matches = glob.glob(os.path.join(os.path.expanduser("~"), "Documents", f"*{name}*"))
+        doc_path = os.path.join(os.path.expanduser("~"), "Documents")
+        if not name or "documents" in name.lower():
+            os.startfile(doc_path)
+            return "Tactical data vault opened."
+
+        matches = glob.glob(os.path.join(doc_path, f"*{name}*"))
         if matches:
             os.startfile(matches[0])
-            return f"Opening {os.path.basename(matches[0])}"
-        return "Not found."
+            return f"Opening archive: {os.path.basename(matches[0])}"
+        return f"Archive '{name}' not found in tactical sectors."
