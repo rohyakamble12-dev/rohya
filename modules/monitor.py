@@ -15,6 +15,7 @@ class MonitorModule:
         last_net_state = True
         last_window = ""
         last_ocr_time = 0
+        last_ssid = ""
         while self.running:
             try:
                 # 1. Resource Consumption
@@ -31,22 +32,30 @@ class MonitorModule:
                 if battery and not battery.power_plugged and battery.percent < self.thresholds["battery"]:
                     self.assistant.notify(f"POWER ALERT: Reserve power at {battery.percent}%. Connect to power source.")
 
-                # 3. Network Link (Proactive)
+                # 3. Network Link (SSID Detection)
                 import socket
                 try:
                     socket.create_connection(("1.1.1.1", 53), timeout=2)
                     current_net = True
                 except: current_net = False
 
+                net_info = self.assistant.router.system.get_network_info()
+                current_ssid = net_info.split("SSID:")[1].strip() if "SSID:" in net_info else "Unknown"
+
                 if current_net != last_net_state:
-                    self.assistant.notify(f"NETWORK ALERT: Data link {'established' if current_net else 'lost'}. Synchronizing interface.")
+                    self.assistant.notify(f"NETWORK ALERT: Data link {'established' if current_net else 'lost'}. SSID: {current_ssid}.")
                     last_net_state = current_net
+                elif current_ssid != last_ssid and current_net:
+                    self.assistant.notify(f"NETWORK UPDATE: Roaming detected. Connected to '{current_ssid}'.")
+                last_ssid = current_ssid
 
                 # 4. Active Window (Proactive Workflow)
                 current_win = self.assistant.router.system.get_active_window()
                 if "Focus:" in current_win and current_win != last_window:
                     if "code" in current_win.lower() or "studio" in current_win.lower():
-                        self.assistant.notify("Workflow detected: Development sector active. Stand by for tactical support.")
+                        self.assistant.notify("Workflow detected: Development sector active. Prepared for tactical support.")
+                    elif "chrome" in current_win.lower() or "edge" in current_win.lower():
+                        self.assistant.notify("Intelligence gathering detected. Search protocols online.")
                     last_window = current_win
 
                 # 5. Autonomous OCR (Sentinel Mode)
@@ -57,7 +66,7 @@ class MonitorModule:
                     last_ocr_time = time.time()
 
             except: pass
-            time.sleep(45) # Watch every 45s
+            time.sleep(30) # High-fidelity watch every 30s
 
     def stop(self):
         self.running = False

@@ -210,40 +210,37 @@ class VedaAssistant:
             time.sleep(0.1)
 
     def _handle_survival_mode(self, text):
-        """Instant offline processing for core intents (Survival 9.0)."""
+        """Instant offline processing for core intents (Survival 10.0)."""
         text = text.lower().strip()
 
-        # Adaptive & Fuzzy Rule Check
+        # 1. Identity & Greeting Fast-Path
+        if text in ["hello", "hi", "hey", "veda", "friday"]:
+            return "Systems operational. Standing by for command, Operator."
+        if "who are you" in text or "your identity" in text:
+            return "I am Veda. Your personal tactical interface and system guardian."
+        if "how are you" in text:
+            return "My core systems are reporting 100% efficiency. Ready for engagement."
+
+        # 2. Adaptive Rule Check (Learned behavior)
         rule = self.memory.get_rule(text)
         if rule: return self.router.route(rule)
 
-        # Quick Responses (Omni-Router Fast Path)
-        responses = {
-            "hello": "Systems operational. Standing by, Operator.",
-            "who are you": "I am Veda. Your personal tactical interface and system guardian.",
-            "how are you": "Systems reporting 100% efficiency.",
-            "thank you": "Efficiency is my primary directive.",
-            "system report": self.router.system.get_sys_info(),
-            "network status": self.router.system.get_network_info(),
-            "shutdown": self.router.system.open_app("shutdown /s /t 60"),
-            "restart": self.router.system.open_app("shutdown /r /t 60"),
-            "battery": self.router.system.get_health(),
-            "active window": self.router.system.get_active_window()
-        }
-        for trigger, resp in responses.items():
-            if trigger == text or (trigger in text and len(text) < 15): return resp
-
-        # Utilities
+        # 3. System Reports & Utilities
+        if "system report" in text or "status report" in text: return self.router.system.get_sys_info()
+        if "network status" in text: return self.router.system.get_network_info()
         if "time" in text: return f"Current tactical time is {time.strftime('%H:%M:%S')}."
         if "date" in text: return f"Today is {time.strftime('%A, %B %d, %Y')}."
+        if "battery" in text: return self.router.system.get_health()
+
+        # 4. Secure Math Evaluator
         if re.match(r'^[0-9+\-*/().\s^]+$', text) and len(text) > 1:
             try: return f"Calculation: {eval(text, {'__builtins__': None}, {})}."
             except: pass
 
+        # 5. OS Control Fast-Path
         # Prefix Cleanup
         text = re.sub(r'^(veda|hey veda|please|could you|would you mind|just)\s+', '', text)
 
-        # Fast Routing
         if "open" in text or "launch" in text:
             app = re.sub(r'.*(open|launch)\s+', '', text).strip()
             return self.router.system.open_app(app)

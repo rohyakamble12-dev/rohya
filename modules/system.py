@@ -60,49 +60,42 @@ class SystemModule:
                 "settings": "ms-settings:", "camera": "microsoft.windows.camera:",
                 "weather": "bingweather:", "store": "ms-windows-store:",
                 "photos": "ms-photos:", "calendar": "outlookcal:",
-                "mail": "mailto:", "maps": "bingmaps:", "music": "mswindowsmusic:"
+                "mail": "mailto:", "maps": "bingmaps:", "music": "mswindowsmusic:",
+                "control": "control", "defender": "windowsdefender:"
             }
             if app in uris:
                 os.startfile(uris[app])
                 return f"Launching native {app} interface."
 
-            # Tier 2: Precision Command Aliases
-            aliases = {
-                "chrome": "chrome", "notepad": "notepad", "calculator": "calc",
-                "explorer": "explorer", "edge": "msedge", "task manager": "taskmgr",
-                "cmd": "cmd", "powershell": "powershell", "documents": "shell:Personal",
-                "downloads": "shell:Downloads", "desktop": "shell:Desktop"
-            }
-            cmd = aliases.get(app, app)
-
-            # Tier 2.5: Registry Cache Search
+            # Tier 2: Registry & Start Menu Deep Discovery
             if app in self.app_cache:
                 os.startfile(self.app_cache[app])
-                return f"Executing {app} from verified path."
+                return f"Executing {app} from verified sectors."
 
-            # Tier 3: Start Menu & Desktop Shortcut Search
             try:
                 import winshell
-                for path in [winshell.programs(), winshell.desktop()]:
+                # Dynamic crawl if cache missed
+                for path in [winshell.programs(), winshell.desktop(), os.path.join(os.environ["ProgramData"], "Microsoft", "Windows", "Start Menu", "Programs")]:
+                    if not os.path.exists(path): continue
                     for root, dirs, files in os.walk(path):
                         for f in files:
                             if app in f.lower() and f.endswith(".lnk"):
-                                os.startfile(os.path.join(root, f))
-                                return f"Executing {f.replace('.lnk', '')} from tactical links."
+                                target = os.path.join(root, f)
+                                os.startfile(target)
+                                return f"Link established: Executing {f.replace('.lnk', '')}."
             except: pass
 
-            # Tier 4: Standard Subprocess / Where Fallback
+            # Tier 3: Command-Line Search (Where)
             try:
-                subprocess.Popen(["cmd", "/c", f"start {cmd}"], shell=False, creationflags=0x08000000)
-                return f"Executing {app_name}."
-            except:
-                try:
-                    res = subprocess.check_output(f"where {cmd}", shell=True).decode().split('\n')[0].strip()
-                    if res:
-                        subprocess.Popen([res], shell=False)
-                        return f"Executing {app_name} via system search."
-                except: pass
-                return f"Failed to acquire execution path for {app_name}."
+                res = subprocess.check_output(f"where {app}", shell=True).decode().split('\n')[0].strip()
+                if res:
+                    subprocess.Popen([res], shell=False)
+                    return f"Executing {app} via system search."
+            except: pass
+
+            # Tier 4: Generic Execution
+            subprocess.Popen(["cmd", "/c", f"start {app}"], shell=False, creationflags=0x08000000)
+            return f"Executing {app_name} via standard protocol."
 
         except Exception as e: return f"Execution failed: {e}"
 

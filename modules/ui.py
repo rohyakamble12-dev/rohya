@@ -186,6 +186,13 @@ class VedaHUD(ctk.CTk):
         canvas = self.center.canvas
         canvas.delete("globe")
 
+        # Apex Visual Health-Sync
+        try:
+            cpu_val = float(self.sidebar.stats_labels["THREADS"].cget("text")) # Simulated
+            # If threads > 15, assume high load for visual effect
+            load_glow = cpu_val > 15
+        except: load_glow = False
+
         # Resize-aware dimensions
         w, h = canvas.winfo_width(), canvas.winfo_height()
         if w < 10 or h < 10: return
@@ -196,10 +203,10 @@ class VedaHUD(ctk.CTk):
 
         scale = (min(w, h) // 4) * (1.0 + self.mic_level * 0.5)
         color = {"idle": "#00d4ff", "thinking": "#b026ff", "speaking": "#00ffcc"}.get(self.status, "#00d4ff")
-        if "ALERT" in self.log.status_label.cget("text"): color = "#ff3e3e"
+        if "ALERT" in self.log.status_label.cget("text") or load_glow: color = "#ff3e3e"
 
         # Quantum Glow Effect
-        glow_width = 2 if self.status == "thinking" else 1
+        glow_width = 2 if self.status == "thinking" or load_glow else 1
 
         # Projection
         proj = []
