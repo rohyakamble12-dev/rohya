@@ -134,9 +134,18 @@ class LogPanel(VedaPanel):
             threading.Thread(target=self.assistant.process_command, args=(cmd,), daemon=True).start()
 
     def add_message(self, role, text):
-        f = ctk.CTkFrame(self.chat_scroll, fg_color="#08080c", border_width=1, border_color="#1a1a25" if role=="User" else "#00d4ff")
+        color = "#00d4ff" if role == "Veda" else "#1a1a25"
+        text_color = "#cccccc"
+        font = ("Consolas", 9)
+
+        if role == "Thought":
+            color = "#333333"
+            text_color = "#666666"
+            font = ("Consolas", 8, "italic")
+
+        f = ctk.CTkFrame(self.chat_scroll, fg_color="#08080c", border_width=1, border_color=color)
         f.pack(fill="x", pady=2, padx=5)
-        lbl = ctk.CTkLabel(f, text=f"{role.upper()}: {text}", font=("Consolas", 9), text_color="#cccccc", wraplength=250, justify="left")
+        lbl = ctk.CTkLabel(f, text=f"{role.upper()}: {text}", font=font, text_color=text_color, wraplength=250, justify="left")
         lbl.pack(padx=10, pady=5)
         self.chat_scroll._parent_canvas.yview_moveto(1.0)
         return lbl
@@ -189,6 +198,9 @@ class VedaHUD(ctk.CTk):
         color = {"idle": "#00d4ff", "thinking": "#b026ff", "speaking": "#00ffcc"}.get(self.status, "#00d4ff")
         if "ALERT" in self.log.status_label.cget("text"): color = "#ff3e3e"
 
+        # Quantum Glow Effect
+        glow_width = 2 if self.status == "thinking" else 1
+
         # Projection
         proj = []
         for p in self.center.points:
@@ -206,7 +218,7 @@ class VedaHUD(ctk.CTk):
             # Simple nearest neighbor connections for the mesh look
             for j in range(i + 1, min(i + 4, len(proj))):
                 if proj[j][2] > 0:
-                    canvas.create_line(pt[0], pt[1], proj[j][0], proj[j][1], fill=color, tags="globe", width=1, stipple="gray50")
+                    canvas.create_line(pt[0], pt[1], proj[j][0], proj[j][1], fill=color, tags="globe", width=glow_width, stipple="gray50")
 
         # Scanline Effect (Requested overlay)
         for y in range(0, h, 4):

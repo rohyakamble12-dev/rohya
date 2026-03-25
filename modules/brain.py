@@ -84,28 +84,34 @@ class VedaBrain:
                 return _error_gen()
             return error_msg
 
-    def plan_tactical_steps(self, user_input):
-        """Breaks a complex request into a sequence of executable intents."""
+    def plan_tactical_steps(self, user_input, stream=False):
+        """Breaks a complex request into a sequence of actions with reasoning."""
         prompt = (
-            "You are the Veda Strategic Planner. Break the user's request into a sequence of discrete actions. "
-            "Return a JSON list of objects, each with 'intent' and 'params'. "
-            "If the request is simple, return a list with one object. "
-            "If it's conversational, return [{\"intent\": \"none\", \"params\": {}}]. "
-            f"Request: \"{user_input}\""
+            "You are the Veda Strategic Planner. First, briefly explain your reasoning in one short sentence within <reasoning> tags. "
+            "Then, break the user's request into a sequence of discrete actions in a JSON list. "
+            "Request: \"{user_input}\"\n"
+            "Example: <reasoning>I will open the app and adjust audio.</reasoning> [{\"intent\": \"open_app\", \"params\": {...}}]"
         )
         try:
             response = ollama.chat(
                 model=self.model,
-                messages=[{"role": "system", "content": "JSON Planner. Return raw JSON array only."},
+                messages=[{"role": "system", "content": "Strategic Planner. Always use <reasoning> tags."},
                           {"role": "user", "content": prompt}],
                 options={"num_predict": 256}
             )
-            content = response['message']['content']
-            match = re.search(r'\[.*\]', content, re.DOTALL)
-            if match:
-                return json.loads(match.group())
+            return response['message']['content'] # Return raw string for main.py extraction
         except: pass
-        return [{"intent": "none", "params": {}}]
+        return str(self._regex_plan_fallback(user_input))
+
+    def _regex_plan_fallback(self, text):
+        """Survival Mode 8.0: Regex-based planning when LLM is offline."""
+        text = text.lower()
+        plan = []
+        parts = re.split(r'\s+(?:and|then|also)\s+', text)
+        for part in parts:
+            extracted = self._regex_extract_fallback(part)
+            if extracted['intent'] != "none": plan.append(extracted)
+        return plan if plan else [{"intent": "none", "params": {}}]
 
     def extract_params(self, user_input):
         """Uses LLM to extract JSON parameters for commands with regex fallback."""

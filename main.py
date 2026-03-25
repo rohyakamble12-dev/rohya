@@ -79,71 +79,74 @@ class VedaAssistant:
     def process_command(self, user_input):
         logging.info(f"Command Received: {user_input}")
 
-        # Segment multi-commands: "open chrome and then set volume to 50"
-        commands = re.split(r'\s+(?:and|then|also|after that)\s+', user_input, flags=re.IGNORECASE)
+        # 1. Quick Global Response Check
+        survival = self._handle_survival_mode(user_input)
+        if survival:
+            self._finalize_interaction(user_input, survival)
+            return
+
+        # 2. Neural Strategic Planning
+        self.gui.after(0, lambda: self.gui.set_state("thinking"))
+        raw_plan = self.brain.plan_tactical_steps(user_input)
+
+        # Extract Reasoning (Thought)
+        if "<reasoning>" in str(raw_plan):
+            match = re.search(r'<reasoning>(.*?)</reasoning>', str(raw_plan), re.DOTALL)
+            if match: self.gui.after(0, lambda m=match.group(1): self.gui.add_message("Thought", m))
+
+        # Extract Action List
+        plan = []
+        if isinstance(raw_plan, list): plan = raw_plan
+        else:
+            j_match = re.search(r'\[.*\]', str(raw_plan), re.DOTALL)
+            if j_match: plan = json.loads(j_match.group())
+
         final_responses = []
+        for step in plan:
+            intent = step.get("intent", "none")
+            if intent == "none": continue
 
-        for cmd in commands:
-            cmd = cmd.strip()
-            if not cmd: continue
+            res = self.router.route(step)
 
-            self.gui.after(0, lambda: self.gui.set_state("thinking"))
+            # 2.5 Reflection: If step failed, analyze why
+            if not res or "failed" in str(res).lower() or "not found" in str(res).lower():
+                reflection = self.brain.chat(f"Tactical analysis: Command '{intent}' with params {step.get('params')} failed. Result: {res}. Inform the operator.", [])
+                final_responses.append(reflection)
+            elif res:
+                final_responses.append(res)
 
-            # 1. Survival Mode Check (Direct regex for core commands)
-            response = self._handle_survival_mode(cmd)
+        # 3. Handle Remaining / Conversational Needs
+        if not final_responses:
+            history = self.memory.get_context()
+            facts = self.memory.search_facts("")
+            screen_ctx = self.memory.load_state("screen_context", "")
+            if screen_ctx: facts.append(f"CURRENT SCREEN DATA: {screen_ctx}")
 
-            if not response:
-                # 2. Semantic Intent Path
-                category = self.brain.classify_intent(cmd)
-                if category in ["command", "search", "productivity", "calculation"]:
-                    intent_data = self.brain.extract_params(cmd)
-                    response = self.router.route(intent_data)
+            fact_str = "\n".join(facts)
+            stream = self.brain.chat(user_input, history, facts=fact_str, stream=True)
 
-                    # Tactical Failover: if route failed, check integrity then ask brain
-                    if not response or "failed" in response.lower() or "not found" in response.lower():
-                        # Proactive Self-Heal
-                        if "app" in cmd.lower():
-                            self.router.system.scan_installed_apps() # Force cache refresh
-                            response = self.router.system.open_app(cmd.split()[-1]) # Try one last time
+            full_text = ""; lbl = self.gui.add_message("Veda", "...")
+            for chunk in stream:
+                content = chunk['message']['content']
+                full_text += content
+                self.gui.after(0, lambda t=full_text, l=lbl: l.configure(text=f"VEDA: {t}"))
+            final_responses.append(full_text)
 
-                        if not response or "failed" in response.lower():
-                            history = self.memory.get_context()
-                            response = self.brain.chat(f"Command '{cmd}' failed. Suggest an alternative to the operator.", history)
+            # Learning
+            if any(t in user_input.lower() for t in ["my name is", "i like", "call me"]):
+                self.memory.add_fact(user_input)
 
-            # 3. Neural Fallback (Conversation with Streaming)
-            if not response:
-                history = self.memory.get_context()
-                facts = self.memory.search_facts("")
-                fact_str = "\n".join(facts) if facts else ""
+        combined = ". ".join([r for r in final_responses if r])
+        self._finalize_interaction(user_input, combined)
 
-                stream = self.brain.chat(cmd, history, facts=fact_str, stream=True)
-                full_text = ""
-                # We need to capture the label object returned by add_message
-                # But after(0, ...) returns an ID, not the object.
-                # So we run it directly or via a synchronized helper.
-                lbl = self.gui.add_message("Veda", "...")
-
-                for chunk in stream:
-                    content = chunk['message']['content']
-                    full_text += content
-                    # Note: updating UI every token might be heavy, but we want the effect
-                    self.gui.after(0, lambda t=full_text, l=lbl: l.configure(text=f"VEDA: {t}"))
-
-                response = full_text
-
-                # Pro-Active Learning
-                if any(t in cmd.lower() for t in ["my name is", "i like", "call me", "remember that"]):
-                    self.memory.add_fact(cmd)
-
-            final_responses.append(response)
-
-        # Finalize Multi-Command Interaction
-        combined_response = ". ".join([r for r in final_responses if r])
+    def _finalize_interaction(self, user_input, response):
         self.memory.log_interaction("user", user_input)
-        self.memory.log_interaction("assistant", combined_response)
-
+        self.memory.log_interaction("assistant", response)
         self.gui.after(0, lambda: self.gui.set_state("speaking"))
-        self.voice.speak(combined_response)
+        # If response was not streamed, add it now
+        if not any(role in response for role in ["VEDA:", "Veda:"]):
+            self.gui.after(0, lambda: self.gui.add_message("Veda", response))
+        self.voice.speak(response)
         self.gui.after(0, lambda: self.gui.set_state("idle"))
 
     def run(self):

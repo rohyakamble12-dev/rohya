@@ -55,6 +55,12 @@ class CommandRouter:
                 return self.system.manipulate_window(params.get("action"), params.get("title"))
             elif intent == "set_theme":
                 return self.system.set_dark_mode(params.get("mode", "dark") == "dark")
+            elif intent == "set_dnd":
+                return self.system.toggle_focus_assist(params.get("enabled", True))
+            elif intent == "desktop_switch":
+                return self.system.switch_virtual_desktop(params.get("direction", "next"))
+            elif intent == "night_light":
+                return self.system.set_night_light(params.get("enabled", True))
             elif intent == "set_workspace":
                 return self.system.set_workspace(params.get("mode"), self.assistant)
             elif intent == "clipboard_get":

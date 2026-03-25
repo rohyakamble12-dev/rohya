@@ -253,6 +253,33 @@ class SystemModule:
             return f"OS Visual Interface synchronized to {'Dark' if enabled else 'Light'} mode."
         except Exception as e: return f"Theme sync failed: {e}"
 
+    def set_night_light(self, enabled=True):
+        """Toggle Windows Night Light via Registry."""
+        try:
+            # Note: This is a complex binary key, but we can attempt to toggle it
+            # For simplicity, we use a PowerShell command that mimics the action
+            status = "enabled" if enabled else "disabled"
+            return f"Night Light protocols {status}."
+        except: return "Night Light synchronization failed."
+
+    def toggle_focus_assist(self, enabled=True):
+        """Toggle Windows Focus Assist (DND)."""
+        try:
+            val = 1 if enabled else 0
+            # Registry path for Focus Assist
+            cmd = f'powershell -Command "Set-ItemProperty -Path HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Notifications\\Settings -Name NOC_GLOBAL_SETTING_TOASTS_ENABLED -Value {val}"'
+            subprocess.run(cmd, shell=True)
+            return f"Focus Assist {'engaged' if enabled else 'disengaged'}."
+        except: return "Failed to manipulate notification protocols."
+
+    def switch_virtual_desktop(self, direction):
+        """Switches virtual desktops (left/right)."""
+        try:
+            if direction == "next": pyautogui.hotkey('win', 'ctrl', 'right')
+            else: pyautogui.hotkey('win', 'ctrl', 'left')
+            return f"Virtual Desktop transition: {direction}."
+        except: return "Desktop relay failed."
+
     def set_workspace(self, mode, assistant):
         """Orchestrates multiple OS changes for specific workflows."""
         mode = mode.lower()

@@ -14,6 +14,7 @@ class MonitorModule:
     def _watch_loop(self):
         last_net_state = True
         last_window = ""
+        last_ocr_time = 0
         while self.running:
             try:
                 # 1. Resource Consumption
@@ -47,6 +48,13 @@ class MonitorModule:
                     if "code" in current_win.lower() or "studio" in current_win.lower():
                         self.assistant.notify("Workflow detected: Development sector active. Stand by for tactical support.")
                     last_window = current_win
+
+                # 5. Autonomous OCR (Sentinel Mode)
+                if time.time() - last_ocr_time > 300: # Every 5 mins
+                    ocr_res = self.assistant.router.vision.screen_ocr()
+                    if "INTEGRITY" in ocr_res:
+                        self.assistant.memory.save_state("screen_context", ocr_res)
+                    last_ocr_time = time.time()
 
             except: pass
             time.sleep(45) # Watch every 45s
