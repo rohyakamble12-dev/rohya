@@ -55,6 +55,12 @@ class CommandRouter:
                 return self.system.manipulate_window(params.get("action"), params.get("title"))
             elif intent == "set_theme":
                 return self.system.set_dark_mode(params.get("mode", "dark") == "dark")
+            elif intent == "set_workspace":
+                return self.system.set_workspace(params.get("mode"), self.assistant)
+            elif intent == "clipboard_get":
+                return self.system.get_clipboard()
+            elif intent == "clipboard_set":
+                return self.system.set_clipboard(params.get("text"))
             elif intent == "send_email":
                 return self.comms.send_email(params.get("recipient"), params.get("subject"), params.get("body"))
             elif intent == "open_social":
@@ -75,6 +81,13 @@ class CommandRouter:
                 return self.system.set_volume(params.get("level", 50), params.get("app_name"))
             elif intent == "set_brightness":
                 return self.system.set_brightness(params.get("level", 50))
+            elif intent == "session_save":
+                return self.system.capture_session(self.assistant)
+            elif intent == "session_restore":
+                return self.system.restore_session(self.assistant)
+            elif intent == "learn_command":
+                self.assistant.memory.add_rule(params.get("trigger"), params.get("action"))
+                return f"Rule integrated: '{params.get('trigger')}' now triggers tactical sequence."
 
             # 2. Intel & Search
             elif intent == "web_search":

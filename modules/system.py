@@ -252,3 +252,37 @@ class SystemModule:
             subprocess.run(cmd, shell=True)
             return f"OS Visual Interface synchronized to {'Dark' if enabled else 'Light'} mode."
         except Exception as e: return f"Theme sync failed: {e}"
+
+    def set_workspace(self, mode, assistant):
+        """Orchestrates multiple OS changes for specific workflows."""
+        mode = mode.lower()
+        if "stealth" in mode:
+            pyautogui.hotkey('win', 'd') # Minimize all
+            self.set_volume(0)
+            self.set_dark_mode(True)
+            return "Stealth Protocol active. Environment silenced and concealed."
+        elif "coding" in mode or "dev" in mode:
+            self.open_app("code")
+            self.open_app("chrome")
+            self.open_app("terminal")
+            self.set_dark_mode(True)
+            return "Development environment established. Stand by for compilation, Operator."
+        elif "focus" in mode:
+            self.set_volume(20)
+            self.open_app("spotify")
+            return "Focus parameters initialized. Distractions minimized."
+        return f"Workspace profile '{mode}' not recognized."
+
+    def get_clipboard(self):
+        try:
+            import pyperclip
+            text = pyperclip.paste()
+            return f"Clipboard content acquired: {text[:200]}..." if text else "Clipboard is empty."
+        except: return "Clipboard link failed."
+
+    def set_clipboard(self, text):
+        try:
+            import pyperclip
+            pyperclip.copy(text)
+            return "Data synchronized to system clipboard."
+        except: return "Clipboard synchronization failed."

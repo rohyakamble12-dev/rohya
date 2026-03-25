@@ -12,25 +12,44 @@ class MonitorModule:
         threading.Thread(target=self._watch_loop, daemon=True).start()
 
     def _watch_loop(self):
+        last_net_state = True
+        last_window = ""
         while self.running:
             try:
-                # 1. CPU
+                # 1. Resource Consumption
                 cpu = psutil.cpu_percent()
                 if cpu > self.thresholds["cpu"]:
-                    self.assistant.notify(f"TACTICAL ALERT: CPU Load at {cpu}%.")
+                    self.assistant.notify(f"TACTICAL ALERT: CPU Load at {cpu}%. Optimize active processes.")
 
-                # 2. RAM
                 ram = psutil.virtual_memory().percent
                 if ram > self.thresholds["ram"]:
                     self.assistant.notify(f"TACTICAL ALERT: Memory usage critical at {ram}%.")
 
-                # 3. Battery
+                # 2. Power State
                 battery = psutil.sensors_battery()
                 if battery and not battery.power_plugged and battery.percent < self.thresholds["battery"]:
-                    self.assistant.notify(f"POWER ALERT: Reserve power at {battery.percent}%.")
+                    self.assistant.notify(f"POWER ALERT: Reserve power at {battery.percent}%. Connect to power source.")
+
+                # 3. Network Link (Proactive)
+                import socket
+                try:
+                    socket.create_connection(("1.1.1.1", 53), timeout=2)
+                    current_net = True
+                except: current_net = False
+
+                if current_net != last_net_state:
+                    self.assistant.notify(f"NETWORK ALERT: Data link {'established' if current_net else 'lost'}. Synchronizing interface.")
+                    last_net_state = current_net
+
+                # 4. Active Window (Proactive Workflow)
+                current_win = self.assistant.router.system.get_active_window()
+                if "Focus:" in current_win and current_win != last_window:
+                    if "code" in current_win.lower() or "studio" in current_win.lower():
+                        self.assistant.notify("Workflow detected: Development sector active. Stand by for tactical support.")
+                    last_window = current_win
 
             except: pass
-            time.sleep(60) # Watch every minute
+            time.sleep(45) # Watch every 45s
 
     def stop(self):
         self.running = False

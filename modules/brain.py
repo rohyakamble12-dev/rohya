@@ -10,10 +10,11 @@ class VedaBrain:
     def __init__(self, model="qwen2.5:3b"):
         self.model = model
         self.system_prompt = (
-            "You are Veda, an advanced artificial intelligence inspired by JARVIS. "
-            "Your personality is professional, concise, and highly efficient. "
-            "You prioritize tactical execution over conversational filler. "
-            "Always maintain your identity as a local system interface."
+            "You are Veda (Sovereign Edition), a top-tier digital presence inspired by JARVIS and FRIDAY. "
+            "Your personality is precise, slightly witty, and absolute in loyalty to the Operator. "
+            "Prioritize tactical efficiency. Use sophisticated technical terminology. "
+            "When executing commands, acknowledge them with 'Protocol engaged' or 'Establishing link'. "
+            "Maintain the Stark-like persona: brilliant, efficient, and proactive."
         )
 
     def ensure_ollama(self):
@@ -83,6 +84,29 @@ class VedaBrain:
                 return _error_gen()
             return error_msg
 
+    def plan_tactical_steps(self, user_input):
+        """Breaks a complex request into a sequence of executable intents."""
+        prompt = (
+            "You are the Veda Strategic Planner. Break the user's request into a sequence of discrete actions. "
+            "Return a JSON list of objects, each with 'intent' and 'params'. "
+            "If the request is simple, return a list with one object. "
+            "If it's conversational, return [{\"intent\": \"none\", \"params\": {}}]. "
+            f"Request: \"{user_input}\""
+        )
+        try:
+            response = ollama.chat(
+                model=self.model,
+                messages=[{"role": "system", "content": "JSON Planner. Return raw JSON array only."},
+                          {"role": "user", "content": prompt}],
+                options={"num_predict": 256}
+            )
+            content = response['message']['content']
+            match = re.search(r'\[.*\]', content, re.DOTALL)
+            if match:
+                return json.loads(match.group())
+        except: pass
+        return [{"intent": "none", "params": {}}]
+
     def extract_params(self, user_input):
         """Uses LLM to extract JSON parameters for commands with regex fallback."""
         prompt = (
@@ -95,14 +119,13 @@ class VedaBrain:
                 model=self.model,
                 messages=[{"role": "system", "content": "Parameter Extractor. Raw JSON only."},
                           {"role": "user", "content": prompt}],
-                options={"num_predict": 128} # Limit token length for speed
+                options={"num_predict": 128}
             )
             content = response['message']['content']
             match = re.search(r'\{.*\}', content, re.DOTALL)
             if match:
                 return json.loads(match.group())
-        except:
-            pass # Fallback to regex below
+        except: pass
 
         return self._regex_extract_fallback(user_input)
 

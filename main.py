@@ -207,8 +207,12 @@ class VedaAssistant:
             time.sleep(0.1)
 
     def _handle_survival_mode(self, text):
-        """Instant offline processing for core intents (Survival 7.0)."""
+        """Instant offline processing for core intents (Survival 9.0)."""
         text = text.lower().strip()
+
+        # Adaptive & Fuzzy Rule Check
+        rule = self.memory.get_rule(text)
+        if rule: return self.router.route(rule)
 
         # Quick Responses (Omni-Router Fast Path)
         responses = {
