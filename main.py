@@ -79,7 +79,7 @@ class VedaAssistant:
     def process_command(self, user_input):
         logging.info(f"Command Received: {user_input}")
 
-        # 1. Quick Global Response Check
+        # 1. Survival Mode Fast-Path
         survival = self._handle_survival_mode(user_input)
         if survival:
             self._finalize_interaction(user_input, survival)
@@ -99,7 +99,9 @@ class VedaAssistant:
         if isinstance(raw_plan, list): plan = raw_plan
         else:
             j_match = re.search(r'\[.*\]', str(raw_plan), re.DOTALL)
-            if j_match: plan = json.loads(j_match.group())
+            if j_match:
+                try: plan = json.loads(j_match.group())
+                except: plan = []
 
         final_responses = []
         for step in plan:
@@ -108,10 +110,16 @@ class VedaAssistant:
 
             res = self.router.route(step)
 
-            # 2.5 Reflection: If step failed, analyze why
+            # Reflection: If step failed, analyze locally
             if not res or "failed" in str(res).lower() or "not found" in str(res).lower():
-                reflection = self.brain.chat(f"Tactical analysis: Command '{intent}' with params {step.get('params')} failed. Result: {res}. Inform the operator.", [])
-                final_responses.append(reflection)
+                # Proactive Self-Heal for Apps
+                if intent == "open_app":
+                    self.router.system.scan_installed_apps()
+                    res = self.router.system.open_app(step.get("params", {}).get("app_name"))
+
+                if not res or "failed" in str(res).lower():
+                    reflection = self.brain.chat(f"Analysis: Command '{intent}' failed. {res}. Briefly inform operator.", [])
+                    final_responses.append(reflection)
             elif res:
                 final_responses.append(res)
 
@@ -136,17 +144,20 @@ class VedaAssistant:
             if any(t in user_input.lower() for t in ["my name is", "i like", "call me"]):
                 self.memory.add_fact(user_input)
 
-        combined = ". ".join([r for r in final_responses if r])
+        combined = ". ".join([str(r) for r in final_responses if r])
         self._finalize_interaction(user_input, combined)
 
     def _finalize_interaction(self, user_input, response):
+        if not response: return
         self.memory.log_interaction("user", user_input)
-        self.memory.log_interaction("assistant", response)
+        self.memory.log_interaction("assistant", str(response))
         self.gui.after(0, lambda: self.gui.set_state("speaking"))
-        # If response was not streamed, add it now
-        if not any(role in response for role in ["VEDA:", "Veda:"]):
-            self.gui.after(0, lambda: self.gui.add_message("Veda", response))
-        self.voice.speak(response)
+
+        # UI Check: don't double print if streamed
+        if not any(tag in str(response) for tag in ["VEDA:", "Veda:"]):
+            self.gui.after(0, lambda: self.gui.add_message("Veda", str(response)))
+
+        self.voice.speak(str(response))
         self.gui.after(0, lambda: self.gui.set_state("idle"))
 
     def run(self):

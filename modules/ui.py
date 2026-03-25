@@ -43,7 +43,7 @@ class SidebarPanel(VedaPanel):
             self.stats_labels[label] = v
 
         # Connectivity Links
-        self._add_section_header("CONNECTIVITY")
+        self._add_section_header("LINK TELEMETRY")
         self.conn_box = ctk.CTkFrame(self, fg_color="#08080c", border_width=1, border_color="#1a1a25")
         self.conn_box.pack(fill="x", pady=5)
         self.links = {}
@@ -114,7 +114,7 @@ class LogPanel(VedaPanel):
         self.setup_ui()
 
     def setup_ui(self):
-        ctk.CTkLabel(self, text="COMMUNICATION LOG", font=("Orbitron", 8, "bold"), text_color="#00d4ff").pack(anchor="w", pady=(5, 5))
+        ctk.CTkLabel(self, text="TACTICAL LOG", font=("Orbitron", 8, "bold"), text_color="#00d4ff").pack(anchor="w", pady=(5, 5))
         self.chat_scroll = ctk.CTkScrollableFrame(self, fg_color="#08080c", border_width=1, border_color="#1a1a25")
         self.chat_scroll.pack(expand=True, fill="both", pady=5)
 
