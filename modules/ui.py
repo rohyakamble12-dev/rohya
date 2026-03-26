@@ -157,7 +157,7 @@ class VedaHUD(ctk.CTk):
         self.assistant = assistant
         self.overrideredirect(True)
         self.attributes("-alpha", 0.85, "-topmost", True)
-        self.geometry("850x550")
+        self.geometry("1100x650")
         self.configure(fg_color="#050508")
         self.title("VEDA CORE")
         self.mic_level = 0
@@ -188,11 +188,11 @@ class VedaHUD(ctk.CTk):
             canvas = self.center.canvas
             canvas.delete("globe")
 
-            # Use reliable geometry fetching
+            # Absolute Coordinate Rectification
             w = canvas.winfo_width()
             h = canvas.winfo_height()
-            if w < 20:
-                canvas.update_idletasks()
+            if w < 50:
+                self.update_idletasks()
                 w = canvas.winfo_width()
                 h = canvas.winfo_height()
 
@@ -208,7 +208,7 @@ class VedaHUD(ctk.CTk):
             angle_x = self.center.angle_y * 0.3 # Secondary rotation axis
 
             # Base Scale
-            scale = (min(w, h) // 5) * (1.0 + self.mic_level * 0.5)
+            scale = (min(w, h) // 4.5) * (1.0 + self.mic_level * 0.4)
             color = {"idle": "#00d4ff", "thinking": "#b026ff", "speaking": "#00ffcc"}.get(self.status, "#00d4ff")
             if "ALERT" in self.log.status_label.cget("text") or load_glow: color = "#ff3e3e"
 

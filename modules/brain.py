@@ -86,6 +86,10 @@ class VedaBrain:
 
     def plan_tactical_steps(self, user_input, stream=False):
         """Breaks a complex request into a sequence of actions with reasoning."""
+        # Tactical Pre-Processing
+        text = user_input.lower().strip()
+        if len(text) < 3: return str([{"intent": "none", "params": {}}])
+
         prompt = (
             "You are the Veda Strategic Planner. First, briefly explain your reasoning in one short sentence within <reasoning> tags. "
             "Then, break the user's request into a sequence of discrete actions in a JSON list. "
@@ -99,7 +103,11 @@ class VedaBrain:
                           {"role": "user", "content": prompt}],
                 options={"num_predict": 256}
             )
-            return response['message']['content'] # Return raw string for main.py extraction
+            content = response['message']['content']
+
+            # Neural Auto-Heal: Ensure JSON brackets are balanced
+            if "[" in content and "]" not in content: content += "]"
+            return content
         except: pass
         return str(self._regex_plan_fallback(user_input))
 

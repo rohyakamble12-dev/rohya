@@ -7,6 +7,14 @@ import ctypes
 import logging
 import platform
 import time
+import socket
+try:
+    import winreg
+except ImportError:
+    winreg = None
+import shutil
+import winshell
+import pyperclip
 
 try:
     import pygetwindow as gw
@@ -31,8 +39,8 @@ class SystemModule:
 
     def scan_installed_apps(self):
         """Scans Windows Registry for installed application paths."""
+        if not winreg: return
         try:
-            import winreg
             paths = [
                 (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths"),
                 (winreg.HKEY_CURRENT_USER, r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths")
@@ -87,21 +95,28 @@ class SystemModule:
 
             # Tier 3: Command-Line Search (Where)
             try:
-                res = subprocess.check_output(f"where {app}", shell=True).decode().split('\n')[0].strip()
-                if res:
+                # Sanitized search using list arguments (no shell=True)
+                res = subprocess.check_output(["where", app], stderr=subprocess.DEVNULL).decode().split('\n')[0].strip()
+                if res and os.path.exists(res):
                     subprocess.Popen([res], shell=False)
                     return f"Executing {app} via system search."
             except: pass
 
-            # Tier 4: Generic Execution
-            subprocess.Popen(["cmd", "/c", f"start {app}"], shell=False, creationflags=0x08000000)
-            return f"Executing {app_name} via standard protocol."
+            # Tier 4: Generic Execution (Safe start)
+            # We use os.startfile which is safer for opening registered apps/files on Windows
+            try:
+                os.startfile(app)
+                return f"Executing {app_name} via standard protocol."
+            except:
+                # Fallback to a very restricted cmd start if everything else fails
+                # We do NOT use shell=True here
+                subprocess.Popen(["cmd", "/c", "start", "", app], shell=False, creationflags=0x08000000)
+                return f"Executing {app_name} via secondary protocol."
 
         except Exception as e: return f"Execution failed: {e}"
 
     def move_file(self, src, dst):
         try:
-            import shutil
             user_home = os.path.expanduser("~")
             aliases = {
                 "documents": os.path.join(user_home, "Documents"),
@@ -173,7 +188,6 @@ class SystemModule:
             disk = psutil.disk_usage('/').percent
             battery = psutil.sensors_battery()
             bat_str = f" | BAT {battery.percent}%" if battery else ""
-            import socket
             ip = socket.gethostbyname(socket.gethostname())
             return f"INTEGRITY: CPU {cpu}% | RAM {ram}% | DSK {disk}%{bat_str} | IP {ip}"
         except Exception as e: return f"Diagnostic failure: {e}"
@@ -188,7 +202,6 @@ class SystemModule:
 
     def get_network_info(self):
         try:
-            import socket
             hostname = socket.gethostname()
             ip = socket.gethostbyname(hostname)
             ssid = "Unknown"
@@ -295,14 +308,12 @@ class SystemModule:
 
     def get_clipboard(self):
         try:
-            import pyperclip
             text = pyperclip.paste()
             return f"Clipboard content acquired: {text[:200]}..." if text else "Clipboard is empty."
         except: return "Clipboard link failed."
 
     def set_clipboard(self, text):
         try:
-            import pyperclip
             pyperclip.copy(text)
             return "Data synchronized to system clipboard."
         except: return "Clipboard synchronization failed."

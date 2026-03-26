@@ -1,6 +1,9 @@
 import cv2
 import logging
 import os
+import pyautogui
+import numpy as np
+import pytesseract # Requires Tesseract-OCR installed on Windows
 
 class VisionModule:
     def capture_and_describe(self):
@@ -45,10 +48,6 @@ class VisionModule:
     def screen_ocr(self):
         """Captures screen and extracts text."""
         try:
-            import pyautogui
-            import numpy as np
-            import pytesseract # Requires Tesseract-OCR installed on Windows
-
             shot = pyautogui.screenshot()
             frame = np.array(shot)
             # OCR processing

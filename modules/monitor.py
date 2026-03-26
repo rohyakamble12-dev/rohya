@@ -1,6 +1,7 @@
 import psutil
 import time
 import threading
+import socket
 
 class MonitorModule:
     def __init__(self, assistant):
@@ -33,7 +34,6 @@ class MonitorModule:
                     self.assistant.notify(f"POWER ALERT: Reserve power at {battery.percent}%. Connect to power source.")
 
                 # 3. Network Link (SSID Detection)
-                import socket
                 try:
                     socket.create_connection(("1.1.1.1", 53), timeout=2)
                     current_net = True

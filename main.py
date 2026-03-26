@@ -8,6 +8,8 @@ import threading
 import time
 import socket
 import psutil
+import queue
+import cv2
 
 # Tactical Module Imports
 try:
@@ -25,31 +27,38 @@ except ImportError as e:
 class VedaAssistant:
     def __init__(self):
         self.setup_logging()
-        logging.info("--- VEDA KERNEL INITIALIZATION ---")
+        logging.info("--- VEDA SOVEREIGN KERNEL BOOT ---")
 
-        self.load_config()
+        # Kernel State
+        self.command_lock = threading.RLock()
         self.optical_active = False
+        self.load_config()
 
-        # 1. Initialize Persistent Memory
+        # 1. Memory Sector
         self.memory = VedaMemory()
 
-        # 2. Initialize Neural Core
+        # 2. Neural Link
         self.brain = VedaBrain()
         self.brain.ensure_ollama()
 
-        # 3. Initialize Tactical Interfaces
-        self.voice = VedaVoice(self.config)
+        # 3. HUD and Interface
         self.gui = VedaHUD(self.config, self)
+        self.voice = VedaVoice(self.config)
         self.notif = NotificationModule(self.gui)
 
-        # 4. Initialize Decision Hub
+        # 4. Command Engine
         self.router = CommandRouter(self)
-
-        # 5. Initialize Sentinel Monitoring
         self.monitor = MonitorModule(self)
 
-        # Pre-Flight Check
-        self._preflight_check()
+        # 5. Start Passive Loops
+        self._initialize_subsystems()
+
+    def _initialize_subsystems(self):
+        threading.Thread(target=self._preflight_check_loop, name="PreflightThread", daemon=True).start()
+        threading.Thread(target=self.wake_word_loop, name="VoiceThread", daemon=True).start()
+        threading.Thread(target=self._metrics_updater, name="MetricsThread", daemon=True).start()
+        threading.Thread(target=self._optical_feed_loop, name="OpticThread", daemon=True).start()
+        self.monitor.start()
 
     def setup_logging(self):
         logging.basicConfig(
@@ -71,21 +80,15 @@ class VedaAssistant:
             with open("config.json", "r") as f:
                 self.config = json.load(f)
 
-    def _preflight_check(self):
-        logging.info("[SYSTEM]: Running tactical pre-flight checks...")
-        threading.Thread(target=self._telemetry_loop, daemon=True).start()
-
-    def _telemetry_loop(self):
+    def _preflight_check_loop(self):
+        logging.info("[SYSTEM]: Tactical link synchronization active.")
         while True:
             try:
-                # Neural Status
                 neural = self.brain.ensure_ollama()
-                # Data Status
                 try:
                     socket.create_connection(("1.1.1.1", 53), timeout=2)
                     data = True
                 except: data = False
-
                 self.gui.after(0, lambda n=neural, d=data: self._update_telemetry_ui(n, d))
             except: pass
             time.sleep(30)
@@ -99,70 +102,87 @@ class VedaAssistant:
         except: pass
 
     def process_command(self, user_input):
-        if not user_input: return
-        logging.info(f"Input: {user_input}")
+        with self.command_lock:
+            if not user_input: return
+            logging.info(f"Input: {user_input}")
 
-        # 1. Resilient Fast-Path (Survival Mode 11.0)
-        try:
-            survival = self._handle_survival_mode(user_input)
-            if survival:
-                self._finalize_interaction(user_input, survival)
-                return
-        except Exception as e:
-            logging.error(f"Survival error: {e}")
-
-        # 2. Neural Planning
-        self.gui.after(0, lambda: self.gui.set_state("thinking"))
-        try:
-            raw_plan = self.brain.plan_tactical_steps(user_input)
-
-            # Thought Visualization
-            if "<reasoning>" in str(raw_plan):
-                match = re.search(r'<reasoning>(.*?)</reasoning>', str(raw_plan), re.DOTALL)
-                if match: self.gui.after(0, lambda m=match.group(1): self.gui.add_message("Thought", m))
-
-            # Plan Parsing
-            plan = []
-            if isinstance(raw_plan, list): plan = raw_plan
-            else:
-                j_match = re.search(r'\[.*\]', str(raw_plan), re.DOTALL)
-                if j_match: plan = json.loads(j_match.group())
-
-            final_responses = []
-            for step in plan:
-                intent = step.get("intent", "none")
-                if intent == "none": continue
-                res = self.router.route(step)
-                if res: final_responses.append(res)
-        except Exception as e:
-            logging.error(f"Planning failure: {e}")
-            final_responses = ["Strategic planning interrupted. Reverting to neural fallback."]
-
-        # 3. Neural Fallback / Conversation
-        if not final_responses:
+            # 1. Resilient Fast-Path (Survival Mode 11.0)
             try:
-                history = self.memory.get_context()
-                facts = "\n".join(self.memory.search_facts(""))
-                screen_ctx = self.memory.load_state("screen_context", "")
-                if screen_ctx: facts += f"\nSCREEN: {screen_ctx}"
-
-                stream = self.brain.chat(user_input, history, facts=facts, stream=True)
-                full_text = ""; lbl = self.gui.add_message("Veda", "...")
-                for chunk in stream:
-                    content = chunk['message']['content']
-                    full_text += content
-                    self.gui.after(0, lambda t=full_text, l=lbl: l.configure(text=f"VEDA: {t}"))
-                final_responses.append(full_text)
-
-                # Pro-Active Learning
-                if any(t in user_input.lower() for t in ["my name is", "i like", "call me"]):
-                    self.memory.add_fact(user_input)
+                survival = self._handle_survival_mode(user_input)
+                if survival:
+                    self._finalize_interaction(user_input, survival)
+                    return
             except Exception as e:
-                logging.error(f"Fallback failure: {e}")
-                final_responses.append("Neural link unstable. Core functions only.")
+                logging.error(f"Survival error: {e}")
 
-        combined = ". ".join([str(r) for r in final_responses if r])
-        self._finalize_interaction(user_input, combined)
+            # 2. Neural Planning
+            self.gui.after(0, lambda: self.gui.set_state("thinking"))
+            final_responses = []
+            try:
+                raw_plan = self.brain.plan_tactical_steps(user_input)
+
+                # Thought Visualization
+                if "<reasoning>" in str(raw_plan):
+                    match = re.search(r'<reasoning>(.*?)</reasoning>', str(raw_plan), re.DOTALL)
+                    if match: self.gui.after(0, lambda m=match.group(1): self.gui.add_message("Thought", m))
+
+                # Plan Parsing
+                plan = []
+                if isinstance(raw_plan, list): plan = raw_plan
+                else:
+                    j_match = re.search(r'\[.*\]', str(raw_plan), re.DOTALL)
+                    if j_match: plan = json.loads(j_match.group())
+
+                for step in plan:
+                    intent = step.get("intent", "none")
+                    if intent == "none": continue
+                    res = self.router.route(step)
+                    if res: final_responses.append(res)
+            except Exception as e:
+                logging.error(f"Planning failure: {e}")
+                final_responses = ["Strategic planning interrupted. Reverting to neural fallback."]
+
+            # 3. Neural Fallback / Conversation
+            if not final_responses:
+                try:
+                    history = self.memory.get_context()
+                    facts = "\n".join(self.memory.search_facts(""))
+                    screen_ctx = self.memory.load_state("screen_context", "")
+                    if screen_ctx: facts += f"\nSCREEN: {screen_ctx}"
+
+                    stream = self.brain.chat(user_input, history, facts=facts, stream=True)
+                    token_queue = queue.Queue()
+                    lbl = self.gui.add_message("Veda", "...")
+
+                    def _stream_to_ui():
+                        full_text = ""
+                        while True:
+                            try:
+                                token = token_queue.get(timeout=5)
+                                if token is None: break
+                                full_text += token
+                                self.gui.after(0, lambda t=full_text, l=lbl: l.configure(text=f"VEDA: {t}"))
+                            except queue.Empty: break
+
+                    threading.Thread(target=_stream_to_ui, daemon=True).start()
+
+                    final_text = ""
+                    for chunk in stream:
+                        content = chunk['message']['content']
+                        final_text += content
+                        token_queue.put(content)
+                    token_queue.put(None)
+                    final_responses.append(final_text)
+
+                    # Pro-Active Learning
+                    if any(t in user_input.lower() for t in ["my name is", "i like", "call me"]):
+                        self.memory.add_fact(user_input)
+                except Exception as e:
+                    logging.error(f"Fallback failure: {e}")
+                    final_responses.append("Neural link unstable. Core functions only.")
+
+            combined = ". ".join([str(r) for r in final_responses if r])
+            self._finalize_interaction(user_input, combined)
 
     def _finalize_interaction(self, user_input, response):
         if not response: return
@@ -211,14 +231,9 @@ class VedaAssistant:
         return f"Optic link {'established' if self.optical_active else 'severed'}."
 
     def run(self):
-        self.monitor.start()
-        threading.Thread(target=self.wake_word_loop, daemon=True).start()
-        threading.Thread(target=self._metrics_updater, daemon=True).start()
-        threading.Thread(target=self._optical_feed_loop, daemon=True).start()
         self.gui.start()
 
     def _optical_feed_loop(self):
-        import cv2
         cap = None
         while True:
             if self.optical_active:

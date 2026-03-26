@@ -2,12 +2,15 @@ import os, glob, PyPDF2, fnmatch
 
 class FilesModule:
     def find_file(self, filename):
-        """Searches for a file in common user directories."""
+        """Searches for a file in common user directories with deep scan."""
         try:
+            user_home = os.path.expanduser("~")
             search_dirs = [
-                os.path.join(os.path.expanduser("~"), "Desktop"),
-                os.path.join(os.path.expanduser("~"), "Documents"),
-                os.path.join(os.path.expanduser("~"), "Downloads"),
+                os.path.join(user_home, "Desktop"),
+                os.path.join(user_home, "Documents"),
+                os.path.join(user_home, "Downloads"),
+                os.path.join(user_home, "Videos"),
+                os.path.join(user_home, "Pictures"),
                 os.getcwd()
             ]
 
@@ -16,10 +19,15 @@ class FilesModule:
 
             for root_dir in search_dirs:
                 if not os.path.exists(root_dir): continue
-                for root, dirnames, filenames in os.walk(root_dir):
-                    for name in fnmatch.filter(filenames, pattern):
-                        matches.append(os.path.join(root, name))
-                    if len(matches) > 5: break # Limit results
+                # Optimized shallow search first
+                shallow = glob.glob(os.path.join(root_dir, pattern))
+                if shallow: matches.extend(shallow)
+
+                if not matches:
+                    for root, dirnames, filenames in os.walk(root_dir):
+                        for name in fnmatch.filter(filenames, pattern):
+                            matches.append(os.path.join(root, name))
+                        if len(matches) > 5: break # Limit results
                 if matches: break
 
             if matches:

@@ -1,6 +1,7 @@
 import sqlite3
 import os
 import logging
+import json
 from datetime import datetime
 
 class VedaMemory:
@@ -52,6 +53,14 @@ class VedaMemory:
             CREATE TABLE IF NOT EXISTS system_state (
                 key TEXT PRIMARY KEY,
                 value TEXT
+            )
+        ''')
+
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS tactical_rules (
+                trigger_text TEXT PRIMARY KEY,
+                action_data TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         ''')
 
@@ -107,3 +116,20 @@ class VedaMemory:
         row = conn.execute("SELECT value FROM system_state WHERE key=?", (key,)).fetchone()
         conn.close()
         return row[0] if row else default
+
+    def add_rule(self, trigger, action):
+        conn = sqlite3.connect(self.db_path)
+        action_str = json.dumps(action) if not isinstance(action, str) else action
+        conn.execute("INSERT OR REPLACE INTO tactical_rules (trigger_text, action_data) VALUES (?, ?)",
+                     (trigger.lower().strip(), action_str))
+        conn.commit()
+        conn.close()
+
+    def get_rule(self, trigger):
+        conn = sqlite3.connect(self.db_path)
+        row = conn.execute("SELECT action_data FROM tactical_rules WHERE trigger_text=?", (trigger.lower().strip(),)).fetchone()
+        conn.close()
+        if row:
+            try: return json.loads(row[0])
+            except: return row[0]
+        return None
