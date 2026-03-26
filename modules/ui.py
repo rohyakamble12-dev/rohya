@@ -213,7 +213,8 @@ class VedaHUD(ctk.CTk):
             angle_x = self.center.angle_y * 0.3 # Secondary rotation axis
 
             # Base Scale
-            scale = (min(w, h) // 4.5) * (1.0 + self.mic_level * 0.4) * min(intensity, 1.5)
+            mic_scale = 1.0 + (self.assistant.voice.mic_level * 0.4)
+            scale = (min(w, h) // 4.5) * mic_scale * min(intensity, 1.5)
             color = {"idle": "#00d4ff", "thinking": "#b026ff", "speaking": "#00ffcc"}.get(self.status, "#00d4ff")
 
             # Theme override for ALERT or Extreme Load

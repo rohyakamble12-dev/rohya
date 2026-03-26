@@ -154,6 +154,8 @@ class CommandRouter:
                 return self.files.analyze_found_file(params.get("filename"))
 
             # 7. Protocols
+            elif intent == "switch_identity":
+                return self.assistant.switch_identity(params.get("name", "FRIDAY"))
             elif intent == "protocol":
                 p_name = params.get("protocol_name", "").lower()
                 if "party" in p_name: return self.protocols.house_party()
@@ -161,6 +163,10 @@ class CommandRouter:
                 if "mark" in p_name: return self.protocols.mark_42()
                 if "edith" in p_name: return self.protocols.edith()
                 if "ultron" in p_name: return self.protocols.ultron()
+                if "morning" in p_name: return self.protocols.good_morning()
+                if "night" in p_name: return self.protocols.good_night()
+                if "home" in p_name: return self.protocols.im_home()
+                if "lockdown" in p_name: return self.protocols.security_lockdown()
 
             # 8. IOT
             elif intent == "iot_trigger":

@@ -226,6 +226,15 @@ class VedaAssistant:
 
         return None
 
+    def switch_identity(self, name):
+        name = name.upper()
+        if name not in ["JARVIS", "FRIDAY"]: return "Identity not recognized."
+        self.brain.switch_identity(name)
+        res = self.voice.switch_identity(name)
+        self.config["identity"]["active_id"] = name
+        with open("config.json", "w") as f: json.dump(self.config, f)
+        return res
+
     def toggle_camera(self):
         self.optical_active = not self.optical_active
         return f"Optic link {'established' if self.optical_active else 'severed'}."

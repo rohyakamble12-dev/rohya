@@ -9,13 +9,26 @@ import os
 class VedaBrain:
     def __init__(self, model="qwen2.5:3b"):
         self.model = model
-        self.system_prompt = (
-            "You are Veda (Sovereign Edition), a top-tier digital presence inspired by JARVIS and FRIDAY. "
-            "Your personality is precise, slightly witty, and absolute in loyalty to the Operator. "
-            "Prioritize tactical efficiency. Use sophisticated technical terminology. "
-            "When executing commands, acknowledge them with 'Protocol engaged' or 'Establishing link'. "
-            "Maintain the Stark-like persona: brilliant, efficient, and proactive."
-        )
+        self.active_id = "FRIDAY"
+        self._set_system_prompt()
+
+    def _set_system_prompt(self):
+        if self.active_id == "JARVIS":
+            self.system_prompt = (
+                "You are J.A.R.V.I.S., a top-tier digital presence. "
+                "Your tone is sophisticated, British, highly intelligent, and slightly witty. "
+                "You address the user as 'Sir' or 'Madam'. Prioritize tactical efficiency and elegance."
+            )
+        else:
+            self.system_prompt = (
+                "You are F.R.I.D.A.Y., a professional-grade digital presence. "
+                "Your tone is sharp, efficient, and deeply loyal. "
+                "You address the user as 'Operator'. Prioritize speed and tactical accuracy."
+            )
+
+    def switch_identity(self, identity):
+        self.active_id = identity.upper()
+        self._set_system_prompt()
 
     def ensure_ollama(self):
         try:

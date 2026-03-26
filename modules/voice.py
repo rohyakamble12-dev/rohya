@@ -10,11 +10,13 @@ except ImportError:
 
 class VedaVoice:
     def __init__(self, config):
-        # Forced high-quality female profile
-        self.online_voice = "en-US-AvaNeural"
+        self.config = config
+        self.active_id = config.get("identity", {}).get("active_id", "FRIDAY")
+        self._update_voice_profile()
         self.wake_word = config['preferences']['voice']['wake_word']
         self.recognizer = sr.Recognizer()
         self.mic = sr.Microphone()
+        self.mic_level = 0.0
 
         with self.mic as source:
             self.recognizer.adjust_for_ambient_noise(source, duration=1)
@@ -36,7 +38,14 @@ class VedaVoice:
             await communicate.save(tmp.name)
             pygame.mixer.music.load(tmp.name)
             pygame.mixer.music.play()
-            while pygame.mixer.music.get_busy(): time.sleep(0.1)
+
+            # Simulated Speech Visualization Link
+            while pygame.mixer.music.get_busy():
+                # Fluctuating mic_level for HUD animation
+                self.mic_level = 0.5 + (0.5 * (time.time() % 0.5))
+                time.sleep(0.05)
+
+            self.mic_level = 0.0
             pygame.mixer.music.unload()
             os.unlink(tmp.name)
 
@@ -94,6 +103,30 @@ class VedaVoice:
                     return res.get("text", "")
             return ""
         except: return ""
+
+    def _update_voice_profile(self):
+        """Switches vocal profile based on active identity."""
+        if self.active_id == "JARVIS":
+            self.online_voice = "en-GB-RyanNeural" # Sophisticated British male
+        else:
+            self.online_voice = "en-US-AvaNeural" # Professional female
+
+        if hasattr(self, 'offline_engine') and self.offline_engine:
+            voices = self.offline_engine.getProperty('voices')
+            for voice in voices:
+                if self.active_id == "JARVIS":
+                    if "david" in voice.name.lower() or "male" in voice.name.lower():
+                        self.offline_engine.setProperty('voice', voice.id)
+                        break
+                else:
+                    if "zira" in voice.name.lower() or "female" in voice.name.lower():
+                        self.offline_engine.setProperty('voice', voice.id)
+                        break
+
+    def switch_identity(self, identity):
+        self.active_id = identity.upper()
+        self._update_voice_profile()
+        return f"Identity relay synchronized to {self.active_id} protocol."
 
     def listen_passive(self):
         return self.wake_word in self.listen(timeout=2).lower()
