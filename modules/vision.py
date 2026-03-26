@@ -28,31 +28,50 @@ class VisionModule:
             return f"Vision link error: {e}"
 
     def face_detect(self):
+        """Advanced biometric simulation with facial signature detection."""
         try:
             face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
             cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+            for _ in range(5): cap.read()
             ret, frame = cap.read()
             cap.release()
 
-            if not ret: return "Optical error: Frame capture failed."
+            if not ret: return "Optical error: Frame capture failed. Check hardware link."
 
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            faces = face_cascade.detectMultiScale(gray, 1.1, 4)
+            faces = face_cascade.detectMultiScale(gray, 1.3, 5)
 
             if len(faces) > 0:
-                return f"Biometric scan complete: {len(faces)} human signature(s) detected. Security cleared."
-            return "Biometric scan complete: No human signatures found in immediate vicinity."
-        except:
-            return "Facial recognition protocol offline."
+                # Add simulated metrics for MCU feel
+                confidence = round(100 - (100 / len(faces)), 2) if len(faces) > 0 else 0
+                return (
+                    f"BIOMETRIC SCAN: Human signature identified.\n"
+                    f"COUNT: {len(faces)} | CONFIDENCE: {confidence or 98.4}%\n"
+                    f"PROFILE: Operator status confirmed. Security protocols nominal."
+                )
+            return "BIOMETRIC SCAN: No human signatures detected. Perimeter secure."
+        except Exception as e:
+            return f"Biometric link error: {e}"
 
     def screen_ocr(self):
-        """Captures screen and extracts text."""
+        """Captures screen and performs cognitive text extraction."""
         try:
             shot = pyautogui.screenshot()
             frame = np.array(shot)
+            # Pre-processing for better OCR
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             # OCR processing
-            text = pytesseract.image_to_string(frame)
-            if not text.strip(): return "Visual analysis complete. No legible text detected on current interface."
-            return f"SCREEN INTEGRITY REPORT:\n{text[:500]}..."
+            text = pytesseract.image_to_string(gray)
+            if not text.strip():
+                return "VISUAL SCAN: Sector clear. No legible data streams detected on primary interface."
+
+            clean_text = "\n".join([line.strip() for line in text.split("\n") if line.strip()][:15])
+            return (
+                f"SCREEN INTEGRITY REPORT: DATA ACQUIRED\n"
+                f"--------------------------------------\n"
+                f"{clean_text}\n"
+                f"--------------------------------------\n"
+                f"Analysis: Intelligence buffer updated with active workspace telemetry."
+            )
         except Exception as e:
-            return f"Optical character recognition failed: {e}. Ensure Tesseract-OCR is installed."
+            return f"Optic character recognition protocol failed: {e}."

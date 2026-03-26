@@ -200,17 +200,25 @@ class VedaHUD(ctk.CTk):
 
             # Health Sync Effect
             try:
-                load_glow = float(self.sidebar.stats_labels["THREADS"].cget("text")) > 15
-            except: load_glow = False
+                thread_count = int(self.sidebar.stats_labels["THREADS"].cget("text"))
+                load_glow = thread_count > 15
+            except:
+                thread_count = 1
+                load_glow = False
 
-            speed = 0.05 if self.status == "thinking" else 0.02
+            # Neural Link Intensity (scales scale and speed)
+            intensity = 1.0 + (thread_count / 50.0)
+            speed = (0.05 if self.status == "thinking" else 0.02) * intensity
             self.center.angle_y += speed
             angle_x = self.center.angle_y * 0.3 # Secondary rotation axis
 
             # Base Scale
-            scale = (min(w, h) // 4.5) * (1.0 + self.mic_level * 0.4)
+            scale = (min(w, h) // 4.5) * (1.0 + self.mic_level * 0.4) * min(intensity, 1.5)
             color = {"idle": "#00d4ff", "thinking": "#b026ff", "speaking": "#00ffcc"}.get(self.status, "#00d4ff")
+
+            # Theme override for ALERT or Extreme Load
             if "ALERT" in self.log.status_label.cget("text") or load_glow: color = "#ff3e3e"
+            elif self.status == "idle" and intensity > 1.2: color = "#ffcc00" # Warning/Gold
 
             glow_width = 2 if self.status == "thinking" or load_glow else 1
 

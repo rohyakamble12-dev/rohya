@@ -293,18 +293,57 @@ class SystemModule:
             pyautogui.hotkey('win', 'd') # Minimize all
             self.set_volume(0)
             self.set_dark_mode(True)
-            return "Stealth Protocol active. Environment silenced and concealed."
+            return "STEALTH PROTOCOL: Environment neutralized and concealed."
         elif "coding" in mode or "dev" in mode:
             self.open_app("code")
             self.open_app("chrome")
             self.open_app("terminal")
             self.set_dark_mode(True)
-            return "Development environment established. Stand by for compilation, Operator."
+            return "DEVELOPMENT LINK: Workspace sectors initialized. Awaiting input."
         elif "focus" in mode:
             self.set_volume(20)
             self.open_app("spotify")
-            return "Focus parameters initialized. Distractions minimized."
-        return f"Workspace profile '{mode}' not recognized."
+            return "FOCUS PROTOCOL: Cognitive environment optimized."
+        return f"Profile '{mode}' not found in active sectors."
+
+    def capture_session(self, assistant):
+        """Archives active non-system processes for later restoration."""
+        try:
+            active = []
+            for proc in psutil.process_iter(['name', 'exe']):
+                try:
+                    # Ignore common system processes
+                    if not proc.info['exe'] or "windows" in proc.info['exe'].lower() or "system" in proc.info['name'].lower(): continue
+                    if proc.info['name'].lower() in ["python.exe", "ollama.exe", "explorer.exe"]: continue
+                    active.append(proc.info['exe'])
+                except: continue
+
+            # Save to memory
+            assistant.memory.save_state("session_active_apps", json.dumps(list(set(active))))
+            return f"SESSION CAPTURED: {len(set(active))} tactical interfaces archived for restoration."
+        except: return "Session capture protocol failed."
+
+    def restore_session(self, assistant):
+        """Restores previously archived session processes."""
+        try:
+            raw = assistant.memory.load_state("session_active_apps")
+            if not raw: return "No archived session data found in tactical memory."
+            apps = json.loads(raw)
+            for app in apps:
+                try: os.startfile(app)
+                except: pass
+            return f"SESSION RESTORED: Re-establishing {len(apps)} archived links."
+        except: return "Session restoration protocol failed."
+
+    def discover_network_devices(self):
+        """Simulates ARP scan for local network transparency."""
+        try:
+            # We don't want to run a real Nmap/ARP scan without permissions
+            # But we can list known neighbors via 'arp -a'
+            res = subprocess.check_output("arp -a", shell=True).decode()
+            lines = [l.strip() for l in res.split("\n") if "dynamic" in l.lower()]
+            return f"NETWORK SENTINEL: {len(lines)} active signatures detected in immediate sector."
+        except: return "Network discovery link broken."
 
     def get_clipboard(self):
         try:

@@ -91,6 +91,8 @@ class CommandRouter:
                 return self.system.capture_session(self.assistant)
             elif intent == "session_restore":
                 return self.system.restore_session(self.assistant)
+            elif intent == "network_discovery":
+                return self.system.discover_network_devices()
             elif intent == "learn_command":
                 self.assistant.memory.add_rule(params.get("trigger"), params.get("action"))
                 return f"Rule integrated: '{params.get('trigger')}' now triggers tactical sequence."
@@ -102,6 +104,12 @@ class CommandRouter:
                 return self.intel.get_wiki(params.get("topic"))
             elif intent == "weather":
                 return self.intel.get_weather(params.get("city"))
+            elif intent == "news":
+                return self.intel.get_news(params.get("topic", "technology"))
+            elif intent == "market_data":
+                return self.intel.get_market_data(params.get("symbol"))
+            elif intent == "deep_research":
+                return self.intel.deep_research(params.get("query"))
 
             # 3. Media
             elif intent == "play_music":
@@ -151,6 +159,8 @@ class CommandRouter:
                 if "party" in p_name: return self.protocols.house_party()
                 if "slate" in p_name: return self.protocols.clean_slate()
                 if "mark" in p_name: return self.protocols.mark_42()
+                if "edith" in p_name: return self.protocols.edith()
+                if "ultron" in p_name: return self.protocols.ultron()
 
             # 8. IOT
             elif intent == "iot_trigger":
