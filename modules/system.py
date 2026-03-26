@@ -345,6 +345,60 @@ class SystemModule:
             return f"NETWORK SENTINEL: {len(lines)} active signatures detected in immediate sector."
         except: return "Network discovery link broken."
 
+    def optimize_system(self):
+        """MCU Accurate 'Clean Up' Protocol: Clears temp files and kills idle high-memory processes."""
+        try:
+            temp_path = os.environ.get('TEMP')
+            cleared = 0
+            if temp_path:
+                for root, dirs, files in os.walk(temp_path):
+                    for f in files:
+                        try:
+                            os.remove(os.path.join(root, f))
+                            cleared += 1
+                        except: continue
+
+            killed = 0
+            for proc in psutil.process_iter(['name', 'memory_percent', 'status']):
+                try:
+                    if proc.info['memory_percent'] > 5 and proc.info['status'] == 'sleeping':
+                        if proc.info['name'].lower() not in ["python.exe", "ollama.exe", "explorer.exe"]:
+                            proc.terminate()
+                            killed += 1
+                except: continue
+
+            return f"OPTIMIZATION COMPLETE: {cleared} temporary components purged. {killed} idle high-resource links severed. Tactical efficiency restored."
+        except: return "Optimization protocol failed."
+
+    def structural_analysis(self, path=None):
+        """MCU Accurate Structural Analysis: Deep file/folder metadata scan."""
+        try:
+            path = path or os.getcwd()
+            if not os.path.exists(path): return f"STRUCTURAL ANALYSIS: Target '{path}' not found."
+
+            size = 0
+            count = 0
+            for root, dirs, files in os.walk(path):
+                count += len(files)
+                for f in files:
+                    try: size += os.path.getsize(os.path.join(root, f))
+                    except: continue
+
+            gb_size = round(size / (1024**3), 2)
+
+            # Project Integrity Scan (Self-Diagnostic)
+            integrity = "NOMINAL"
+            missing = []
+            if path == os.getcwd() or "veda" in path.lower():
+                for module in ["main.py", "modules/brain.py", "modules/ui.py", "modules/system.py"]:
+                    if not os.path.exists(module): missing.append(module)
+                if missing: integrity = "COMPROMISED"
+
+            msg = f"STRUCTURAL ANALYSIS: {os.path.basename(path) or path}\nCOMPONENTS: {count} elements\nINTEGRITY MASS: {gb_size} GB\nPROJECT INTEGRITY: {integrity}"
+            if missing: msg += f"\nMISSING SECTORS: {', '.join(missing)}"
+            return msg
+        except: return "Structural analysis protocol failed."
+
     def get_clipboard(self):
         try:
             text = pyperclip.paste()

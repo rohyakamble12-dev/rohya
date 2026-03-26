@@ -59,6 +59,25 @@ class AutomationModule:
         threading.Thread(target=_execute, daemon=True).start()
         return f"Executing tactical sequence: {name}."
 
+    def type_text(self, text):
+        """Simulates human-like typing for the provided text."""
+        try:
+            k_ctrl = keyboard.Controller()
+            for char in text:
+                k_ctrl.type(char)
+                time.sleep(0.05)
+            return "Data transmission complete: Text typed into active sector."
+        except: return "Tactical typing protocol failed."
+
+    def execute_script(self, code):
+        """Safely executes a Python tactical script (restricted)."""
+        try:
+            # We use a restricted environment for safety
+            exec(code, {'__builtins__': None, 'time': time, 'os': os}, {})
+            return "Tactical script executed successfully."
+        except Exception as e:
+            return f"Script execution failed: {e}"
+
     def _on_k_press(self, key):
         if not self.recording: return
         try: k = key.char

@@ -77,6 +77,10 @@ class CommandRouter:
                 return self.auto.stop_recording()
             elif intent == "macro_play":
                 return self.auto.play_macro(params.get("name"))
+            elif intent == "type_text":
+                return self.auto.type_text(params.get("text"))
+            elif intent == "execute_script":
+                return self.auto.execute_script(params.get("code"))
             elif intent == "list_procs":
                 return self.system.list_processes()
             elif intent == "kill_proc":
@@ -93,6 +97,8 @@ class CommandRouter:
                 return self.system.restore_session(self.assistant)
             elif intent == "network_discovery":
                 return self.system.discover_network_devices()
+            elif intent == "optimize_system":
+                return self.system.optimize_system()
             elif intent == "learn_command":
                 self.assistant.memory.add_rule(params.get("trigger"), params.get("action"))
                 return f"Rule integrated: '{params.get('trigger')}' now triggers tactical sequence."
