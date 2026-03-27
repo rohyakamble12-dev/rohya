@@ -210,7 +210,18 @@ class SystemModule:
                 for line in out.split('\n'):
                     if "SSID" in line and "BSSID" not in line: ssid = line.split(":")[1].strip()
             except: pass
-            return f"NETWORK LOG: Host '{hostname}' | IP {ip} | SSID: {ssid}"
+
+            public_ip = "Unknown"
+            latency = "Unknown"
+            try:
+                public_ip = requests.get("https://api.ipify.org", timeout=2).text
+                # Simple latency check to 1.1.1.1
+                start = time.time()
+                socket.create_connection(("1.1.1.1", 53), timeout=2)
+                latency = f"{round((time.time() - start) * 1000, 2)}ms"
+            except: pass
+
+            return f"NETWORK LOG: Host '{hostname}' | IP {ip} | PUB {public_ip} | SSID: {ssid} | LAT {latency}"
         except Exception as e: return f"Comms error: {e}"
 
     def list_processes(self, limit=10):

@@ -35,6 +35,32 @@ class IntelModule:
         except: return "Weather link broken."
 
     @staticmethod
+    def convert_currency(amount, from_curr, to_curr):
+        try:
+            res = requests.get(f"https://api.exchangerate-api.com/v4/latest/{from_curr.upper()}", timeout=5)
+            data = res.json()
+            rate = data["rates"][to_curr.upper()]
+            return f"TACTICAL EXCHANGE: {amount} {from_curr.upper()} is {round(amount * rate, 2)} {to_curr.upper()}."
+        except: return "Currency link broken."
+
+    @staticmethod
+    def convert_units(value, from_unit, to_unit):
+        # Basic conversions
+        conversions = {
+            ("c", "f"): lambda v: (v * 9/5) + 32,
+            ("f", "c"): lambda v: (v - 32) * 5/9,
+            ("kg", "lbs"): lambda v: v * 2.20462,
+            ("lbs", "kg"): lambda v: v / 2.20462,
+            ("m", "ft"): lambda v: v * 3.28084,
+            ("ft", "m"): lambda v: v / 3.28084
+        }
+        try:
+            op = conversions.get((from_unit.lower(), to_unit.lower()))
+            if op: return f"UNIT CONVERSION: {value}{from_unit} is {round(op(value), 2)}{to_unit}."
+            return f"Conversion from {from_unit} to {to_unit} not supported."
+        except: return "Conversion protocol failed."
+
+    @staticmethod
     def get_news(topic="technology"):
         try:
             url = f"https://news.google.com/search?q={topic}&hl=en-US&gl=US&ceid=US:en"

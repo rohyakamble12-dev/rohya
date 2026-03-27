@@ -116,6 +116,10 @@ class CommandRouter:
                 return self.intel.get_market_data(params.get("symbol"))
             elif intent == "deep_research":
                 return self.intel.deep_research(params.get("query"))
+            elif intent == "convert_currency":
+                return self.intel.convert_currency(float(params.get("amount", 1)), params.get("from_curr"), params.get("to_curr"))
+            elif intent == "convert_units":
+                return self.intel.convert_units(float(params.get("value")), params.get("from_unit"), params.get("to_unit"))
             elif intent == "creator_registry":
                 return self.intel.get_creator_registry()
 

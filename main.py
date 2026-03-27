@@ -199,6 +199,12 @@ class VedaAssistant:
     def _handle_survival_mode(self, text):
         text = text.lower().strip()
 
+        # Identity Switch Natural Language
+        if "switch to jarvis" in text or "activate jarvis" in text:
+            return self.switch_identity("JARVIS")
+        if "switch to friday" in text or "activate friday" in text:
+            return self.switch_identity("FRIDAY")
+
         # Adaptive Rule Check
         rule = self.memory.get_rule(text)
         if rule: return self.router.route(rule)
