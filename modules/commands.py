@@ -44,7 +44,7 @@ class CommandRouter:
             elif intent == "system_health":
                 return self.system.get_health()
             elif intent == "system_info":
-                return self.system.get_sys_info()
+                return self.system.get_sys_info(self.assistant)
             elif intent == "network_info":
                 return self.system.get_network_info()
             elif intent == "lock_pc":
@@ -164,6 +164,8 @@ class CommandRouter:
                 return self.files.find_file(params.get("filename"))
             elif intent == "file_analyze":
                 return self.files.analyze_found_file(params.get("filename"))
+            elif intent == "organize_files":
+                return self.files.organize_directory(params.get("path"))
 
             # 7. Protocols
             elif intent == "switch_identity":

@@ -260,7 +260,21 @@ class VedaAssistant:
         return f"Optic link {'established' if self.optical_active else 'severed'}."
 
     def run(self):
+        # 1. Dynamic Greeting Sequence
+        threading.Thread(target=self._initial_greeting, daemon=True).start()
+        # 2. Launch Interface
         self.gui.start()
+
+    def _initial_greeting(self):
+        time.sleep(2) # Give UI a moment to load
+        hour = time.localtime().tm_hour
+        period = "morning" if 5 <= hour < 12 else "afternoon" if 12 <= hour < 18 else "evening"
+
+        name = "Sir" if self.config["identity"]["active_id"] == "JARVIS" else "Operator"
+        greeting = f"Good {period}, {name}. Systems are operational. Awaiting tactical instructions."
+
+        self.gui.after(0, lambda: self.gui.add_message("Veda", greeting))
+        self.voice.speak(greeting)
 
     def _optical_feed_loop(self):
         cap = None

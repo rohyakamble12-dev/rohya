@@ -7,7 +7,7 @@ class MonitorModule:
     def __init__(self, assistant):
         self.assistant = assistant
         self.running = True
-        self.thresholds = {"cpu": 90, "ram": 90, "battery": 20}
+        self.thresholds = {"cpu": 90, "ram": 90, "battery": 20, "disk": 90}
 
     def start(self):
         threading.Thread(target=self._watch_loop, daemon=True).start()
@@ -27,6 +27,10 @@ class MonitorModule:
                 ram = psutil.virtual_memory().percent
                 if ram > self.thresholds["ram"]:
                     self.assistant.notify(f"TACTICAL ALERT: Memory usage critical at {ram}%.")
+
+                disk = psutil.disk_usage('/').percent
+                if disk > self.thresholds["disk"]:
+                    self.assistant.notify(f"TACTICAL ALERT: Primary drive capacity at {disk}%. Initiate cleanup protocol.")
 
                 # 2. Power State
                 battery = psutil.sensors_battery()

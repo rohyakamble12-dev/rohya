@@ -73,3 +73,34 @@ class FilesModule:
             os.startfile(matches[0])
             return f"Opening archive: {os.path.basename(matches[0])}"
         return f"Archive '{name}' not found in tactical sectors."
+
+    def organize_directory(self, path=None):
+        """MCU Accurate 'Data Cleanup': Organizes files into categories."""
+        import shutil
+        try:
+            path = path or os.path.join(os.path.expanduser("~"), "Downloads")
+            if not os.path.exists(path): return "ORGANIZATION: Target sector not found."
+
+            mapping = {
+                "Documents": [".pdf", ".docx", ".txt", ".md", ".pptx", ".xlsx"],
+                "Media": [".jpg", ".png", ".mp4", ".mp3", ".wav", ".mov"],
+                "Archives": [".zip", ".rar", ".7z", ".tar", ".gz"],
+                "Scripts": [".py", ".js", ".sh", ".bat"]
+            }
+
+            moved = 0
+            for item in os.listdir(path):
+                item_path = os.path.join(path, item)
+                if os.path.isfile(item_path):
+                    ext = os.path.splitext(item)[1].lower()
+                    for folder, extensions in mapping.items():
+                        if ext in extensions:
+                            dest_dir = os.path.join(path, folder)
+                            os.makedirs(dest_dir, exist_ok=True)
+                            shutil.move(item_path, os.path.join(dest_dir, item))
+                            moved += 1
+                            break
+
+            return f"ORGANIZATION COMPLETE: {moved} files relocated into categorized sub-sectors in {os.path.basename(path)}."
+        except Exception as e:
+            return f"Organization protocol failed: {e}"

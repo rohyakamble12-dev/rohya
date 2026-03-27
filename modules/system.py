@@ -192,12 +192,30 @@ class SystemModule:
             return f"INTEGRITY: CPU {cpu}% | RAM {ram}% | DSK {disk}%{bat_str} | IP {ip}"
         except Exception as e: return f"Diagnostic failure: {e}"
 
-    def get_sys_info(self):
+    def get_sys_info(self, assistant=None):
+        """Refined Tactical Status: Aggregates all telemetry."""
         try:
             uptime_seconds = time.time() - psutil.boot_time()
             hours = int(uptime_seconds // 3600)
             mins = int((uptime_seconds % 3600) // 60)
-            return f"SYSTEM REPORT:\nOS: {platform.system()} {platform.release()}\nProcessor: {platform.processor()}\nArchitecture: {platform.machine()}\nUptime: {hours}h {mins}m"
+
+            health = self.get_health()
+            network = self.get_network_info()
+
+            report = (
+                f"--- TACTICAL STATUS REPORT ---\n"
+                f"ID: {assistant.config['identity']['active_id'] if assistant else 'VEDA'}\n"
+                f"OS: {platform.system()} {platform.release()}\n"
+                f"UPTIME: {hours}h {mins}m\n"
+                f"{health}\n"
+                f"{network}\n"
+            )
+
+            if assistant:
+                integrity = self.structural_analysis(os.getcwd())
+                report += f"INTEGRITY: {integrity.split('PROJECT INTEGRITY: ')[1] if 'PROJECT INTEGRITY: ' in integrity else 'NOMINAL'}"
+
+            return report
         except Exception as e: return f"Telemetry error: {e}"
 
     def get_network_info(self):

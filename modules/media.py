@@ -14,9 +14,10 @@ class MediaModule:
 
     def play_youtube(self, song):
         try:
-            url = f"https://www.youtube.com/results?search_query={song.replace(' ', '+')}"
+            # Enhanced to attempt direct playing if possible
+            url = f"https://www.youtube.com/results?search_query={song.replace(' ', '+')}&sp=EgIQAQ%253D%253D" # Filter for videos
             webbrowser.open(url)
-            return f"Playing {song} on YouTube."
+            return f"MEDIA PROTOCOL: Searching for '{song}' in global archives. Link established."
         except Exception as e:
             return f"Media link failed: {e}"
 
