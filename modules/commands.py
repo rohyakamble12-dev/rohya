@@ -116,6 +116,8 @@ class CommandRouter:
                 return self.intel.get_market_data(params.get("symbol"))
             elif intent == "deep_research":
                 return self.intel.deep_research(params.get("query"))
+            elif intent == "creator_registry":
+                return self.intel.get_creator_registry()
 
             # 3. Media
             elif intent == "play_music":

@@ -78,3 +78,15 @@ class IntelModule:
             combined = "\n".join(snippets)
             return f"DEEP RESEARCH REPORT: {query.upper()}\n{combined}\n--- Analysis Complete ---"
         except: return "Deep research protocols interrupted."
+
+    @staticmethod
+    def get_creator_registry():
+        """Returns influential real-world creators of smart assistants."""
+        return (
+            "CREATOR REGISTRY (Verified Tactical Sources):\n"
+            "1. harriik (GitHub): Advanced Jarvis with face/voice/GUI automation.\n"
+            "2. kishanrajput23 (GitHub): Sophisticated desktop-level system control.\n"
+            "3. PhD Security (YouTube): MCU-accurate Edith and secure AI architectures.\n"
+            "4. The Coding Bus (YouTube): LLM-driven personalized assistant builds.\n"
+            "5. LiveKit Framework: Standard for professional real-time voice agents."
+        )

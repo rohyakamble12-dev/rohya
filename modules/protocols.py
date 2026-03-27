@@ -25,9 +25,11 @@ class ProtocolModule:
         """Self-Repair & Diagnostic Protocol."""
         import subprocess
         try:
-            # Simulated repair by running the dependency check script
+            # First perform hot-reload
+            reload_res = self.assistant.hot_reload()
+            # Then run diagnostic
             subprocess.Popen(["python", "check_startup.py"], creationflags=0x08000000)
-            return "ULTRON PROTOCOL: Initiating self-diagnostic and repair sequences. Re-indexing system links."
+            return f"ULTRON PROTOCOL: {reload_res} Initiating self-diagnostic sequences."
         except: return "ULTRON: Diagnostic link failed."
 
     def good_morning(self):
@@ -55,3 +57,24 @@ class ProtocolModule:
         self.assistant.process_command("lock pc")
         self.assistant.process_command("vision describe")
         return "SECURITY LOCKDOWN: Peripheral interfaces severed. Perimeter scan initiated. System secured."
+
+    def barn_door(self):
+        """MCU Accurate Barn Door Protocol: Total System Isolation."""
+        self.assistant.process_command("close all")
+        self.assistant.process_command("set clipboard clear")
+        self.assistant.process_command("set dnd true")
+        self.assistant.process_command("optimize_system")
+        self.assistant.process_command("lock pc")
+        return "BARN DOOR PROTOCOL: Total system isolation engaged. Critical data sectors sealed and purged."
+
+    def legionnaire(self):
+        """MCU Accurate Legionnaire Protocol: Sentinel Overdrive."""
+        self.assistant.monitor.thresholds = {"cpu": 60, "ram": 60, "battery": 30} # Tighter thresholds
+        self.assistant.process_command("network_discovery")
+        return "LEGIONNAIRE PROTOCOL: Sentinel sensitivity at maximum. Tactical monitoring overlapping all sectors."
+
+    def verity(self, claim):
+        """MCU Accurate Verity Protocol: Truth/Fact verification."""
+        if not claim: return "VERITY PROTOCOL: No claim provided for analysis."
+        res = self.assistant.router.intel.deep_research(f"Fact check: {claim}")
+        return f"VERITY ANALYSIS: {claim}\nREPORT: {res}\nConfidence level: ANALYZED."

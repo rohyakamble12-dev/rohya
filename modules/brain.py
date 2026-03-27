@@ -80,6 +80,10 @@ class VedaBrain:
         if facts:
             custom_prompt += f"\n\n[KNOWN OPERATOR DATA]:\n{facts}\n\nYou must proactively use this data to personalize your responses. If you know the operator's name or preferences, refer to them."
 
+        # Adaptive Learning Hint
+        if len(history) > 4:
+            custom_prompt += "\n\n[STRATEGIC INSTRUCTION]: If you notice the operator repeating a specific multi-step request, suggest creating a 'Learn Command' rule for it."
+
         messages = [{"role": "system", "content": custom_prompt}]
         messages.extend(history)
         messages.append({"role": "user", "content": user_input})

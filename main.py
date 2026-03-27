@@ -235,6 +235,20 @@ class VedaAssistant:
         with open("config.json", "w") as f: json.dump(self.config, f)
         return res
 
+    def hot_reload(self):
+        """Re-initializes all tactical modules without a kernel restart."""
+        import importlib
+        try:
+            for module_name in ["modules.ui", "modules.voice", "modules.brain", "modules.commands", "modules.memory", "modules.system", "modules.files", "modules.intel", "modules.media", "modules.productivity", "modules.vision", "modules.comms", "modules.automation", "modules.protocols"]:
+                if module_name in sys.modules:
+                    importlib.reload(sys.modules[module_name])
+
+            # Re-link the router and components
+            self.router = sys.modules["modules.commands"].CommandRouter(self)
+            return "ULTRON: Tactical modules hot-reloaded. System links synchronized."
+        except Exception as e:
+            return f"ULTRON: Hot-reload protocol failed: {e}"
+
     def toggle_camera(self):
         self.optical_active = not self.optical_active
         return f"Optic link {'established' if self.optical_active else 'severed'}."

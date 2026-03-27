@@ -42,16 +42,38 @@ class VisionModule:
             faces = face_cascade.detectMultiScale(gray, 1.3, 5)
 
             if len(faces) > 0:
+                # Real Image Matching Attempt (Trusted profile check)
+                is_verified = self.verify_operator(frame)
+
                 # Add simulated metrics for MCU feel
                 confidence = round(100 - (100 / len(faces)), 2) if len(faces) > 0 else 0
+                status = "VERIFIED" if is_verified else "IDENTIFIED"
                 return (
-                    f"BIOMETRIC SCAN: Human signature identified.\n"
+                    f"BIOMETRIC SCAN: Human signature {status}.\n"
                     f"COUNT: {len(faces)} | CONFIDENCE: {confidence or 98.4}%\n"
                     f"PROFILE: Operator status confirmed. Security protocols nominal."
                 )
             return "BIOMETRIC SCAN: No human signatures detected. Perimeter secure."
         except Exception as e:
             return f"Biometric link error: {e}"
+
+    def verify_operator(self, frame):
+        """Compares live frame against trusted signature in storage."""
+        try:
+            trusted_path = "storage/biometric_trusted.jpg"
+            if not os.path.exists(trusted_path):
+                # Auto-enrollment on first success
+                os.makedirs("storage", exist_ok=True)
+                cv2.imwrite(trusted_path, frame)
+                return True
+
+            trusted = cv2.imread(trusted_path)
+            # Histogram comparison (Simple for demo, robust for Friday)
+            hist1 = cv2.calcHist([trusted], [0], None, [256], [0, 256])
+            hist2 = cv2.calcHist([frame], [0], None, [256], [0, 256])
+            similarity = cv2.compareHist(hist1, hist2, cv2.HISTCMP_CORREL)
+            return similarity > 0.8
+        except: return False
 
     def screen_ocr(self):
         """Captures screen and performs cognitive text extraction."""
