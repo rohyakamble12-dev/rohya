@@ -177,6 +177,7 @@ class VedaHUD(ctk.CTk):
         self.title("VEDA CORE")
         self.mic_level = 0
         self.status = "idle"
+        self.hud_mode = "analytical" # stealth, battle, analytical
 
         self.grid_columnconfigure(0, weight=1, minsize=200)
         self.grid_columnconfigure(1, weight=2, minsize=350)
@@ -234,6 +235,8 @@ class VedaHUD(ctk.CTk):
 
             # Theme override for ALERT or Extreme Load
             if "ALERT" in self.log.status_label.cget("text") or load_glow: color = "#ff3e3e"
+            elif self.hud_mode == "battle": color = "#ff3e3e"
+            elif self.hud_mode == "stealth": color = "#666666"
             elif self.status == "idle" and intensity > 1.2: color = "#ffcc00" # Warning/Gold
 
             glow_width = 2 if self.status == "thinking" or load_glow else 1
@@ -266,6 +269,12 @@ class VedaHUD(ctk.CTk):
     def set_state(self, status):
         self.status = status
         self.log.status_label.configure(text=f"TACTICAL STATUS: {status.upper()}")
+
+    def set_hud_mode(self, mode):
+        self.hud_mode = mode.lower()
+        alpha = 0.6 if self.hud_mode == "stealth" else 0.85
+        self.attributes("-alpha", alpha)
+        return f"HUD MODALITY: {self.hud_mode.upper()} profile synchronized."
 
     def add_message(self, role, text):
         return self.log.add_message(role, text)

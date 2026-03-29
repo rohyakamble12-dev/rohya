@@ -102,14 +102,27 @@ class SystemModule:
                     return f"Executing {app} via system search."
             except: pass
 
-            # Tier 4: Generic Execution (Safe start)
-            # We use os.startfile which is safer for opening registered apps/files on Windows
+            # Tier 4: Deep Sector Scanning (Program Files)
+            try:
+                for drive in ["C:\\", "D:\\"]:
+                    for base in ["Program Files", "Program Files (x86)"]:
+                        search_path = os.path.join(drive, base)
+                        if not os.path.exists(search_path): continue
+                        for root, dirs, files in os.walk(search_path):
+                            # Shallow check for exe names
+                            for f in files:
+                                if f.lower() == f"{app}.exe":
+                                    target = os.path.join(root, f)
+                                    os.startfile(target)
+                                    return f"Sector scan successful: Executing {f}."
+                            if len(root.split(os.sep)) > 4: break # Don't go too deep
+            except: pass
+
+            # Tier 5: Generic Execution (Safe start)
             try:
                 os.startfile(app)
                 return f"Executing {app_name} via standard protocol."
             except:
-                # Fallback to a very restricted cmd start if everything else fails
-                # We do NOT use shell=True here
                 subprocess.Popen(["cmd", "/c", "start", "", app], shell=False, creationflags=0x08000000)
                 return f"Executing {app_name} via secondary protocol."
 

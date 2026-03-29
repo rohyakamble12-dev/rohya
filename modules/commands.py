@@ -24,6 +24,18 @@ class CommandRouter:
         self.comms = CommsModule()
         self.auto = AutomationModule()
 
+    def get_registry(self):
+        """Returns a summarized registry of all tactical intents."""
+        return (
+            "--- TACTICAL COMMAND REGISTRY ---\n"
+            "SYSTEM: open_app, close_app, screenshot, lock_pc, shutdown, restart, sleep, set_theme, set_volume, set_brightness, move_file, optimize_system, system_info, network_info.\n"
+            "INTEL: web_search, wikipedia, weather, news, market_data, deep_research, convert_currency, convert_units, get_eta, creator_registry.\n"
+            "VISION: vision_describe, vision_face, security_scan, vision_scan, screen_read.\n"
+            "AUTOMATION: macro_record, macro_stop, macro_play, macro_list, type_text, execute_script.\n"
+            "PROTOCOLS: morning, night, home, lockdown, barn, legion, verity, ultron, clean_slate, power_efficiency.\n"
+            "MISC: switch_identity, add_todo, show_todo, pomodoro, play_music, translate, session_save, session_restore, command_registry."
+        )
+
     def route(self, intent_data):
         try:
             intent = intent_data.get("intent", "none")
@@ -61,6 +73,8 @@ class CommandRouter:
                 return self.system.manipulate_window(params.get("action"), params.get("title"))
             elif intent == "set_theme":
                 return self.system.set_dark_mode(params.get("mode", "dark") == "dark")
+            elif intent == "hud_mode":
+                return self.assistant.gui.set_hud_mode(params.get("mode", "analytical"))
             elif intent == "set_wallpaper":
                 return self.system.set_wallpaper(params.get("path"))
             elif intent == "set_dnd":
@@ -203,6 +217,10 @@ class CommandRouter:
                 if "night" in p_name: return self.protocols.good_night()
                 if "home" in p_name: return self.protocols.im_home()
                 if "lockdown" in p_name: return self.protocols.security_lockdown()
+                if "power" in p_name: return self.protocols.power_efficiency()
+
+            elif intent == "command_registry":
+                return self.get_registry()
 
             # 8. IOT
             elif intent == "iot_trigger":

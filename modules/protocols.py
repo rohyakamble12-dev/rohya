@@ -70,6 +70,13 @@ class ProtocolModule:
         self.assistant.process_command("security_scan")
         return "SECURITY LOCKDOWN: Peripheral interfaces severed. Perimeter scan initiated. System secured."
 
+    def power_efficiency(self):
+        """MCU Accurate Power Protocol: Reduces brightness and optimizations."""
+        self.assistant.process_command("set brightness 10")
+        self.assistant.process_command("set volume 10")
+        self.assistant.process_command("optimize_system")
+        return "POWER EFFICIENCY PROTOCOL: OS resources minimized. Optical output reduced. Energy draw synchronized to Stark Industry standards."
+
     def barn_door(self):
         """MCU Accurate Barn Door Protocol: Total System Isolation."""
         self.assistant.process_command("close all")

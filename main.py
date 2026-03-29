@@ -273,6 +273,12 @@ class VedaAssistant:
 
     def _initial_greeting(self):
         time.sleep(2) # Give UI a moment to load
+
+        # Biometric Authentication Step
+        self.gui.after(0, lambda: self.gui.add_message("System", "INITIATING STARTUP BIOMETRIC SCAN..."))
+        auth = self.router.vision.security_perimeter_scan()
+        self.gui.after(0, lambda: self.gui.add_message("System", auth))
+
         hour = time.localtime().tm_hour
         period = "morning" if 5 <= hour < 12 else "afternoon" if 12 <= hour < 18 else "evening"
 
