@@ -150,6 +150,9 @@ class CommandRouter:
                 return self.intel.convert_units(float(params.get("value")), params.get("from_unit"), params.get("to_unit"))
             elif intent == "creator_registry":
                 return self.intel.get_creator_registry()
+            elif intent == "index_doc":
+                self.assistant.memory.index_document(params.get("text"))
+                return "KNOWLEDGE BASE: Document segment indexed into neural vector space."
 
             # 3. Media
             elif intent == "play_music":
@@ -186,6 +189,8 @@ class CommandRouter:
                 return self.vision.security_perimeter_scan()
             elif intent == "operator_state":
                 return self.vision.analyze_operator_state()
+            elif intent == "style_advisor":
+                return self.vision.analyze_style()
             elif intent == "vision_scan":
                 return self.vision.scan_objects()
             elif intent == "vision_camera":

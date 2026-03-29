@@ -31,3 +31,7 @@ pyaudio
 winshell
 pytesseract
 mediapipe
+flask
+pystray
+faiss-cpu
+sentence-transformers

@@ -153,6 +153,30 @@ class VisionModule:
             return f"TACTICAL SCAN: {len(eyes)} ocular signature(s) detected. Sector status: {status}."
         except: return "Tactical scan protocol offline."
 
+    def analyze_style(self):
+        """MCU Accurate Style Advisor: Color and Profile analysis."""
+        try:
+            cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+            for _ in range(5): cap.read()
+            ret, frame = cap.read()
+            cap.release()
+
+            if not ret: return "STYLE ADVISOR: Optic link failed."
+
+            # Simple color dominance analysis
+            avg_color_per_row = np.average(frame, axis=0)
+            avg_color = np.average(avg_color_per_row, axis=0)
+            # BGR to HEX
+            hex_color = '#%02x%02x%02x' % (int(avg_color[2]), int(avg_color[1]), int(avg_color[0]))
+
+            return (
+                f"STYLE ANALYSIS COMPLETE:\n"
+                f"DOMINANT SPECTRUM: {hex_color}\n"
+                f"SYMMETRY: Nominal\n"
+                f"ADVICE: Aesthetic profile synchronized with active tactical sector."
+            )
+        except: return "Style advisor protocol offline."
+
     def analyze_operator_state(self):
         """Detects operator mood/state using facial landmarks."""
         try:

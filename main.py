@@ -58,7 +58,35 @@ class VedaAssistant:
         threading.Thread(target=self.wake_word_loop, name="VoiceThread", daemon=True).start()
         threading.Thread(target=self._metrics_updater, name="MetricsThread", daemon=True).start()
         threading.Thread(target=self._optical_feed_loop, name="OpticThread", daemon=True).start()
+        threading.Thread(target=self._start_web_hud, name="WebHUDThread", daemon=True).start()
+        threading.Thread(target=self._setup_tray, name="TrayThread", daemon=True).start()
         self.monitor.start()
+
+    def _setup_tray(self):
+        """Persistent Tray Icon for Veda."""
+        try:
+            import pystray
+            from PIL import Image
+            def on_unload(): self.gui.master.destroy()
+            icon = pystray.Icon("Veda", Image.new('RGB', (64, 64), color=(0, 255, 204)), "Veda Sovereign",
+                                menu=pystray.Menu(pystray.MenuItem("Unload Kernel", on_unload)))
+            icon.run()
+        except: pass
+
+    def _start_web_hud(self):
+        """Launches a secondary web interface for remote monitoring."""
+        from flask import Flask, jsonify
+        app = Flask(__name__)
+
+        @app.route('/status')
+        def status():
+            return jsonify({
+                "id": self.config["identity"]["active_id"],
+                "health": self.router.system.get_health(),
+                "network": self.router.system.get_network_info()
+            })
+
+        app.run(host="0.0.0.0", port=5000)
 
     def setup_logging(self):
         logging.basicConfig(
@@ -147,7 +175,11 @@ class VedaAssistant:
             if not final_responses:
                 try:
                     history = self.memory.get_context()
+
+                    # RAG Knowledge Retrieval
+                    knowledge = self.memory.search_knowledge(user_input)
                     facts = "\n".join(self.memory.search_facts(""))
+                    if knowledge: facts += "\nSOVEREIGN KNOWLEDGE:\n" + "\n".join(knowledge)
 
                     # Active Screen Context Integration
                     screen_ctx = self.memory.load_state("screen_context", "")

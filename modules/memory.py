@@ -2,12 +2,24 @@ import sqlite3
 import os
 import logging
 import json
+import numpy as np
 from datetime import datetime
+
+try:
+    import faiss
+    from sentence_transformers import SentenceTransformer
+    RAG_AVAILABLE = True
+except ImportError:
+    RAG_AVAILABLE = False
 
 class VedaMemory:
     def __init__(self, db_path="storage/veda.db"):
         self.db_path = db_path
         self._init_db()
+        if RAG_AVAILABLE:
+            self.embed_model = SentenceTransformer('all-MiniLM-L6-v2')
+            self.index = faiss.IndexFlatL2(384) # Dim for MiniLM
+            self.docs = []
 
     def _init_db(self):
         os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
@@ -110,6 +122,20 @@ class VedaMemory:
         conn = sqlite3.connect(self.db_path)
         conn.execute("INSERT OR REPLACE INTO system_state (key, value) VALUES (?, ?)", (key, str(value)))
         conn.commit(); conn.close()
+
+    def index_document(self, text):
+        """Adds text to the vector database."""
+        if not RAG_AVAILABLE: return
+        self.docs.append(text)
+        embedding = self.embed_model.encode([text])
+        self.index.add(np.array(embedding).astype('float32'))
+
+    def search_knowledge(self, query, top_k=2):
+        """Searches indexed documents for relevance."""
+        if not RAG_AVAILABLE or not self.docs: return []
+        embedding = self.embed_model.encode([query])
+        D, I = self.index.search(np.array(embedding).astype('float32'), top_k)
+        return [self.docs[i] for i in I[0] if i < len(self.docs)]
 
     def load_state(self, key, default=None):
         conn = sqlite3.connect(self.db_path)

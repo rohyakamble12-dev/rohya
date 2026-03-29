@@ -12,7 +12,9 @@ modules_to_mock = [
 ]
 
 for mod in modules_to_mock:
-    sys.modules[mod] = MagicMock()
+    mock = MagicMock()
+    if mod == 'numpy': mock.__version__ = "2.0.0"
+    sys.modules[mod] = mock
 
 def diagnostic():
     print("--- VEDA SOVEREIGN STARTUP DIAGNOSTIC ---")
