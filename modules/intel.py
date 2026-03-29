@@ -117,6 +117,23 @@ class IntelModule:
             return f"MARKET DATA: {symbol.upper()} is currently trading at ${price}."
         except: return f"Market data relay for {symbol} unavailable."
 
+    def site_search(self, platform, query):
+        """Directly searches within a specified platform."""
+        import webbrowser
+        urls = {
+            "youtube": f"https://www.youtube.com/results?search_query={requests.utils.quote(query)}",
+            "amazon": f"https://www.amazon.com/s?k={requests.utils.quote(query)}",
+            "google": f"https://www.google.com/search?q={requests.utils.quote(query)}",
+            "github": f"https://github.com/search?q={requests.utils.quote(query)}"
+        }
+        try:
+            target = urls.get(platform.lower())
+            if target:
+                webbrowser.open(target)
+                return f"DIRECT SEARCH: Accessing {platform} archives for '{query}'."
+            return f"DIRECT SEARCH: Platform '{platform}' not supported."
+        except: return "Site search relay failed."
+
     def deep_research(self, query):
         """Summarizes multiple search results for complex queries."""
         try:

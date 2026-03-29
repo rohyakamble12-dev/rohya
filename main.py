@@ -148,8 +148,14 @@ class VedaAssistant:
                 try:
                     history = self.memory.get_context()
                     facts = "\n".join(self.memory.search_facts(""))
+
+                    # Active Screen Context Integration
                     screen_ctx = self.memory.load_state("screen_context", "")
-                    if screen_ctx: facts += f"\nSCREEN: {screen_ctx}"
+                    if any(k in user_input.lower() for k in ["on my screen", "this screen", "what am i looking at"]):
+                        real_time_ocr = self.router.vision.screen_ocr()
+                        screen_ctx = real_time_ocr
+
+                    if screen_ctx: facts += f"\nSCREEN CONTEXT: {screen_ctx}"
 
                     stream = self.brain.chat(user_input, history, facts=facts, stream=True)
                     token_queue = queue.Queue()
@@ -272,12 +278,15 @@ class VedaAssistant:
         self.gui.start()
 
     def _initial_greeting(self):
+        self.voice.play_sfx("startup")
         time.sleep(2) # Give UI a moment to load
 
         # Biometric Authentication Step
         self.gui.after(0, lambda: self.gui.add_message("System", "INITIATING STARTUP BIOMETRIC SCAN..."))
+        self.voice.play_sfx("scan")
         auth = self.router.vision.security_perimeter_scan()
         self.gui.after(0, lambda: self.gui.add_message("System", auth))
+        self.voice.play_sfx("success")
 
         hour = time.localtime().tm_hour
         period = "morning" if 5 <= hour < 12 else "afternoon" if 12 <= hour < 18 else "evening"

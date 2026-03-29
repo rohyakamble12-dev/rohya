@@ -261,6 +261,12 @@ class VedaHUD(ctk.CTk):
                     if j < len(proj) and proj[j][2] > 0:
                         canvas.create_line(pt[0], pt[1], proj[j][0], proj[j][1], fill=color, tags="globe", width=glow_width, stipple="gray50")
 
+            # Digital Glitch Effect (Random visual offsets)
+            if random.random() < 0.05 and (load_glow or self.hud_mode == "battle"):
+                offset = random.randint(-5, 5)
+                canvas.move("globe", offset, 0)
+                if random.random() < 0.2: canvas.itemconfig("globe", fill="#ff0000")
+
             # Scanline Overlay
             for y in range(0, h, 4):
                 canvas.create_line(0, y, w, y, fill="#00ffff", tags="globe", width=1, stipple="gray12")

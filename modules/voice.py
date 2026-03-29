@@ -32,6 +32,21 @@ class VedaVoice:
             pygame.mixer.init()
         except: self.offline_engine = None
 
+    def play_sfx(self, effect):
+        """Plays tactical sound effects."""
+        try:
+            # SFX are simulated by frequency beeps if files are missing
+            import winsound
+            sfx = {
+                "startup": [(800, 100), (1200, 150)],
+                "scan": [(400, 50), (600, 50)],
+                "alert": [(1000, 300), (1000, 300)],
+                "success": [(800, 100), (1000, 100)]
+            }
+            if effect in sfx:
+                for freq, dur in sfx[effect]: winsound.Beep(freq, dur)
+        except: pass
+
     async def _speak_online(self, text):
         communicate = edge_tts.Communicate(text, self.online_voice)
         with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as tmp:

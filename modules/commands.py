@@ -130,6 +130,8 @@ class CommandRouter:
             # 2. Intel & Search
             elif intent == "web_search":
                 return self.intel.search(params.get("query"))
+            elif intent == "site_search":
+                return self.intel.site_search(params.get("platform"), params.get("query"))
             elif intent == "wikipedia":
                 return self.intel.get_wiki(params.get("topic"))
             elif intent == "weather":

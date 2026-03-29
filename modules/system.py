@@ -202,7 +202,12 @@ class SystemModule:
             battery = psutil.sensors_battery()
             bat_str = f" | BAT {battery.percent}%" if battery else ""
             ip = socket.gethostbyname(socket.gethostname())
-            return f"INTEGRITY: CPU {cpu}% | RAM {ram}% | DSK {disk}%{bat_str} | IP {ip}"
+
+            # Thermal Simulation for MCU Immersion
+            temp = 40 + (cpu // 5)
+            thermal = f" | THM {temp}°C"
+
+            return f"INTEGRITY: CPU {cpu}% | RAM {ram}% {thermal} | DSK {disk}%{bat_str} | IP {ip}"
         except Exception as e: return f"Diagnostic failure: {e}"
 
     def get_sys_info(self, assistant=None):
