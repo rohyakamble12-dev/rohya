@@ -292,20 +292,33 @@ class VedaAssistant:
         period = "morning" if 5 <= hour < 12 else "afternoon" if 12 <= hour < 18 else "evening"
 
         name = "Sir" if self.config["identity"]["active_id"] == "JARVIS" else "Operator"
-        greeting = f"Good {period}, {name}. Systems are operational. Awaiting tactical instructions."
+
+        # Operator State Integration
+        state = self.router.vision.analyze_operator_state()
+        mood = state.split("appears ")[1].split(".")[0] if "appears " in state else "NOMINAL"
+
+        greeting = f"Good {period}, {name}. Systems are operational. Mood analysis: {mood}. Awaiting tactical instructions."
 
         self.gui.after(0, lambda: self.gui.add_message("Veda", greeting))
         self.voice.speak(greeting)
 
     def _optical_feed_loop(self):
         cap = None
+        last_gesture_time = 0
         while True:
             if self.optical_active:
                 if cap is None: cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
                 ret, frame = cap.read()
                 if ret:
-                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    self.gui.after(0, lambda f=frame: self.gui.update_camera(f))
+                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    self.gui.after(0, lambda f=frame_rgb: self.gui.update_camera(f))
+
+                    # Gesture Processing (Stark Interface)
+                    if time.time() - last_gesture_time > 1.0:
+                        gesture = self.router.vision.detect_gesture(frame_rgb)
+                        if gesture:
+                            self._handle_hand_gesture(gesture)
+                            last_gesture_time = time.time()
             else:
                 if cap is not None:
                     cap.release(); cap = None
@@ -320,6 +333,17 @@ class VedaAssistant:
                 self.gui.after(0, lambda c=cpu, r=ram: self._ui_metrics_sync(c, r))
             except: pass
             time.sleep(2)
+
+    def _handle_hand_gesture(self, gesture):
+        if gesture == "MUTE":
+            self.process_command("set volume 0")
+            self.notify("STARK INTERFACE: Audio output MUTED via manual gesture.")
+        elif gesture == "VOL_UP":
+            self.process_command("set volume 80")
+            self.notify("STARK INTERFACE: Audio gain INCREASED via manual gesture.")
+        elif gesture == "VOL_DOWN":
+            self.process_command("set volume 20")
+            self.notify("STARK INTERFACE: Audio gain REDUCED via manual gesture.")
 
     def _ui_metrics_sync(self, cpu, ram):
         try:

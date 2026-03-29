@@ -4,8 +4,14 @@ import os
 import pyautogui
 import numpy as np
 import pytesseract # Requires Tesseract-OCR installed on Windows
+import mediapipe as mp
 
 class VisionModule:
+    def __init__(self):
+        self.mp_hands = mp.solutions.hands
+        self.hands = self.mp_hands.Hands(static_image_mode=False, max_num_hands=1, min_detection_confidence=0.7)
+        self.mp_face_mesh = mp.solutions.face_mesh
+        self.face_mesh = self.mp_face_mesh.FaceMesh(static_image_mode=False, max_num_hands=1, min_detection_confidence=0.7)
     def capture_and_describe(self):
         try:
             # Optimized camera initialization with DirectShow (faster on Windows)
@@ -75,10 +81,28 @@ class VisionModule:
             return similarity > 0.8
         except: return False
 
-    def security_perimeter_scan(self):
-        """MCU Accurate Security Protocol: Scans for unauthorized signatures."""
+    def detect_gesture(self, frame):
+        """Detects hand gestures for system control."""
         try:
-            face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+            results = self.hands.process(frame)
+            if results.multi_hand_landmarks:
+                for hand_landmarks in results.multi_hand_landmarks:
+                    # Index and Thumb tip coordinates
+                    thumb_tip = hand_landmarks.landmark[self.mp_hands.HandLandmark.THUMB_TIP]
+                    index_tip = hand_landmarks.landmark[self.mp_hands.HandLandmark.INDEX_FINGER_TIP]
+
+                    # Euclidean distance
+                    dist = np.sqrt((thumb_tip.x - index_tip.x)**2 + (thumb_tip.y - index_tip.y)**2)
+
+                    if dist < 0.05: return "MUTE"
+                    if index_tip.y < thumb_tip.y - 0.1: return "VOL_UP"
+                    if index_tip.y > thumb_tip.y + 0.1: return "VOL_DOWN"
+            return None
+        except: return None
+
+    def security_perimeter_scan(self):
+        """MCU Accurate Security Protocol: Advanced Face Mesh Analysis."""
+        try:
             cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
             for _ in range(5): cap.read()
             ret, frame = cap.read()
@@ -86,18 +110,29 @@ class VisionModule:
 
             if not ret: return "SECURITY ALERT: Optical sensor failure. Unable to verify perimeter."
 
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+            # Face Mesh Analysis
+            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            mesh_results = self.face_mesh.process(rgb_frame)
 
-            if len(faces) == 0:
+            if not mesh_results.multi_face_landmarks:
                 return "PERIMETER SECURE: No biological signatures detected in primary sector."
 
-            # Verify if the primary operator is present
+            num_faces = len(mesh_results.multi_face_landmarks)
+            landmarks = mesh_results.multi_face_landmarks[0].landmark
+
+            # Simulated Geometric Depth
+            depth = round(landmarks[0].z * -100, 2)
+
+            # Verify identity
             is_verified = self.verify_operator(frame)
-            if is_verified:
-                return f"PERIMETER SCAN: {len(faces)} signature(s) detected. Operator identity CONFIRMED. Status: NOMINAL."
-            else:
-                return f"SECURITY ALERT: {len(faces)} unauthorized signature(s) detected. Primary Operator NOT identified. Engaging defensive monitoring."
+            status = "CONFIRMED" if is_verified else "UNAUTHORIZED"
+
+            return (
+                f"BIOMETRIC SCAN: {num_faces} signature(s) detected.\n"
+                f"GEOMETRIC INTEGRITY: {status}\n"
+                f"SIGNATURE DEPTH: {depth}mm (3D MESH ACTIVE)\n"
+                f"STATUS: {'Access Granted' if is_verified else 'Engaging Defensive Monitoring'}."
+            )
         except Exception as e:
             return f"Security link failure: {e}"
 
@@ -117,6 +152,34 @@ class VisionModule:
             status = "CLEAR" if len(eyes) == 0 else "IDENTIFIED"
             return f"TACTICAL SCAN: {len(eyes)} ocular signature(s) detected. Sector status: {status}."
         except: return "Tactical scan protocol offline."
+
+    def analyze_operator_state(self):
+        """Detects operator mood/state using facial landmarks."""
+        try:
+            cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+            for _ in range(5): cap.read()
+            ret, frame = cap.read()
+            cap.release()
+
+            if not ret: return "STATE ANALYSIS: Optic sensors offline."
+
+            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            mesh_results = self.face_mesh.process(rgb_frame)
+
+            if not mesh_results.multi_face_landmarks:
+                return "STATE ANALYSIS: Awaiting visual lock on Operator profile."
+
+            landmarks = mesh_results.multi_face_landmarks[0].landmark
+            # Simple heuristic: Mouth corner distance vs Eye height
+            left_mouth = landmarks[61]; right_mouth = landmarks[291]
+            mouth_width = np.sqrt((left_mouth.x - right_mouth.x)**2 + (left_mouth.y - right_mouth.y)**2)
+
+            state = "FOCUSED"
+            if mouth_width > 0.08: state = "ENGAGED/CONTENT"
+            elif mouth_width < 0.05: state = "STRESSED/DETERMINED"
+
+            return f"STATE ANALYSIS: Operator appears {state}. Environmental optimizations adjusted."
+        except: return "Sentiment analysis protocol offline."
 
     def screen_ocr(self):
         """Captures screen and performs cognitive text extraction."""

@@ -184,6 +184,8 @@ class CommandRouter:
                 return self.vision.face_detect()
             elif intent == "security_scan":
                 return self.vision.security_perimeter_scan()
+            elif intent == "operator_state":
+                return self.vision.analyze_operator_state()
             elif intent == "vision_scan":
                 return self.vision.scan_objects()
             elif intent == "vision_camera":
@@ -220,6 +222,7 @@ class CommandRouter:
                 if "home" in p_name: return self.protocols.im_home()
                 if "lockdown" in p_name: return self.protocols.security_lockdown()
                 if "power" in p_name: return self.protocols.power_efficiency()
+                if "extremis" in p_name: return self.protocols.extremis()
 
             elif intent == "command_registry":
                 return self.get_registry()

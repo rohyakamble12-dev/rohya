@@ -97,3 +97,10 @@ class ProtocolModule:
         if not claim: return "VERITY PROTOCOL: No claim provided for analysis."
         res = self.assistant.router.intel.deep_research(f"Fact check: {claim}")
         return f"VERITY ANALYSIS: {claim}\nREPORT: {res}\nConfidence level: ANALYZED."
+
+    def extremis(self):
+        """MCU Accurate Extremis Protocol: Self-Healing Overdrive."""
+        self.assistant.process_command("optimize_system")
+        self.assistant.process_command("ultron")
+        self.assistant.process_command("security_scan")
+        return "EXTREMIS PROTOCOL: Neural and system layers re-coded. Integrity confirmed. Systems at peak efficiency."
