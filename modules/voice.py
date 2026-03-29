@@ -120,23 +120,19 @@ class VedaVoice:
         except: return ""
 
     def _update_voice_profile(self):
-        """Switches vocal profile based on active identity."""
+        """Standardizes on professional female vocal profiles."""
         if self.active_id == "JARVIS":
-            self.online_voice = "en-GB-RyanNeural" # Sophisticated British male
+            self.online_voice = "en-US-AvaNeural" # Professional Female
         else:
-            self.online_voice = "en-US-AvaNeural" # Professional female
+            self.online_voice = "en-IE-EmilyNeural" # Professional Irish female (MCU Accurate)
 
         if hasattr(self, 'offline_engine') and self.offline_engine:
             voices = self.offline_engine.getProperty('voices')
             for voice in voices:
-                if self.active_id == "JARVIS":
-                    if "david" in voice.name.lower() or "male" in voice.name.lower():
-                        self.offline_engine.setProperty('voice', voice.id)
-                        break
-                else:
-                    if "zira" in voice.name.lower() or "female" in voice.name.lower():
-                        self.offline_engine.setProperty('voice', voice.id)
-                        break
+                # Force female voice regardless of identity
+                if "zira" in voice.name.lower() or "female" in voice.name.lower():
+                    self.offline_engine.setProperty('voice', voice.id)
+                    break
 
     def switch_identity(self, identity):
         self.active_id = identity.upper()

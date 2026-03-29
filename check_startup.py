@@ -8,7 +8,7 @@ modules_to_mock = [
     'pygame', 'ollama', 'psutil', 'pyautogui', 'ctypes', 'cv2',
     'win10toast', 'pynput', 'pynput.keyboard', 'PyPDF2', 'wikipedia',
     'deep_translator', 'comtypes', 'screen_brightness_control', 'pycaw.pycaw',
-    'schedule', 'winshell', 'pytesseract', 'numpy', 'mediapipe'
+    'schedule', 'winshell', 'pytesseract', 'numpy', 'mediapipe', 'flask', 'pystray'
 ]
 
 for mod in modules_to_mock:
