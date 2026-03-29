@@ -8,6 +8,7 @@ class MonitorModule:
         self.assistant = assistant
         self.running = True
         self.thresholds = {"cpu": 90, "ram": 90, "battery": 20, "disk": 90}
+        self.affinity = {} # Window name -> seconds
 
     def start(self):
         threading.Thread(target=self._watch_loop, daemon=True).start()
@@ -56,6 +57,11 @@ class MonitorModule:
 
                 # 4. Active Window (Proactive Workflow)
                 current_win = self.assistant.router.system.get_active_window()
+
+                # Affinity Tracking
+                win_name = current_win.split("Focus:")[1].strip() if "Focus:" in current_win else "Idle"
+                self.affinity[win_name] = self.affinity.get(win_name, 0) + 30
+
                 if "Focus:" in current_win and current_win != last_window:
                     if "code" in current_win.lower() or "studio" in current_win.lower():
                         self.assistant.notify("Workflow detected: Development sector active. Prepared for tactical support.")
@@ -79,6 +85,17 @@ class MonitorModule:
 
             except: pass
             time.sleep(30) # High-fidelity watch every 30s
+
+    def get_affinity_report(self):
+        """Returns the operator's workflow affinity report."""
+        try:
+            sorted_aff = sorted(self.affinity.items(), key=lambda x: x[1], reverse=True)
+            report = "--- APPLICATION AFFINITY REPORT ---\n"
+            for app, duration in sorted_aff[:5]:
+                mins = duration // 60
+                report += f"FOCUS: {app} ({mins}m)\n"
+            return report
+        except: return "Affinity protocol failed."
 
     def stop(self):
         self.running = False

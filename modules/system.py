@@ -463,6 +463,11 @@ class SystemModule:
 
             msg = f"STRUCTURAL ANALYSIS: {os.path.basename(path) or path}\nCOMPONENTS: {count} elements\nINTEGRITY MASS: {gb_size} GB\nPROJECT INTEGRITY: {integrity}"
             if missing: msg += f"\nMISSING SECTORS: {', '.join(missing)}"
+
+            # Integrated Creator Reference
+            if path == os.getcwd():
+                msg += "\nTACTICAL REGISTRY: harriik, kishanrajput23, Naz Louis, LiveKit."
+
             return msg
         except: return "Structural analysis protocol failed."
 

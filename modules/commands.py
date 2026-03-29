@@ -19,7 +19,7 @@ class CommandRouter:
         self.prod = ProductivityModule(assistant)
         self.vision = VisionModule()
         self.files = FilesModule()
-        self.iot = IOTModule(assistant.config)
+        self.iot = IOTModule(assistant)
         self.protocols = ProtocolModule(assistant)
         self.comms = CommsModule()
         self.auto = AutomationModule()
@@ -156,6 +156,10 @@ class CommandRouter:
                 return self.prod.remind_me(params.get("task"), params.get("time_str"))
             elif intent == "list_schedule":
                 return self.prod.list_schedule()
+            elif intent == "daily_outlook":
+                return self.prod.daily_strategic_outlook()
+            elif intent == "affinity_report":
+                return self.assistant.monitor.get_affinity_report()
 
             # 5. Vision
             elif intent == "vision_describe":
@@ -203,6 +207,10 @@ class CommandRouter:
             # 8. IOT
             elif intent == "iot_trigger":
                 return self.iot.trigger(params.get("device"))
+            elif intent == "habitat_report":
+                return self.iot.get_habitat_report()
+            elif intent == "set_scene":
+                return self.iot.set_scene(params.get("name"))
 
             return None
         except Exception as e:

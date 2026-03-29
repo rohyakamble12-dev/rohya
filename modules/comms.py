@@ -21,6 +21,6 @@ class CommsModule:
             target = urls.get(platform.lower())
             if target:
                 webbrowser.open(target)
-                return f"Established connection to {platform} relay."
-            return f"Platform '{platform}' not found in tactical comms registry."
+                return f"COMMS RELAY: Established connection to {platform} interface."
+            return f"COMMS: Platform '{platform}' not found in tactical registry."
         except: return "Relay connection failed."

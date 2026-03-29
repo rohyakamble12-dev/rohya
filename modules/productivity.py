@@ -9,9 +9,17 @@ class ProductivityModule:
         threading.Thread(target=self._scheduler_loop, daemon=True).start()
 
     def _scheduler_loop(self):
+        # Daily Briefing at 08:00
+        schedule.every().day.at("08:00").do(self.daily_strategic_outlook)
         while self.running:
             schedule.run_pending()
             time.sleep(1)
+
+    def daily_strategic_outlook(self):
+        """Aggregated Daily Briefing."""
+        res = self.assistant.router.protocols.good_morning()
+        self.assistant.notify(f"DAILY STRATEGIC OUTLOOK: {res}")
+        return res
 
     def start_pomodoro(self, minutes=25):
         def _run():

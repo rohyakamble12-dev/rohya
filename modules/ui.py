@@ -139,15 +139,30 @@ class LogPanel(VedaPanel):
         text_color = "#cccccc"
         font = ("Consolas", 9)
 
+        # Specialized Card Detection
+        is_report = any(keyword in text.upper() for keyword in ["REPORT", "TELEMETRY", "ACQUIRED", "INTELLIGENCE", "STATUS"])
+
         if role == "Thought":
             color = "#333333"
             text_color = "#666666"
             font = ("Consolas", 8, "italic")
+        elif is_report:
+            color = "#00ffcc" # Neon Cyan for data
 
-        f = ctk.CTkFrame(self.chat_scroll, fg_color="#08080c", border_width=1, border_color=color)
-        f.pack(fill="x", pady=2, padx=5)
-        lbl = ctk.CTkLabel(f, text=f"{role.upper()}: {text}", font=font, text_color=text_color, wraplength=250, justify="left")
-        lbl.pack(padx=10, pady=5)
+        f = ctk.CTkFrame(self.chat_scroll, fg_color="#0b0b12" if is_report else "#08080c", border_width=1, border_color=color)
+        f.pack(fill="x", pady=4 if is_report else 2, padx=5)
+
+        # Stylized Header for Reports
+        if is_report:
+            header = text.split("\n")[0]
+            body = "\n".join(text.split("\n")[1:])
+            ctk.CTkLabel(f, text=header, font=("Orbitron", 8, "bold"), text_color="#00ffcc").pack(padx=10, pady=(5, 0), anchor="w")
+            lbl = ctk.CTkLabel(f, text=body, font=("Consolas", 8), text_color="#aaaaaa", wraplength=230, justify="left")
+            lbl.pack(padx=10, pady=(2, 5), anchor="w")
+        else:
+            lbl = ctk.CTkLabel(f, text=f"{role.upper()}: {text}", font=font, text_color=text_color, wraplength=250, justify="left")
+            lbl.pack(padx=10, pady=5)
+
         self.chat_scroll._parent_canvas.yview_moveto(1.0)
         return lbl
 
