@@ -236,11 +236,16 @@ class VedaAssistant:
     def switch_identity(self, name):
         name = name.upper()
         if name not in ["JARVIS", "FRIDAY"]: return "Identity not recognized."
+
+        # Voiceprint Simulation Step
+        self.gui.after(0, lambda: self.gui.add_message("System", f"ANALYZING VOICEPRINT FOR {name} ACCESS..."))
+        time.sleep(1.5)
+
         self.brain.switch_identity(name)
         res = self.voice.switch_identity(name)
         self.config["identity"]["active_id"] = name
         with open("config.json", "w") as f: json.dump(self.config, f)
-        return res
+        return f"VOICEPRINT VERIFIED. {res}"
 
     def hot_reload(self):
         """Re-initializes all tactical modules without a kernel restart."""

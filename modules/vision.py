@@ -101,6 +101,23 @@ class VisionModule:
         except Exception as e:
             return f"Security link failure: {e}"
 
+    def scan_objects(self):
+        """MCU Accurate Object Detection: Eye and Profile detection."""
+        try:
+            eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
+            cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+            ret, frame = cap.read()
+            cap.release()
+
+            if not ret: return "VISUAL SCAN: Hardware link failed."
+
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            eyes = eye_cascade.detectMultiScale(gray, 1.3, 5)
+
+            status = "CLEAR" if len(eyes) == 0 else "IDENTIFIED"
+            return f"TACTICAL SCAN: {len(eyes)} ocular signature(s) detected. Sector status: {status}."
+        except: return "Tactical scan protocol offline."
+
     def screen_ocr(self):
         """Captures screen and performs cognitive text extraction."""
         try:

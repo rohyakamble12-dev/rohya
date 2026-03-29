@@ -93,7 +93,9 @@ class IntelModule:
             soup = BeautifulSoup(res.text, "html.parser")
             titles = [t.text for t in soup.find_all("a", class_="J7YVsc")[:5]]
             if not titles: titles = [t.text for t in soup.find_all("h3")[:5]]
-            return f"TACTICAL NEWS BRIEF ({topic.upper()}):\n" + "\n".join([f"- {t}" for t in titles])
+
+            # Simulated Trending Context
+            return f"GLOBAL INTELLIGENCE BRIEF ({topic.upper()}):\n" + "\n".join([f"- {t}" for t in titles]) + "\nSTATUS: Scanning for tactical anomalies in global streams."
         except: return "Global news relay offline."
 
     @staticmethod

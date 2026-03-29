@@ -318,6 +318,14 @@ class SystemModule:
             return f"OS Visual Interface synchronized to {'Dark' if enabled else 'Light'} mode."
         except Exception as e: return f"Theme sync failed: {e}"
 
+    def set_wallpaper(self, path):
+        """Standard Windows wallpaper control protocol."""
+        if not os.path.exists(path): return f"WALLPAPER: Archive '{path}' not found."
+        try:
+            ctypes.windll.user32.SystemParametersInfoW(20, 0, path, 3)
+            return "OS VISUALS: Desktop environment background synchronized."
+        except: return "Wallpaper relay protocol failed."
+
     def set_night_light(self, enabled=True):
         """Toggle Windows Night Light via Registry."""
         try:

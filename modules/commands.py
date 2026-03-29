@@ -61,6 +61,8 @@ class CommandRouter:
                 return self.system.manipulate_window(params.get("action"), params.get("title"))
             elif intent == "set_theme":
                 return self.system.set_dark_mode(params.get("mode", "dark") == "dark")
+            elif intent == "set_wallpaper":
+                return self.system.set_wallpaper(params.get("path"))
             elif intent == "set_dnd":
                 return self.system.toggle_focus_assist(params.get("enabled", True))
             elif intent == "desktop_switch":
@@ -162,6 +164,8 @@ class CommandRouter:
                 return self.vision.face_detect()
             elif intent == "security_scan":
                 return self.vision.security_perimeter_scan()
+            elif intent == "vision_scan":
+                return self.vision.scan_objects()
             elif intent == "vision_camera":
                 return self.assistant.toggle_camera()
             elif intent == "screen_read":
