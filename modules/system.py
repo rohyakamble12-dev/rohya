@@ -239,7 +239,16 @@ class SystemModule:
                 latency = f"{round((time.time() - start) * 1000, 2)}ms"
             except: pass
 
-            return f"NETWORK LOG: Host '{hostname}' | IP {ip} | PUB {public_ip} | SSID: {ssid} | LAT {latency}"
+            # Additional Hardware Transmissions (Wi-Fi list)
+            wifi_list = []
+            try:
+                out = subprocess.check_output("netsh wlan show networks", shell=True).decode()
+                for line in out.split('\n'):
+                    if "SSID" in line: wifi_list.append(line.split(":")[1].strip())
+            except: pass
+            wifi_str = f" | NEARBY: {len(wifi_list)} networks" if wifi_list else ""
+
+            return f"NETWORK LOG: Host '{hostname}' | IP {ip} | PUB {public_ip} | SSID: {ssid} | LAT {latency}{wifi_str}"
         except Exception as e: return f"Comms error: {e}"
 
     def list_processes(self, limit=10):
@@ -260,6 +269,27 @@ class SystemModule:
             ctypes.windll.user32.LockWorkStation()
             return "OS Locked. Tactical security engaged."
         except Exception as e: return f"Lock failed: {e}"
+
+    def shutdown(self):
+        """Standard OS shutdown protocol."""
+        try:
+            os.system("shutdown /s /t 60")
+            return "SHUTDOWN INITIATED: System terminal in 60 seconds. Finalize all active sectors."
+        except: return "Shutdown protocol failed."
+
+    def restart(self):
+        """Standard OS restart protocol."""
+        try:
+            os.system("shutdown /r /t 5")
+            return "RESTART INITIATED: Kernel reboot in 5 seconds."
+        except: return "Restart protocol failed."
+
+    def sleep_mode(self):
+        """Standard OS sleep/suspend protocol."""
+        try:
+            os.system("rundll32.exe powrprof.dll,SetSuspendState 0,1,0")
+            return "SLEEP PROTOCOL: Entering low-power state."
+        except: return "Sleep protocol failed."
 
     def get_active_window(self):
         if not gw: return "Window management offline."

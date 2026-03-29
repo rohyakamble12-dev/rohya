@@ -1,3 +1,5 @@
+import psutil
+
 class ProtocolModule:
     def __init__(self, assistant):
         self.assistant = assistant
@@ -8,8 +10,18 @@ class ProtocolModule:
         return "House Party Protocol engaged. Multi-system initialization complete."
 
     def clean_slate(self):
-        self.assistant.process_command("close all") # Hypothetical broad close
-        return "CLEAN SLATE PROTOCOL: All non-essential interfaces purged from active sectors."
+        """MCU Accurate Clean Slate Protocol: Terminates all user-launched processes."""
+        try:
+            procs = self.assistant.router.system.list_processes(limit=50)
+            # Filter for non-essential common apps
+            targets = ["chrome.exe", "code.exe", "spotify.exe", "discord.exe", "vlc.exe", "notepad.exe", "calculator.exe"]
+            killed = 0
+            for proc in psutil.process_iter(['name']):
+                if proc.info['name'].lower() in targets:
+                    proc.terminate()
+                    killed += 1
+            return f"CLEAN SLATE PROTOCOL: {killed} non-essential interfaces purged from active sectors."
+        except: return "Clean Slate protocol failed."
 
     def mark_42(self):
         health = self.assistant.router.system.get_health()
@@ -55,7 +67,7 @@ class ProtocolModule:
     def security_lockdown(self):
         """Security Protocol: Stealth and Locking."""
         self.assistant.process_command("lock pc")
-        self.assistant.process_command("vision describe")
+        self.assistant.process_command("security_scan")
         return "SECURITY LOCKDOWN: Peripheral interfaces severed. Perimeter scan initiated. System secured."
 
     def barn_door(self):

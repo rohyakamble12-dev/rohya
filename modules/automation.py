@@ -78,6 +78,14 @@ class AutomationModule:
         except Exception as e:
             return f"Script execution failed: {e}"
 
+    def list_macros(self):
+        """Lists all archived tactical sequences."""
+        try:
+            macros = [f.replace(".json", "") for f in os.listdir(self.storage_dir) if f.endswith(".json")]
+            if not macros: return "AUTOMATION REGISTRY: No tactical sequences archived."
+            return f"TACTICAL ARCHIVES:\n" + "\n".join([f"- {m}" for m in macros])
+        except: return "Failed to acquire automation archives."
+
     def _on_k_press(self, key):
         if not self.recording: return
         try: k = key.char

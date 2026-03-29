@@ -17,6 +17,7 @@ class MonitorModule:
         last_window = ""
         last_ocr_time = 0
         last_ssid = ""
+        last_weather_check = 0
         while self.running:
             try:
                 # 1. Resource Consumption
@@ -68,6 +69,13 @@ class MonitorModule:
                     if "INTEGRITY" in ocr_res:
                         self.assistant.memory.save_state("screen_context", ocr_res)
                     last_ocr_time = time.time()
+
+                # 6. Proactive Weather Sentinel
+                if time.time() - last_weather_check > 3600: # Every hour
+                    weather = self.assistant.router.intel.get_weather("current")
+                    if any(w in weather.lower() for w in ["rain", "storm", "snow", "warning"]):
+                        self.assistant.notify(f"ENVIRONMENT ALERT: Significant weather detected. {weather}")
+                    last_weather_check = time.time()
 
             except: pass
             time.sleep(30) # High-fidelity watch every 30s

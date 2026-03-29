@@ -74,6 +74,29 @@ class FilesModule:
             return f"Opening archive: {os.path.basename(matches[0])}"
         return f"Archive '{name}' not found in tactical sectors."
 
+    def find_duplicates(self, path=None):
+        """Identifies duplicate files using MD5 hashing."""
+        import hashlib
+        try:
+            path = path or os.path.join(os.path.expanduser("~"), "Documents")
+            hashes = {}
+            duplicates = []
+            for root, dirs, files in os.walk(path):
+                for f in files:
+                    file_path = os.path.join(root, f)
+                    try:
+                        with open(file_path, "rb") as f_obj:
+                            file_hash = hashlib.md5(f_obj.read()).hexdigest()
+                        if file_hash in hashes:
+                            duplicates.append(file_path)
+                        else:
+                            hashes[file_hash] = file_path
+                    except: continue
+
+            if not duplicates: return f"SECTOR ANALYSIS: {os.path.basename(path)} is optimized. No duplicates detected."
+            return f"DUPLICATE DETECTION: {len(duplicates)} redundant files found in {os.path.basename(path)}.\nSample: {os.path.basename(duplicates[0])}"
+        except: return "Duplicate analysis protocol failed."
+
     def organize_directory(self, path=None):
         """MCU Accurate 'Data Cleanup': Organizes files into categories."""
         import shutil

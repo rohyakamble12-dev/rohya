@@ -70,7 +70,8 @@ class VedaAssistant:
     def load_config(self):
         if not os.path.exists("config.json"):
             self.config = {
-                "identity": {"name": "Veda", "version": "6.0.0"},
+                "identity": {"name": "Veda", "version": "6.0.0", "active_id": "FRIDAY"},
+                "operator": {"home": "New York", "work": "Manhattan"},
                 "preferences": {
                     "appearance": {"transparency": 0.92, "always_on_top": True},
                     "voice": {"online_voice": "en-US-AvaNeural", "wake_word": "hey veda", "offline_rate": 180}

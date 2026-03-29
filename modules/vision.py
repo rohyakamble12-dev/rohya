@@ -75,6 +75,32 @@ class VisionModule:
             return similarity > 0.8
         except: return False
 
+    def security_perimeter_scan(self):
+        """MCU Accurate Security Protocol: Scans for unauthorized signatures."""
+        try:
+            face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+            cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+            for _ in range(5): cap.read()
+            ret, frame = cap.read()
+            cap.release()
+
+            if not ret: return "SECURITY ALERT: Optical sensor failure. Unable to verify perimeter."
+
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+
+            if len(faces) == 0:
+                return "PERIMETER SECURE: No biological signatures detected in primary sector."
+
+            # Verify if the primary operator is present
+            is_verified = self.verify_operator(frame)
+            if is_verified:
+                return f"PERIMETER SCAN: {len(faces)} signature(s) detected. Operator identity CONFIRMED. Status: NOMINAL."
+            else:
+                return f"SECURITY ALERT: {len(faces)} unauthorized signature(s) detected. Primary Operator NOT identified. Engaging defensive monitoring."
+        except Exception as e:
+            return f"Security link failure: {e}"
+
     def screen_ocr(self):
         """Captures screen and performs cognitive text extraction."""
         try:

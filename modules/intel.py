@@ -12,11 +12,16 @@ class IntelModule:
             headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"}
             res = requests.get(url, headers=headers, timeout=5)
             soup = BeautifulSoup(res.text, "html.parser")
-            result = soup.find("a", class_="result__a")
-            if result:
-                snippet = soup.find("a", class_="result__snippet")
-                text = snippet.text if snippet else result.text
-                return f"Intel found: {text.strip()}"
+
+            results = []
+            for item in soup.find_all("div", class_="result")[:3]:
+                title = item.find("a", class_="result__a")
+                snippet = item.find("a", class_="result__snippet")
+                if title and snippet:
+                    results.append(f"[{title.text.strip()}] {snippet.text.strip()}")
+
+            if results:
+                return "INTEL ACQUIRED:\n" + "\n".join(results)
             return "No matching records in global search database."
         except Exception as e:
             return f"Intelligence gathering interrupted: {e}"
@@ -33,6 +38,25 @@ class IntelModule:
             res = requests.get(f"https://wttr.in/{city}?format=3")
             return res.text.strip()
         except: return "Weather link broken."
+
+    @staticmethod
+    def get_eta(origin, destination):
+        """Estimates travel time between locations using Google Maps search relay."""
+        try:
+            query = f"travel time from {origin} to {destination}"
+            url = f"https://www.google.com/search?q={requests.utils.quote(query)}"
+            headers = {"User-Agent": "Mozilla/5.0"}
+            res = requests.get(url, headers=headers, timeout=5)
+            soup = BeautifulSoup(res.text, "html.parser")
+            # Attempt to find the duration in the search snippet
+            # This is a heuristic approach for zero-API deployment
+            text = soup.get_text()
+            match = re.search(r"(\d+\s*(?:hr|min|hour|minute)s?)\s*(?:by|via)", text.lower())
+            if match:
+                return f"TACTICAL ETA: Estimated travel time from {origin} to {destination} is approximately {match.group(1)}."
+            return f"TACTICAL ETA: Route analysis for {origin} to {destination} is inconclusive. Manual verification required."
+        except Exception as e:
+            return f"Travel link interrupted: {e}"
 
     @staticmethod
     def convert_currency(amount, from_curr, to_curr):
@@ -110,9 +134,9 @@ class IntelModule:
         """Returns influential real-world creators of smart assistants."""
         return (
             "CREATOR REGISTRY (Verified Tactical Sources):\n"
-            "1. harriik (GitHub): Advanced Jarvis with face/voice/GUI automation.\n"
-            "2. kishanrajput23 (GitHub): Sophisticated desktop-level system control.\n"
-            "3. PhD Security (YouTube): MCU-accurate Edith and secure AI architectures.\n"
-            "4. The Coding Bus (YouTube): LLM-driven personalized assistant builds.\n"
-            "5. LiveKit Framework: Standard for professional real-time voice agents."
+            "1. Naz Louis (YouTube/GitHub): Creator of 'Ada', specialized in blazing fast local AI and custom React-based UIs.\n"
+            "2. harriik (GitHub): Developed one of the most complete 'Jarvis' clones with robust GUI and face recognition.\n"
+            "3. kishanrajput23 (GitHub): Master of Python system automation for desktop assistants.\n"
+            "4. PhD Security (YouTube): Known for real-world MCU tech like EDITH glasses and secure AI protocols.\n"
+            "5. LiveKit: The professional framework for real-time, ultra-low latency voice interaction."
         )

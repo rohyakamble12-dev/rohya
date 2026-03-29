@@ -49,6 +49,12 @@ class CommandRouter:
                 return self.system.get_network_info()
             elif intent == "lock_pc":
                 return self.system.lock_pc()
+            elif intent == "shutdown":
+                return self.system.shutdown()
+            elif intent == "restart":
+                return self.system.restart()
+            elif intent == "sleep":
+                return self.system.sleep_mode()
             elif intent == "active_window":
                 return self.system.get_active_window()
             elif intent == "window_control":
@@ -77,6 +83,8 @@ class CommandRouter:
                 return self.auto.stop_recording()
             elif intent == "macro_play":
                 return self.auto.play_macro(params.get("name"))
+            elif intent == "macro_list":
+                return self.auto.list_macros()
             elif intent == "type_text":
                 return self.auto.type_text(params.get("text"))
             elif intent == "execute_script":
@@ -110,6 +118,8 @@ class CommandRouter:
                 return self.intel.get_wiki(params.get("topic"))
             elif intent == "weather":
                 return self.intel.get_weather(params.get("city"))
+            elif intent == "get_eta":
+                return self.intel.get_eta(params.get("origin"), params.get("destination"))
             elif intent == "news":
                 return self.intel.get_news(params.get("topic", "technology"))
             elif intent == "market_data":
@@ -150,6 +160,8 @@ class CommandRouter:
                 return self.vision.capture_and_describe()
             elif intent == "vision_face":
                 return self.vision.face_detect()
+            elif intent == "security_scan":
+                return self.vision.security_perimeter_scan()
             elif intent == "vision_camera":
                 return self.assistant.toggle_camera()
             elif intent == "screen_read":
@@ -166,6 +178,8 @@ class CommandRouter:
                 return self.files.analyze_found_file(params.get("filename"))
             elif intent == "organize_files":
                 return self.files.organize_directory(params.get("path"))
+            elif intent == "find_duplicates":
+                return self.files.find_duplicates(params.get("path"))
 
             # 7. Protocols
             elif intent == "switch_identity":
