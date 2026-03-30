@@ -12,6 +12,7 @@ except:
 
 class VisionModule:
     def __init__(self):
+        global HAS_MEDIAPIPE
         if HAS_MEDIAPIPE:
             try:
                 self.mp_hands = mp.solutions.hands
