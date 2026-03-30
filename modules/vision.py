@@ -1,6 +1,7 @@
 import cv2
 import logging
 import os
+import threading
 import pyautogui
 import numpy as np
 import pytesseract # Requires Tesseract-OCR installed on Windows
@@ -12,6 +13,7 @@ except:
 
 class VisionModule:
     def __init__(self):
+        self.camera_lock = threading.Lock()
         global HAS_MEDIAPIPE
         if HAS_MEDIAPIPE:
             try:
@@ -22,6 +24,10 @@ class VisionModule:
             except:
                 HAS_MEDIAPIPE = False
     def capture_and_describe(self):
+        with self.camera_lock:
+            return self._execute_capture_and_describe()
+
+    def _execute_capture_and_describe(self):
         try:
             # Optimized camera initialization with DirectShow (faster on Windows)
             cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
@@ -44,6 +50,10 @@ class VisionModule:
 
     def face_detect(self):
         """Advanced biometric simulation with facial signature detection."""
+        with self.camera_lock:
+            return self._execute_face_detect()
+
+    def _execute_face_detect(self):
         try:
             face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
             cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
@@ -112,6 +122,10 @@ class VisionModule:
 
     def security_perimeter_scan(self):
         """MCU Accurate Security Protocol: Advanced Face Mesh Analysis."""
+        with self.camera_lock:
+            return self._execute_security_perimeter_scan()
+
+    def _execute_security_perimeter_scan(self):
         try:
             cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
             for _ in range(5): cap.read()
@@ -157,6 +171,10 @@ class VisionModule:
 
     def scan_objects(self):
         """MCU Accurate Object Detection: Eye and Profile detection."""
+        with self.camera_lock:
+            return self._execute_scan_objects()
+
+    def _execute_scan_objects(self):
         try:
             eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
             cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
@@ -174,6 +192,10 @@ class VisionModule:
 
     def analyze_style(self):
         """MCU Accurate Style Advisor: Color and Profile analysis."""
+        with self.camera_lock:
+            return self._execute_analyze_style()
+
+    def _execute_analyze_style(self):
         try:
             cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
             for _ in range(5): cap.read()
@@ -199,6 +221,10 @@ class VisionModule:
     def analyze_operator_state(self):
         """Detects operator mood/state using facial landmarks."""
         if not HAS_MEDIAPIPE: return "STATE ANALYSIS: Cognitive vision offline."
+        with self.camera_lock:
+            return self._execute_analyze_operator_state()
+
+    def _execute_analyze_operator_state(self):
         try:
             cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
             for _ in range(5): cap.read()

@@ -1,4 +1,4 @@
-import asyncio, edge_tts, pyttsx3, os, tempfile, pygame, time, json
+import asyncio, edge_tts, pyttsx3, os, tempfile, pygame, time, json, threading
 import speech_recognition as sr
 
 try:
@@ -17,6 +17,7 @@ class VedaVoice:
         self.recognizer = sr.Recognizer()
         self.mic = sr.Microphone()
         self.mic_level = 0.0
+        self.speech_lock = threading.Lock()
 
         with self.mic as source:
             self.recognizer.adjust_for_ambient_noise(source, duration=1)
@@ -66,6 +67,11 @@ class VedaVoice:
 
     def speak(self, text):
         """Unified speech output with priority for high-quality online TTS."""
+        with self.speech_lock:
+            self._execute_speech(text)
+
+    def _execute_speech(self, text):
+        import threading as th
         try:
             # Check if event loop is already running (e.g. within an async context)
             try:
