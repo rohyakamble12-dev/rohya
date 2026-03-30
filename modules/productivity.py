@@ -1,6 +1,10 @@
 import time
 import threading
-import schedule
+try:
+    import schedule
+    HAS_SCHEDULE = True
+except ImportError:
+    HAS_SCHEDULE = False
 
 class ProductivityModule:
     def __init__(self, assistant):
@@ -9,6 +13,7 @@ class ProductivityModule:
         threading.Thread(target=self._scheduler_loop, daemon=True).start()
 
     def _scheduler_loop(self):
+        if not HAS_SCHEDULE: return
         # Daily Briefing at 08:00
         schedule.every().day.at("08:00").do(self.daily_strategic_outlook)
         while self.running:
@@ -39,6 +44,7 @@ class ProductivityModule:
                 threading.Thread(target=_remind, daemon=True).start()
                 return f"Reminder logged: {task} in {mins}m."
             else:
+                if not HAS_SCHEDULE: return "Absolute scheduling offline."
                 # Expects HH:MM format for 'at'
                 schedule.every().day.at(time_str).do(self.assistant.notify, f"SCHEDULED TASK: {task}")
                 return f"Absolute schedule set for {task} at {time_str}."
@@ -46,6 +52,7 @@ class ProductivityModule:
             return f"Scheduling error: {e}"
 
     def list_schedule(self):
+        if not HAS_SCHEDULE: return "Scheduler interface offline."
         jobs = schedule.get_jobs()
         if not jobs: return "Daily schedule is clear, Operator."
         return "\n".join([f"{j.next_run}" for j in jobs])

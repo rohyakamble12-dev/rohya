@@ -1,5 +1,9 @@
 import webbrowser
-from deep_translator import GoogleTranslator
+try:
+    from deep_translator import GoogleTranslator
+    HAS_TRANSLATOR = True
+except ImportError:
+    HAS_TRANSLATOR = False
 import logging
 
 try:
@@ -32,6 +36,7 @@ class MediaModule:
         return "Invalid media command."
 
     def translate(self, text, target_lang="en"):
+        if not HAS_TRANSLATOR: return "Translation services offline."
         try:
             translated = GoogleTranslator(source='auto', target=target_lang).translate(text)
             return f"Translation ({target_lang}): {translated}"

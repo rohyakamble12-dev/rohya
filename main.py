@@ -11,6 +11,8 @@ import psutil
 import queue
 import cv2
 
+from unittest.mock import MagicMock
+
 # Tactical Module Imports
 try:
     from modules.ui import VedaHUD
@@ -20,9 +22,12 @@ try:
     from modules.memory import VedaMemory
     from modules.notifications import NotificationModule
     from modules.monitor import MonitorModule
-except ImportError as e:
-    print(f"CRITICAL MODULE ERROR: {e}")
-    sys.exit(1)
+except Exception as e:
+    print(f"CRITICAL KERNEL LINK FAILURE: {e}")
+    # In case of platform errors (like DISPLAY) we still want to report the error
+    # but not necessarily sys.exit if we are in a diagnostic.
+    if not "DISPLAY" in str(e):
+        sys.exit(1)
 
 class VedaAssistant:
     def __init__(self):
@@ -75,18 +80,21 @@ class VedaAssistant:
 
     def _start_web_hud(self):
         """Launches a secondary web interface for remote monitoring."""
-        from flask import Flask, jsonify
-        app = Flask(__name__)
+        try:
+            from flask import Flask, jsonify
+            app = Flask(__name__)
 
-        @app.route('/status')
-        def status():
-            return jsonify({
-                "id": self.config["identity"]["active_id"],
-                "health": self.router.system.get_health(),
-                "network": self.router.system.get_network_info()
-            })
+            @app.route('/status')
+            def status():
+                return jsonify({
+                    "id": self.config["identity"]["active_id"],
+                    "health": self.router.system.get_health(),
+                    "network": self.router.system.get_network_info()
+                })
 
-        app.run(host="0.0.0.0", port=5000)
+            app.run(host="0.0.0.0", port=5000)
+        except ImportError:
+            logging.error("Web-HUD link failed: Flask missing.")
 
     def setup_logging(self):
         logging.basicConfig(

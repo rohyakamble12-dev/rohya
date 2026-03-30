@@ -1,6 +1,10 @@
 import requests
 from bs4 import BeautifulSoup
-import wikipedia
+try:
+    import wikipedia
+    HAS_WIKI = True
+except ImportError:
+    HAS_WIKI = False
 import logging
 
 class IntelModule:
@@ -28,6 +32,7 @@ class IntelModule:
 
     @staticmethod
     def get_wiki(topic):
+        if not HAS_WIKI: return "Intelligence databases offline."
         try:
             return wikipedia.summary(topic, sentences=2)
         except: return "Topic not found in global databases."

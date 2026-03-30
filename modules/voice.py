@@ -1,5 +1,21 @@
-import asyncio, edge_tts, pyttsx3, os, tempfile, pygame, time, json, threading
-import speech_recognition as sr
+import asyncio, os, tempfile, pygame, time, json, threading
+try:
+    import edge_tts
+    HAS_EDGE_TTS = True
+except ImportError:
+    HAS_EDGE_TTS = False
+
+try:
+    import pyttsx3
+    HAS_PYTTSX3 = True
+except ImportError:
+    HAS_PYTTSX3 = False
+
+try:
+    import speech_recognition as sr
+    HAS_SR = True
+except ImportError:
+    HAS_SR = False
 
 try:
     from vosk import Model, KaldiRecognizer
@@ -14,23 +30,29 @@ class VedaVoice:
         self.active_id = config.get("identity", {}).get("active_id", "FRIDAY")
         self._update_voice_profile()
         self.wake_word = config['preferences']['voice']['wake_word']
-        self.recognizer = sr.Recognizer()
-        self.mic = sr.Microphone()
+        self.recognizer = sr.Recognizer() if HAS_SR else None
+        self.mic = sr.Microphone() if HAS_SR else None
         self.mic_level = 0.0
         self.speech_lock = threading.Lock()
 
-        with self.mic as source:
-            self.recognizer.adjust_for_ambient_noise(source, duration=1)
+        if self.mic:
+            try:
+                with self.mic as source:
+                    self.recognizer.adjust_for_ambient_noise(source, duration=1)
+            except: pass
 
         try:
-            self.offline_engine = pyttsx3.init()
-            # Enforce female offline identity
-            voices = self.offline_engine.getProperty('voices')
-            for voice in voices:
-                if "female" in voice.name.lower() or "zira" in voice.name.lower():
-                    self.offline_engine.setProperty('voice', voice.id)
-                    break
-            pygame.mixer.init()
+            self.offline_engine = pyttsx3.init() if HAS_PYTTSX3 else None
+            if self.offline_engine:
+                # Enforce female offline identity
+                voices = self.offline_engine.getProperty('voices')
+                for voice in voices:
+                    if "female" in voice.name.lower() or "zira" in voice.name.lower():
+                        self.offline_engine.setProperty('voice', voice.id)
+                        break
+            # Guard pygame mixer init for headless environments
+            if os.environ.get('DISPLAY'):
+                pygame.mixer.init()
         except: self.offline_engine = None
 
     def play_sfx(self, effect):
@@ -49,6 +71,7 @@ class VedaVoice:
         except: pass
 
     async def _speak_online(self, text):
+        if not HAS_EDGE_TTS: raise Exception("Edge-TTS unavailable.")
         communicate = edge_tts.Communicate(text, self.online_voice)
         with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as tmp:
             await communicate.save(tmp.name)
@@ -97,6 +120,7 @@ class VedaVoice:
                 except: pass
 
     def listen(self, timeout=5):
+        if not self.mic: return ""
         try:
             # Tier 1: Online
             with self.mic as source:

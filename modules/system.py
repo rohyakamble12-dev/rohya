@@ -2,7 +2,11 @@ import os
 import subprocess
 import psutil
 import threading
-import pyautogui
+try:
+    import pyautogui
+    HAS_PYAUTOGUI = True
+except:
+    HAS_PYAUTOGUI = False
 import ctypes
 import logging
 import platform
@@ -13,7 +17,11 @@ try:
 except ImportError:
     winreg = None
 import shutil
-import winshell
+try:
+    import winshell
+    HAS_WINSHELL = True
+except:
+    HAS_WINSHELL = False
 import pyperclip
 
 try:
@@ -81,7 +89,7 @@ class SystemModule:
                 return f"Executing {app} from verified sectors."
 
             try:
-                import winshell
+                if not HAS_WINSHELL: raise Exception()
                 # Dynamic crawl if cache missed
                 for path in [winshell.programs(), winshell.desktop(), os.path.join(os.environ["ProgramData"], "Microsoft", "Windows", "Start Menu", "Programs")]:
                     if not os.path.exists(path): continue
@@ -187,6 +195,7 @@ class SystemModule:
         except Exception as e: return f"Brightness adjustment failed: {e}"
 
     def screenshot(self):
+        if not HAS_PYAUTOGUI: return "Capture protocol offline: Display interface unavailable."
         try:
             os.makedirs("captures", exist_ok=True)
             path = f"captures/shot_{int(time.time())}.png"
@@ -375,7 +384,7 @@ class SystemModule:
         """Orchestrates multiple OS changes for specific workflows."""
         mode = mode.lower()
         if "stealth" in mode:
-            pyautogui.hotkey('win', 'd') # Minimize all
+            if HAS_PYAUTOGUI: pyautogui.hotkey('win', 'd') # Minimize all
             self.set_volume(0)
             self.set_dark_mode(True)
             return "STEALTH PROTOCOL: Environment neutralized and concealed."

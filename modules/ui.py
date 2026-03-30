@@ -1,15 +1,37 @@
-import customtkinter as ctk
-import tkinter as tk
 import math
 import random
 import threading
 import time
 import os
-from PIL import Image, ImageTk
 
-class VedaPanel(ctk.CTkFrame):
-    def __init__(self, parent, **kwargs):
-        super().__init__(parent, fg_color="transparent", **kwargs)
+try:
+    import customtkinter as ctk
+    import tkinter as tk
+    from PIL import Image, ImageTk
+    HAS_GUI = True
+except ImportError:
+    HAS_GUI = False
+
+# Mock classes if GUI is missing to prevent import errors in main.py
+if not HAS_GUI:
+    class MockBase:
+        def __init__(self, *args, **kwargs): pass
+        def pack(self, *args, **kwargs): pass
+        def grid(self, *args, **kwargs): pass
+        def configure(self, *args, **kwargs): pass
+    class VedaHUD(MockBase):
+        def __init__(self, *args, **kwargs):
+            super().__init__()
+            self.master = MagicMock()
+        def after(self, ms, func, *args): pass
+        def set_state(self, *args): pass
+        def add_message(self, *args): return MagicMock()
+        def start(self): pass
+        def update_camera(self, *args): pass
+else:
+    class VedaPanel(ctk.CTkFrame):
+        def __init__(self, parent, **kwargs):
+            super().__init__(parent, fg_color="transparent", **kwargs)
 
 class SidebarPanel(VedaPanel):
     def __init__(self, parent, assistant):

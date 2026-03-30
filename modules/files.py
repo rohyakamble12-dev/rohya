@@ -1,4 +1,9 @@
-import os, glob, PyPDF2, fnmatch
+import os, glob, fnmatch
+try:
+    import PyPDF2
+    HAS_PDF = True
+except ImportError:
+    HAS_PDF = False
 
 class FilesModule:
     def find_file(self, filename):
@@ -40,6 +45,7 @@ class FilesModule:
     @staticmethod
     def read_pdf(file_path):
         if not os.path.exists(file_path): return "File not found."
+        if not HAS_PDF: return "PDF analysis sector offline."
         try:
             with open(file_path, 'rb') as f:
                 reader = PyPDF2.PdfReader(f)

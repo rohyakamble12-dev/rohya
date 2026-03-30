@@ -2,9 +2,17 @@ import cv2
 import logging
 import os
 import threading
-import pyautogui
+try:
+    import pyautogui
+    HAS_PYAUTOGUI = True
+except:
+    HAS_PYAUTOGUI = False
 import numpy as np
-import pytesseract # Requires Tesseract-OCR installed on Windows
+try:
+    import pytesseract # Requires Tesseract-OCR installed on Windows
+    HAS_PYTESSERACT = True
+except ImportError:
+    HAS_PYTESSERACT = False
 try:
     import mediapipe as mp
     HAS_MEDIAPIPE = True
@@ -253,6 +261,8 @@ class VisionModule:
 
     def screen_ocr(self):
         """Captures screen and performs cognitive text extraction."""
+        if not HAS_PYAUTOGUI: return "VISUAL SCAN: Display interface link severed."
+        if not HAS_PYTESSERACT: return "VISUAL SCAN: OCR sector offline."
         try:
             shot = pyautogui.screenshot()
             frame = np.array(shot)
