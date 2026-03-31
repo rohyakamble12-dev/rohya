@@ -1,4 +1,6 @@
 import psutil
+import subprocess
+import time
 
 class ProtocolModule:
     def __init__(self, assistant):

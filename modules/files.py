@@ -1,4 +1,4 @@
-import os, glob, fnmatch
+import os, glob, fnmatch, hashlib, shutil
 try:
     import PyPDF2
     HAS_PDF = True

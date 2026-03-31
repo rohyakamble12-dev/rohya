@@ -12,6 +12,8 @@ try:
 except ImportError:
     HAS_GUI = False
 
+from unittest.mock import MagicMock
+
 # Mock classes if GUI is missing to prevent import errors in main.py
 if not HAS_GUI:
     class MockBase:
@@ -107,16 +109,16 @@ class CenterPanel(VedaPanel):
 
         btns = [
             ("💻", lambda: self.assistant.set_state("idle")),
-            ("🗕", lambda: self.master.iconify()),
-            ("👁️", lambda: self.assistant.process_command("vision camera")),
-            ("📁", lambda: self.assistant.process_command("open documents")),
+            ("🗕", lambda: self.assistant.gui.iconify()),
+            ("👁️", lambda: self.assistant.process_command_async("vision camera")),
+            ("📁", lambda: self.assistant.process_command_async("open documents")),
             ("🎤", lambda: self.assistant._trigger_mic())
         ]
         for txt, cmd in btns:
             ctk.CTkButton(self.ctrl_bar, text=txt, width=40, height=35, fg_color="#121217", border_width=1, border_color="#1a1a25", command=cmd).pack(side="left", padx=5)
 
         ctk.CTkButton(self.ctrl_bar, text="U N L O A D", width=100, height=40, fg_color="#121217", border_width=1, border_color="#ff3e3e",
-                       font=("Orbitron", 9, "bold"), text_color="#ffffff", command=self.master.destroy).pack(side="left", padx=5)
+                       font=("Orbitron", 9, "bold"), text_color="#ffffff", command=self.assistant.gui.destroy).pack(side="left", padx=5)
 
     def _init_earth_mesh(self):
         # Fibonacci Sphere (100 points as requested in design spec)

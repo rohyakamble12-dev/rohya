@@ -50,8 +50,9 @@ class VedaVoice:
                     if "female" in voice.name.lower() or "zira" in voice.name.lower():
                         self.offline_engine.setProperty('voice', voice.id)
                         break
-            # Guard pygame mixer init for headless environments
-            if os.environ.get('DISPLAY'):
+            # Guard pygame mixer init (handle Windows vs Linux/Mac headless)
+            import platform
+            if platform.system() == "Windows" or os.environ.get('DISPLAY'):
                 pygame.mixer.init()
         except: self.offline_engine = None
 

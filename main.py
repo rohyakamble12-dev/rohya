@@ -72,7 +72,7 @@ class VedaAssistant:
         try:
             import pystray
             from PIL import Image
-            def on_unload(): self.gui.master.destroy()
+            def on_unload(): self.gui.destroy()
             icon = pystray.Icon("Veda", Image.new('RGB', (64, 64), color=(0, 255, 204)), "Veda Sovereign",
                                 menu=pystray.Menu(pystray.MenuItem("Unload Kernel", on_unload)))
             icon.run()
@@ -139,8 +139,13 @@ class VedaAssistant:
         except: pass
 
     def process_command(self, user_input):
+        if not user_input: return
+
+        # Immediate UI Feedback
+        self.gui.after(0, lambda: self.gui.set_state("thinking"))
+        self.gui.after(0, lambda: self.gui.log.status_label.configure(text=f"EXECUTING: {user_input.upper()[:20]}..."))
+
         with self.command_lock:
-            if not user_input: return
             logging.info(f"Input: {user_input}")
 
             # 1. Resilient Fast-Path (Survival Mode 11.0)
@@ -229,7 +234,9 @@ class VedaAssistant:
                     final_responses.append("Neural link unstable. Core functions only.")
 
             combined = ". ".join([str(r) for r in final_responses if r])
-            self._finalize_interaction(user_input, combined)
+
+        # Speak and Finalize outside the lock to keep the kernel responsive
+        self._finalize_interaction(user_input, combined)
 
     def _finalize_interaction(self, user_input, response):
         if not response: return
@@ -244,38 +251,77 @@ class VedaAssistant:
         self.gui.after(0, lambda: self.gui.set_state("idle"))
 
     def _handle_survival_mode(self, text):
-        text = text.lower().strip()
+        raw_text = text.lower().strip()
 
         # Identity Switch Natural Language
-        if "switch to jarvis" in text or "activate jarvis" in text:
+        if "switch to jarvis" in raw_text or "activate jarvis" in raw_text:
             return self.switch_identity("JARVIS")
-        if "switch to friday" in text or "activate friday" in text:
+        if "switch to friday" in raw_text or "activate friday" in raw_text:
             return self.switch_identity("FRIDAY")
 
         # Adaptive Rule Check
-        rule = self.memory.get_rule(text)
+        rule = self.memory.get_rule(raw_text)
         if rule: return self.router.route(rule)
 
-        # Identity
-        if text in ["hello", "hi", "veda", "friday"]: return "Systems operational, Operator."
-        if "who are you" in text: return "I am Veda. Your personal digital interface."
+        # Identity / Greetings
+        if raw_text in ["hello", "hi", "veda", "friday", "hey veda", "hey friday"]:
+            return "Systems operational, Operator. Awaiting instructions."
+        if "who are you" in raw_text: return "I am Veda. Your personal digital interface and system navigator."
 
-        # Reports
-        if "system report" in text: return self.router.system.get_sys_info()
-        if "battery" in text: return self.router.system.get_health()
+        # Reports & Telemetry
+        if any(k in raw_text for k in ["system report", "status report", "telemetry"]):
+            return self.router.system.get_sys_info(self)
+        if any(k in raw_text for k in ["battery", "health", "integrity"]):
+            return self.router.system.get_health()
+        if "network" in raw_text and "info" in raw_text:
+            return self.router.system.get_network_info()
 
-        # Math
-        if re.match(r'^[0-9+\-*/().\s^]+$', text) and len(text) > 1:
-            try: return f"Result: {eval(text, {'__builtins__': None}, {})}."
+        # Math Fast-Path
+        if re.match(r'^[0-9+\-*/().\s^]+$', raw_text) and len(raw_text) > 1:
+            try: return f"Calculation result: {eval(raw_text, {'__builtins__': None}, {})}."
             except: pass
 
-        # Clean Prefix
-        text = re.sub(r'^(veda|hey veda|please|could you)\s+', '', text)
+        # Prefix Scrubbing for Command Extraction
+        text = re.sub(r'^(veda|hey veda|friday|hey friday|please|could you|i need you to|can you)\s+', '', raw_text)
 
-        # Direct OS Controls
-        if "open" in text or "launch" in text:
-            app = re.sub(r'.*(open|launch)\s+', '', text).strip()
-            return self.router.system.open_app(app)
+        # OS Control Fast-Paths (Survival Override)
+        # --- Launch/Open ---
+        if text.startswith(("open ", "launch ", "start ")):
+            app = re.sub(r'^(open|launch|start)\s+', '', text).strip()
+            return self.router.route({"intent": "open_app", "params": {"app_name": app}})
+
+        # --- Close/Terminate ---
+        if text.startswith(("close ", "exit ", "terminate ", "kill ", "stop ")):
+            app = re.sub(r'^(close|exit|terminate|kill|stop)\s+', '', text).strip()
+            return self.router.route({"intent": "close_app", "params": {"app_name": app}})
+
+        # --- Volume Controls ---
+        if "volume" in text:
+            vol_match = re.search(r'(\d+)', text)
+            if vol_match:
+                return self.router.route({"intent": "set_volume", "params": {"level": int(vol_match.group(1))}})
+            if "mute" in text or "zero" in text:
+                return self.router.route({"intent": "set_volume", "params": {"level": 0}})
+            if "max" in text:
+                return self.router.route({"intent": "set_volume", "params": {"level": 100}})
+
+        # --- Brightness ---
+        if "brightness" in text:
+            bri_match = re.search(r'(\d+)', text)
+            if bri_match:
+                return self.router.route({"intent": "set_brightness", "params": {"level": int(bri_match.group(1))}})
+
+        # --- File Searching ---
+        if text.startswith(("find ", "search for ", "locate ")):
+            query = re.sub(r'^(find|search for|locate)\s+', '', text).strip()
+            if not any(k in query for k in ["on web", "google", "online"]):
+                return self.router.route({"intent": "file_find", "params": {"filename": query}})
+
+        # --- System Commands ---
+        if text in ["screenshot", "take a screenshot", "capture screen"]:
+            return self.router.route({"intent": "screenshot"})
+        if text in ["lock", "lock pc", "lock computer"]:
+            return self.router.route({"intent": "lock_pc"})
 
         return None
 
@@ -394,11 +440,17 @@ class VedaAssistant:
         except: pass
 
     def _trigger_mic(self):
-        self.gui.after(0, lambda: self.gui.add_message("System", "LISTENING..."))
-        query = self.voice.listen()
-        if query:
-            self.gui.after(0, lambda: self.gui.add_message("User", query))
-            self.process_command(query)
+        def _mic_thread():
+            self.gui.after(0, lambda: self.gui.add_message("System", "LISTENING..."))
+            query = self.voice.listen()
+            if query:
+                self.gui.after(0, lambda: self.gui.add_message("User", query))
+                self.process_command(query)
+        threading.Thread(target=_mic_thread, daemon=True).start()
+
+    def process_command_async(self, command):
+        """Standard entry point for UI/threaded commands to prevent blocking."""
+        threading.Thread(target=self.process_command, args=(command,), daemon=True).start()
 
     def wake_word_loop(self):
         while True:

@@ -2,6 +2,8 @@ import os
 import subprocess
 import psutil
 import threading
+import json
+import requests
 try:
     import pyautogui
     HAS_PYAUTOGUI = True
@@ -159,12 +161,27 @@ class SystemModule:
     def close_app(self, app_name):
         if not gw: return "Window management offline."
         try:
-            wins = gw.getWindowsWithTitle(app_name)
-            if wins:
-                for win in wins: win.close()
-                return f"Closing {app_name}."
-            return f"No active interface for {app_name} found."
-        except Exception as e: return f"Closure failed: {e}"
+            if not app_name: return "Specify target for closure."
+            target = app_name.lower()
+
+            # Fuzzy matching across all open windows
+            all_wins = gw.getAllWindows()
+            matching_wins = [w for w in all_wins if target in w.title.lower()]
+
+            if matching_wins:
+                for win in matching_wins:
+                    try: win.close()
+                    except: pass
+                return f"Closing {len(matching_wins)} instances of {app_name}."
+
+            # Process termination as fallback
+            for proc in psutil.process_iter(['name']):
+                if target in proc.info['name'].lower():
+                    proc.terminate()
+                    return f"Process {proc.info['name']} terminated."
+
+            return f"No active interface or process for {app_name} found."
+        except Exception as e: return f"Closure protocol failed: {e}"
 
     def set_volume(self, level, app_name=None):
         if not HAS_PYCAW: return "Audio interface link broken."
