@@ -90,7 +90,7 @@ class SystemModule:
 
             try:
                 if not HAS_WINSHELL: raise Exception()
-                # Dynamic crawl if cache missed
+                # Dynamic crawl if cache missed (Windows 10/11 common paths)
                 for path in [winshell.programs(), winshell.desktop(), os.path.join(os.environ["ProgramData"], "Microsoft", "Windows", "Start Menu", "Programs")]:
                     if not os.path.exists(path): continue
                     for root, dirs, files in os.walk(path):
@@ -225,6 +225,11 @@ class SystemModule:
             # Thermal Simulation for MCU Immersion
             temp = 40 + (cpu // 5)
             thermal = f" | THM {temp}°C"
+
+            # Auto-Energy Protocol logic
+            if battery and not battery.power_plugged and battery.percent < 20:
+                self.set_dark_mode(True)
+                self.set_brightness(20)
 
             return f"INTEGRITY: CPU {cpu}% | RAM {ram}% {thermal} | DSK {disk}%{bat_str} | IP {ip}"
         except Exception as e: return f"Diagnostic failure: {e}"

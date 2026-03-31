@@ -199,6 +199,8 @@ class CommandRouter:
                 return self.vision.analyze_style()
             elif intent == "vision_scan":
                 return self.vision.scan_objects()
+            elif intent == "targeting_system":
+                return self.vision.targeting_system()
             elif intent == "vision_camera":
                 return self.assistant.toggle_camera()
             elif intent == "screen_read":

@@ -198,6 +198,16 @@ class VisionModule:
             return f"TACTICAL SCAN: {len(eyes)} ocular signature(s) detected. Sector status: {status}."
         except: return "Tactical scan protocol offline."
 
+    def targeting_system(self):
+        """MCU Accurate Targeting Simulation."""
+        try:
+            # We use face/object presence to simulate a lock-on
+            res = self.scan_objects()
+            if "IDENTIFIED" in res:
+                return f"TARGETING SYSTEM: Lock established on primary signature. Tracking active."
+            return "TARGETING SYSTEM: Scanning for tactical signatures. No immediate lock-on."
+        except: return "Targeting relay offline."
+
     def analyze_style(self):
         """MCU Accurate Style Advisor: Color and Profile analysis."""
         with self.camera_lock:

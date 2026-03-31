@@ -13,17 +13,25 @@ class VedaBrain:
         self._set_system_prompt()
 
     def _set_system_prompt(self):
+        # Base Persona: Veda (Female Digital Sentinel)
         if self.active_id == "JARVIS":
             self.system_prompt = (
-                "You are J.A.R.V.I.S. (Female Edition), a top-tier digital presence. "
+                "You are J.A.R.V.I.S. (High-Tier Female AI). "
                 "Your tone is sophisticated, highly intelligent, and slightly witty. "
                 "You address the user as 'Sir' or 'Madam'. You are absolute in your loyalty and elegance."
             )
-        else:
+        elif self.active_id == "FRIDAY":
             self.system_prompt = (
                 "You are F.R.I.D.A.Y., a professional-grade female digital presence. "
                 "Your tone is sharp, efficient, and deeply loyal. "
                 "You address the user as 'Operator'. Prioritize speed and tactical accuracy."
+            )
+        else:
+            self.system_prompt = (
+                "You are Veda, a sentient female digital assistant for Windows. "
+                "You combine the intelligence of Jarvis and the efficiency of Friday. "
+                "Your tone is professional, cinematic, and strictly female-voiced. "
+                "Prioritize tactical transparency and system security."
             )
 
     def switch_identity(self, identity):

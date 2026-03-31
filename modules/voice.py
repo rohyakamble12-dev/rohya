@@ -151,10 +151,13 @@ class VedaVoice:
 
     def _update_voice_profile(self):
         """Standardizes on professional female vocal profiles."""
+        # Standardize on high-quality female voices only
         if self.active_id == "JARVIS":
-            self.online_voice = "en-US-AvaNeural" # Professional Female
+            self.online_voice = "en-US-AvaNeural"
+        elif self.active_id == "FRIDAY":
+            self.online_voice = "en-IE-EmilyNeural" # Irish Female
         else:
-            self.online_voice = "en-IE-EmilyNeural" # Professional Irish female (MCU Accurate)
+            self.online_voice = "en-US-AvaNeural" # Default Veda Female
 
         if hasattr(self, 'offline_engine') and self.offline_engine:
             voices = self.offline_engine.getProperty('voices')
