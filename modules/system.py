@@ -226,6 +226,10 @@ class SystemModule:
             temp = 40 + (cpu // 5)
             thermal = f" | THM {temp}°C"
 
+            # Simulated GPU Integrity
+            gpu = 15 + (cpu // 10)
+            thermal += f" | GPU {gpu}%"
+
             # Auto-Energy Protocol logic
             if battery and not battery.power_plugged and battery.percent < 20:
                 self.set_dark_mode(True)

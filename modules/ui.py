@@ -289,6 +289,11 @@ class VedaHUD(ctk.CTk):
                 canvas.move("globe", offset, 0)
                 if random.random() < 0.2: canvas.itemconfig("globe", fill="#ff0000")
 
+            # Sentinel Scan Effect
+            if self.status == "thinking":
+                y = (time.time() * 200) % h
+                canvas.create_line(0, y, w, y, fill="#00ffcc", tags="globe", width=2, dash=(5, 5))
+
             # Scanline Overlay
             for y in range(0, h, 4):
                 canvas.create_line(0, y, w, y, fill="#00ffff", tags="globe", width=1, stipple="gray12")

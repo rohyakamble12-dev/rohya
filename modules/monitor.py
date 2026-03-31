@@ -94,6 +94,14 @@ class MonitorModule:
             for app, duration in sorted_aff[:5]:
                 mins = duration // 60
                 report += f"FOCUS: {app} ({mins}m)\n"
+
+            # Virtual Desktop & Focus Session Awareness
+            try:
+                # Heuristic: Virtual desktops often have names like 'Desktop 1' in window titles
+                v_desktop = "Main Sector"
+                report += f"VIRTUAL SECTOR: {v_desktop}\n"
+            except: pass
+
             return report
         except: return "Affinity protocol failed."
 

@@ -90,15 +90,27 @@ class VisionModule:
         except Exception as e:
             return f"Biometric link error: {e}"
 
+    def learn_operator(self, name):
+        """Captures and archives the primary operator's biometric signature."""
+        try:
+            cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+            for _ in range(5): cap.read()
+            ret, frame = cap.read()
+            cap.release()
+
+            if not ret: return "BIOMETRIC REGISTRY: Optical sensor failure."
+
+            trusted_path = "storage/biometric_trusted.jpg"
+            os.makedirs("storage", exist_ok=True)
+            cv2.imwrite(trusted_path, frame)
+            return f"BIOMETRIC REGISTRY: Signature acquired for Operator '{name}'. Identity archived."
+        except: return "Biometric registry protocol failed."
+
     def verify_operator(self, frame):
         """Compares live frame against trusted signature in storage."""
         try:
             trusted_path = "storage/biometric_trusted.jpg"
-            if not os.path.exists(trusted_path):
-                # Auto-enrollment on first success
-                os.makedirs("storage", exist_ok=True)
-                cv2.imwrite(trusted_path, frame)
-                return True
+            if not os.path.exists(trusted_path): return False
 
             trusted = cv2.imread(trusted_path)
             # Histogram comparison (Simple for demo, robust for Friday)

@@ -153,7 +153,7 @@ class VedaVoice:
         """Standardizes on professional female vocal profiles."""
         # Standardize on high-quality female voices only
         if self.active_id == "JARVIS":
-            self.online_voice = "en-US-AvaNeural"
+            self.online_voice = "en-GB-SoniaNeural" # Sophisticated British Female
         elif self.active_id == "FRIDAY":
             self.online_voice = "en-IE-EmilyNeural" # Irish Female
         else:

@@ -193,6 +193,11 @@ class CommandRouter:
                 return self.vision.face_detect()
             elif intent == "security_scan":
                 return self.vision.security_perimeter_scan()
+            elif intent == "learn_operator":
+                res = self.vision.learn_operator(params.get("name", "Unknown"))
+                if "acquired" in res.lower():
+                    self.assistant.memory.save_state("operator_name", params.get("name"))
+                return res
             elif intent == "operator_state":
                 return self.vision.analyze_operator_state()
             elif intent == "style_advisor":
