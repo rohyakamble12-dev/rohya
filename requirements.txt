@@ -35,3 +35,4 @@ flask
 pystray
 faiss-cpu
 sentence-transformers
+yt-dlp

@@ -1,4 +1,6 @@
 import webbrowser
+import threading
+import os
 try:
     from deep_translator import GoogleTranslator
     HAS_TRANSLATOR = True
@@ -26,13 +28,26 @@ class MediaModule:
             return f"Media link failed: {e}"
 
     def download_media(self, query):
-        """MCU Accurate Media Archival: Downloads audio from YouTube."""
+        """MCU Accurate Media Archival: Real YouTube audio extraction."""
         try:
-            # We simulate the download for now, but in a real-world scenario
-            # this would use yt-dlp. Since Veda is 'real working', we provide
-            # the tactical report.
-            return f"MEDIA ARCHIVAL: '{query}' has been identified and queued for background download. Tactical files will be stored in your Media sector."
-        except: return "Media archival protocol interrupted."
+            import yt_dlp
+            def _download():
+                os.makedirs("assets/sounds", exist_ok=True)
+                opts = {
+                    'format': 'bestaudio/best',
+                    'postprocessors': [{'key': 'FFmpegExtractAudio','preferredcodec': 'mp3','preferredquality': '192'}],
+                    'outtmpl': 'assets/sounds/%(title)s.%(ext)s',
+                    'quiet': True
+                }
+                with yt_dlp.YoutubeDL(opts) as ydl:
+                    ydl.download([f"ytsearch1:{query}"])
+
+            threading.Thread(target=_download, daemon=True).start()
+            return f"MEDIA ARCHIVAL: '{query}' identified. Background retrieval protocol initiated. Tactical files will be stored in the sounds sector."
+        except ImportError:
+            return "MEDIA ARCHIVAL: yt-dlp link failed. Manual archival required."
+        except Exception as e:
+            return f"Media archival protocol failed: {e}"
 
     def control(self, action):
         if not self.keyboard: return "Keyboard control offline."
