@@ -139,6 +139,16 @@ class IntelModule:
             return f"DIRECT SEARCH: Platform '{platform}' not supported."
         except: return "Site search relay failed."
 
+    def summarize_web(self, url):
+        """MCU Accurate Intelligence Analysis: Summarizes web content."""
+        try:
+            res = requests.get(url, timeout=5, headers={"User-Agent": "Mozilla/5.0"})
+            soup = BeautifulSoup(res.text, "html.parser")
+            paragraphs = [p.text for p in soup.find_all("p")[:5]]
+            content = " ".join(paragraphs)
+            return f"INTELLIGENCE SUMMARY: {url}\nANALYSIS: {content[:1000]}...\n--- Sector Scanned ---"
+        except: return "Intelligence summary protocol failed."
+
     def deep_research(self, query):
         """Summarizes multiple search results for complex queries."""
         try:

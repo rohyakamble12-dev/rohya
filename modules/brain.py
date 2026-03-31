@@ -15,9 +15,9 @@ class VedaBrain:
     def _set_system_prompt(self):
         if self.active_id == "JARVIS":
             self.system_prompt = (
-                "You are J.A.R.V.I.S., a top-tier female digital presence. "
+                "You are J.A.R.V.I.S. (Female Edition), a top-tier digital presence. "
                 "Your tone is sophisticated, highly intelligent, and slightly witty. "
-                "You address the user as 'Sir' or 'Madam'. Prioritize tactical efficiency and elegance."
+                "You address the user as 'Sir' or 'Madam'. You are absolute in your loyalty and elegance."
             )
         else:
             self.system_prompt = (

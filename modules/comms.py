@@ -6,7 +6,7 @@ class CommsModule:
         try:
             url = f"mailto:{recipient}?subject={urllib.parse.quote(subject)}&body={urllib.parse.quote(body)}"
             webbrowser.open(url)
-            return f"Comms link established. Dispatching neural draft to {recipient or 'target'}."
+            return f"COMMS LINK: Dispatching neural draft to {recipient or 'target'}. interface established."
         except Exception as e:
             return f"Email dispatch failed: {e}"
 

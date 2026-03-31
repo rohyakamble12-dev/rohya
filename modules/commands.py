@@ -53,6 +53,8 @@ class CommandRouter:
                 return self.system.close_app(params.get("app_name"))
             elif intent == "screenshot":
                 return self.system.screenshot()
+            elif intent == "screen_record":
+                return self.system.record_screen(int(params.get("duration", 10)))
             elif intent == "system_health":
                 return self.system.get_health()
             elif intent == "system_info":
@@ -150,6 +152,8 @@ class CommandRouter:
                 return self.intel.convert_units(float(params.get("value")), params.get("from_unit"), params.get("to_unit"))
             elif intent == "creator_registry":
                 return self.intel.get_creator_registry()
+            elif intent == "summarize_web":
+                return self.intel.summarize_web(params.get("url"))
             elif intent == "index_doc":
                 self.assistant.memory.index_document(params.get("text"))
                 return "KNOWLEDGE BASE: Document segment indexed into neural vector space."
@@ -157,6 +161,8 @@ class CommandRouter:
             # 3. Media
             elif intent == "play_music":
                 return self.media.play_youtube(params.get("song"))
+            elif intent == "media_download":
+                return self.media.download_media(params.get("query"))
             elif intent == "media_control":
                 return self.media.control(params.get("action"))
             elif intent == "translate":
