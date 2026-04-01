@@ -276,13 +276,13 @@ class VedaAssistant:
         if "network" in raw_text and "info" in raw_text:
             return self.router.system.get_network_info()
 
-        # Math Fast-Path
-        if re.match(r'^[0-9+\-*/().\s^]+$', raw_text) and len(raw_text) > 1:
-            try: return f"Calculation result: {eval(raw_text, {'__builtins__': None}, {})}."
-            except: pass
-
         # Prefix Scrubbing for Command Extraction
         text = re.sub(r'^(veda|hey veda|friday|hey friday|please|could you|i need you to|can you)\s+', '', raw_text)
+
+        # Math Fast-Path (Now after prefix scrubbing)
+        if re.match(r'^[0-9+\-*/().\s^]+$', text) and len(text) > 1:
+            try: return f"Calculation result: {eval(text, {'__builtins__': None}, {})}."
+            except: pass
 
         # OS Control Fast-Paths (Survival Override)
         # --- Launch/Open ---
@@ -291,8 +291,12 @@ class VedaAssistant:
             return self.router.route({"intent": "open_app", "params": {"app_name": app}})
 
         # --- Close/Terminate ---
+        if text == "close all":
+            return self.router.protocols.clean_slate()
+
         if text.startswith(("close ", "exit ", "terminate ", "kill ", "stop ")):
             app = re.sub(r'^(close|exit|terminate|kill|stop)\s+', '', text).strip()
+            if app == "all": return self.router.protocols.clean_slate()
             return self.router.route({"intent": "close_app", "params": {"app_name": app}})
 
         # --- Volume Controls ---
