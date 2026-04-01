@@ -1,4 +1,8 @@
-import ollama
+try:
+    import ollama
+    HAS_OLLAMA = True
+except ImportError:
+    HAS_OLLAMA = False
 import json
 import logging
 import subprocess
@@ -41,10 +45,9 @@ class VedaBrain:
         self._set_system_prompt()
 
     def ensure_ollama(self):
+        if not HAS_OLLAMA: return False
         try:
             # Check if ollama is reachable with a short timeout
-            # Note: ollama-python doesn't expose timeout easily in list()
-            # but we can assume if it fails it's down.
             ollama.list()
             return True
         except Exception:
@@ -86,6 +89,13 @@ class VedaBrain:
         return "conversation"
 
     def chat(self, user_input, history, facts="", stream=False):
+        if not HAS_OLLAMA:
+            error_msg = "Neural link unavailable: Ollama-Python link missing."
+            if stream:
+                def _error_gen(): yield {"message": {"content": error_msg}}
+                return _error_gen()
+            return error_msg
+
         custom_prompt = self.system_prompt
         if facts:
             custom_prompt += f"\n\n[KNOWN OPERATOR DATA]:\n{facts}\n\nYou must proactively use this data to personalize your responses. If you know the operator's name or preferences, refer to them."
@@ -113,6 +123,8 @@ class VedaBrain:
 
     def plan_tactical_steps(self, user_input, stream=False):
         """Breaks a complex request into a sequence of actions with reasoning."""
+        if not HAS_OLLAMA: return str(self._regex_plan_fallback(user_input))
+
         # Tactical Pre-Processing
         text = user_input.lower().strip()
         if len(text) < 3: return str([{"intent": "none", "params": {}}])
@@ -150,6 +162,8 @@ class VedaBrain:
 
     def extract_params(self, user_input):
         """Uses LLM to extract JSON parameters for commands with regex fallback."""
+        if not HAS_OLLAMA: return self._regex_extract_fallback(user_input)
+
         prompt = (
             "Analyze the command and extract parameters into a raw JSON object. "
             "Include 'intent' and 'params'. "

@@ -2,7 +2,11 @@ import sqlite3
 import os
 import logging
 import json
-import numpy as np
+try:
+    import numpy as np
+    HAS_NUMPY = True
+except ImportError:
+    HAS_NUMPY = False
 from datetime import datetime
 
 try:

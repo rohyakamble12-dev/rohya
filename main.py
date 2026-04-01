@@ -1,4 +1,8 @@
-import requests
+try:
+    import requests
+    HAS_REQUESTS = True
+except ImportError:
+    HAS_REQUESTS = False
 import sys
 import os
 import json
@@ -7,13 +11,22 @@ import logging
 import threading
 import time
 import socket
-import psutil
+try:
+    import psutil
+    HAS_PSUTIL = True
+except ImportError:
+    HAS_PSUTIL = False
 import queue
-import cv2
+try:
+    import cv2
+    HAS_CV2 = True
+except ImportError:
+    HAS_CV2 = False
 
 from unittest.mock import MagicMock
 
 # Tactical Module Imports
+# Tactical Module Imports (Internal modules are safe to import normally as they guard their own deps)
 try:
     from modules.ui import VedaHUD
     from modules.voice import VedaVoice
@@ -24,15 +37,17 @@ try:
     from modules.monitor import MonitorModule
 except Exception as e:
     print(f"CRITICAL KERNEL LINK FAILURE: {e}")
-    # In case of platform errors (like DISPLAY) we still want to report the error
-    # but not necessarily sys.exit if we are in a diagnostic.
-    if not "DISPLAY" in str(e):
-        sys.exit(1)
+    # We proceed if it's just a display issue for headless diagnostics
+    if "DISPLAY" not in str(e):
+        # If it's a code error in a module, we should see it
+        import traceback
+        traceback.print_exc()
 
 class VedaAssistant:
     def __init__(self):
         self.setup_logging()
         logging.info("--- VEDA SOVEREIGN KERNEL BOOT ---")
+        self._audit_dependencies()
 
         # Kernel State
         self.command_lock = threading.RLock()
@@ -65,7 +80,10 @@ class VedaAssistant:
         threading.Thread(target=self._optical_feed_loop, name="OpticThread", daemon=True).start()
         threading.Thread(target=self._start_web_hud, name="WebHUDThread", daemon=True).start()
         threading.Thread(target=self._setup_tray, name="TrayThread", daemon=True).start()
-        self.monitor.start()
+
+        # Guard monitor start (might fail if psutil is crippled)
+        try: self.monitor.start()
+        except: pass
 
     def _setup_tray(self):
         """Persistent Tray Icon for Veda."""
@@ -102,6 +120,22 @@ class VedaAssistant:
             level=logging.INFO,
             format="%(asctime)s [%(levelname)s] %(message)s"
         )
+        # Also print to console for visibility since user says files won't load
+        console = logging.StreamHandler()
+        console.setLevel(logging.INFO)
+        logging.getLogger('').addHandler(console)
+
+    def _audit_dependencies(self):
+        """Checks for critical and optional modules to provide actionable feedback."""
+        essential = ["customtkinter", "ollama", "requests", "cv2", "psutil"]
+        missing = []
+        for mod in essential:
+            try: __import__(mod)
+            except ImportError: missing.append(mod)
+
+        if missing:
+            logging.warning(f"[SYSTEM ALERT]: Missing tactical modules: {', '.join(missing)}")
+            logging.warning("[ADVICE]: Run 'repair_veda.bat' to re-establish system links.")
 
     def load_config(self):
         if not os.path.exists("config.json"):
@@ -393,6 +427,7 @@ class VedaAssistant:
         self.voice.speak(greeting)
 
     def _optical_feed_loop(self):
+        if not HAS_CV2: return
         cap = None
         last_gesture_time = 0
         while True:
@@ -418,9 +453,10 @@ class VedaAssistant:
     def _metrics_updater(self):
         while True:
             try:
-                cpu = psutil.cpu_percent()
-                ram = psutil.virtual_memory().percent
-                self.gui.after(0, lambda c=cpu, r=ram: self._ui_metrics_sync(c, r))
+                if HAS_PSUTIL:
+                    cpu = psutil.cpu_percent()
+                    ram = psutil.virtual_memory().percent
+                    self.gui.after(0, lambda c=cpu, r=ram: self._ui_metrics_sync(c, r))
             except: pass
             time.sleep(2)
 

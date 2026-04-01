@@ -1,4 +1,8 @@
-import psutil
+try:
+    import psutil
+    HAS_PSUTIL = True
+except ImportError:
+    HAS_PSUTIL = False
 import time
 import threading
 import socket

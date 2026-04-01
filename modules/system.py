@@ -1,9 +1,17 @@
 import os
 import subprocess
-import psutil
+try:
+    import psutil
+    HAS_PSUTIL = True
+except ImportError:
+    HAS_PSUTIL = False
 import threading
 import json
-import requests
+try:
+    import requests
+    HAS_REQUESTS = True
+except ImportError:
+    HAS_REQUESTS = False
 try:
     import pyautogui
     HAS_PYAUTOGUI = True
@@ -295,7 +303,8 @@ class SystemModule:
             public_ip = "Unknown"
             latency = "Unknown"
             try:
-                public_ip = requests.get("https://api.ipify.org", timeout=2).text
+                if HAS_REQUESTS:
+                    public_ip = requests.get("https://api.ipify.org", timeout=2).text
                 # Simple latency check to 1.1.1.1
                 start = time.time()
                 socket.create_connection(("1.1.1.1", 53), timeout=2)

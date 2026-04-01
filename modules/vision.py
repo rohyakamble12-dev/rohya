@@ -1,4 +1,8 @@
-import cv2
+try:
+    import cv2
+    HAS_CV2 = True
+except ImportError:
+    HAS_CV2 = False
 import logging
 import os
 import threading
@@ -7,7 +11,11 @@ try:
     HAS_PYAUTOGUI = True
 except:
     HAS_PYAUTOGUI = False
-import numpy as np
+try:
+    import numpy as np
+    HAS_NUMPY = True
+except ImportError:
+    HAS_NUMPY = False
 try:
     import pytesseract # Requires Tesseract-OCR installed on Windows
     HAS_PYTESSERACT = True

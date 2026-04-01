@@ -2,7 +2,11 @@ import time
 import threading
 import json
 import os
-from pynput import keyboard, mouse
+try:
+    from pynput import keyboard, mouse
+    HAS_PYNPUT = True
+except ImportError:
+    HAS_PYNPUT = False
 
 class AutomationModule:
     def __init__(self, storage_dir="storage/macros"):

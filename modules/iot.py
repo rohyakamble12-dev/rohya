@@ -1,4 +1,8 @@
-import requests
+try:
+    import requests
+    HAS_REQUESTS = True
+except ImportError:
+    HAS_REQUESTS = False
 import random
 
 class IOTModule:
