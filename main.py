@@ -26,22 +26,23 @@ except ImportError:
 from unittest.mock import MagicMock
 
 # Tactical Module Imports
-# Tactical Module Imports (Internal modules are safe to import normally as they guard their own deps)
-try:
-    from modules.ui import VedaHUD
-    from modules.voice import VedaVoice
-    from modules.brain import VedaBrain
-    from modules.commands import CommandRouter
-    from modules.memory import VedaMemory
-    from modules.notifications import NotificationModule
-    from modules.monitor import MonitorModule
-except Exception as e:
-    print(f"CRITICAL KERNEL LINK FAILURE: {e}")
-    # We proceed if it's just a display issue for headless diagnostics
-    if "DISPLAY" not in str(e):
-        # If it's a code error in a module, we should see it
-        import traceback
-        traceback.print_exc()
+# Bulletproof Module Imports (Internal modules are safe to import normally as they guard their own deps)
+def _safe_import(mod_name, class_name):
+    try:
+        mod = __import__(f"modules.{mod_name}", fromlist=[class_name])
+        return getattr(mod, class_name)
+    except Exception as e:
+        logging.error(f"MODULE CRASH: {mod_name} sector offline: {e}")
+        # Return a Mock to keep the kernel from crashing
+        return MagicMock
+
+VedaHUD = _safe_import("ui", "VedaHUD")
+VedaVoice = _safe_import("voice", "VedaVoice")
+VedaBrain = _safe_import("brain", "VedaBrain")
+CommandRouter = _safe_import("commands", "CommandRouter")
+VedaMemory = _safe_import("memory", "VedaMemory")
+NotificationModule = _safe_import("notifications", "NotificationModule")
+MonitorModule = _safe_import("monitor", "MonitorModule")
 
 class VedaAssistant:
     def __init__(self):
@@ -305,6 +306,8 @@ class VedaAssistant:
         # Reports & Telemetry
         if any(k in raw_text for k in ["system report", "status report", "telemetry"]):
             return self.router.system.get_sys_info(self)
+        if any(k in raw_text for k in ["system check", "diagnostic", "check systems"]):
+            return self.router.run_system_check()
         if any(k in raw_text for k in ["battery", "health", "integrity"]):
             return self.router.system.get_health()
         if "network" in raw_text and "info" in raw_text:

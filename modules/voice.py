@@ -1,4 +1,9 @@
-import asyncio, os, tempfile, pygame, time, json, threading
+import asyncio, os, tempfile, time, json, threading
+try:
+    import pygame
+    HAS_PYGAME = True
+except ImportError:
+    HAS_PYGAME = False
 try:
     import edge_tts
     HAS_EDGE_TTS = True
@@ -73,6 +78,7 @@ class VedaVoice:
 
     async def _speak_online(self, text):
         if not HAS_EDGE_TTS: raise Exception("Edge-TTS unavailable.")
+        if not HAS_PYGAME: raise Exception("Pygame link offline.")
         communicate = edge_tts.Communicate(text, self.online_voice)
         with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as tmp:
             await communicate.save(tmp.name)

@@ -10,19 +10,28 @@ from modules.comms import CommsModule
 from modules.automation import AutomationModule
 import logging
 
+from unittest.mock import MagicMock
+
 class CommandRouter:
     def __init__(self, assistant):
         self.assistant = assistant
-        self.system = SystemModule()
-        self.intel = IntelModule()
-        self.media = MediaModule()
-        self.prod = ProductivityModule(assistant)
-        self.vision = VisionModule()
-        self.files = FilesModule()
-        self.iot = IOTModule(assistant)
-        self.protocols = ProtocolModule(assistant)
-        self.comms = CommsModule()
-        self.auto = AutomationModule()
+        self.system = self._init_module("system", SystemModule)
+        self.intel = self._init_module("intel", IntelModule)
+        self.media = self._init_module("media", MediaModule)
+        self.prod = self._init_module("productivity", ProductivityModule, assistant)
+        self.vision = self._init_module("vision", VisionModule)
+        self.files = self._init_module("files", FilesModule)
+        self.iot = self._init_module("iot", IOTModule, assistant)
+        self.protocols = self._init_module("protocols", ProtocolModule, assistant)
+        self.comms = self._init_module("comms", CommsModule)
+        self.auto = self._init_module("automation", AutomationModule)
+
+    def _init_module(self, name, mod_class, *args):
+        try:
+            return mod_class(*args)
+        except Exception as e:
+            logging.error(f"COMMAND SECTOR OFFLINE: {name} initialization failed: {e}")
+            return MagicMock()
 
     def get_registry(self):
         """Returns a summarized registry of all tactical intents."""
@@ -244,6 +253,8 @@ class CommandRouter:
 
             elif intent == "command_registry":
                 return self.get_registry()
+            elif intent == "system_check":
+                return self.run_system_check()
 
             # 8. IOT
             elif intent == "iot_trigger":
@@ -257,3 +268,17 @@ class CommandRouter:
         except Exception as e:
             logging.error(f"Routing error: {e}")
             return f"Kernel routing failed: {e}"
+
+    def run_system_check(self):
+        """MCU Accurate Diagnostic: Checks all tactical link integrities."""
+        report = "--- VEDA CORE DIAGNOSTIC ---\n"
+        sectors = [
+            ("SYSTEM", self.system), ("INTEL", self.intel), ("MEDIA", self.media),
+            ("PROD", self.prod), ("VISION", self.vision), ("FILES", self.files),
+            ("IOT", self.iot), ("PROTOCOLS", self.protocols), ("COMMS", self.comms),
+            ("AUTO", self.auto), ("BRAIN", self.assistant.brain), ("VOICE", self.assistant.voice)
+        ]
+        for name, mod in sectors:
+            status = "NOMINAL" if not isinstance(mod, MagicMock) else "OFFLINE"
+            report += f"{name}: {status}\n"
+        return report
