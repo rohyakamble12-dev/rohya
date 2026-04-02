@@ -133,7 +133,8 @@ class VedaVoice:
             with self.mic as source:
                 audio = self.recognizer.listen(source, timeout=timeout, phrase_time_limit=10)
             return self.recognizer.recognize_google(audio)
-        except:
+        except Exception as e:
+            logging.error(f"STT link failure: {e}")
             # Tier 2: Offline
             if VOSK_AVAILABLE: return self._listen_vosk()
             return ""

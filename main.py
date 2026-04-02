@@ -325,15 +325,25 @@ class VedaAssistant:
         # --- Launch/Open ---
         if text.startswith(("open ", "launch ", "start ")):
             app = re.sub(r'^(open|launch|start)\s+', '', text).strip()
+            if isinstance(self.router, MagicMock):
+                # Absolute Survival: No router, use stdlib
+                try: os.startfile(app); return f"Absolute link established: Launching {app}."
+                except: return f"Failed to acquire absolute link for {app}."
             return self.router.route({"intent": "open_app", "params": {"app_name": app}})
 
         # --- Close/Terminate ---
         if text == "close all":
-            return self.router.protocols.clean_slate()
+            if not isinstance(self.router, MagicMock): return self.router.protocols.clean_slate()
+            return "Command rejected: Protocol module offline."
 
         if text.startswith(("close ", "exit ", "terminate ", "kill ", "stop ")):
             app = re.sub(r'^(close|exit|terminate|kill|stop)\s+', '', text).strip()
-            if app == "all": return self.router.protocols.clean_slate()
+            if app == "all" and not isinstance(self.router, MagicMock): return self.router.protocols.clean_slate()
+
+            if isinstance(self.router, MagicMock):
+                # Absolute Survival: No router, use taskkill
+                try: subprocess.run(["taskkill", "/F", "/IM", f"{app}*"], shell=False); return f"Absolute sector purge: Closing {app}."
+                except: return "Absolute closure failed."
             return self.router.route({"intent": "close_app", "params": {"app_name": app}})
 
         # --- Volume Controls ---

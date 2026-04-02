@@ -1,13 +1,3 @@
-from modules.system import SystemModule
-from modules.intel import IntelModule
-from modules.media import MediaModule
-from modules.productivity import ProductivityModule
-from modules.vision import VisionModule
-from modules.files import FilesModule
-from modules.protocols import ProtocolModule
-from modules.iot import IOTModule
-from modules.comms import CommsModule
-from modules.automation import AutomationModule
 import logging
 
 from unittest.mock import MagicMock
@@ -15,22 +5,24 @@ from unittest.mock import MagicMock
 class CommandRouter:
     def __init__(self, assistant):
         self.assistant = assistant
-        self.system = self._init_module("system", SystemModule)
-        self.intel = self._init_module("intel", IntelModule)
-        self.media = self._init_module("media", MediaModule)
-        self.prod = self._init_module("productivity", ProductivityModule, assistant)
-        self.vision = self._init_module("vision", VisionModule)
-        self.files = self._init_module("files", FilesModule)
-        self.iot = self._init_module("iot", IOTModule, assistant)
-        self.protocols = self._init_module("protocols", ProtocolModule, assistant)
-        self.comms = self._init_module("comms", CommsModule)
-        self.auto = self._init_module("automation", AutomationModule)
+        self.system = self._safe_init("system", "SystemModule")
+        self.intel = self._safe_init("intel", "IntelModule")
+        self.media = self._safe_init("media", "MediaModule")
+        self.prod = self._safe_init("productivity", "ProductivityModule", assistant)
+        self.vision = self._safe_init("vision", "VisionModule")
+        self.files = self._safe_init("files", "FilesModule")
+        self.iot = self._safe_init("iot", "IOTModule", assistant)
+        self.protocols = self._safe_init("protocols", "ProtocolModule", assistant)
+        self.comms = self._safe_init("comms", "CommsModule")
+        self.auto = self._safe_init("automation", "AutomationModule")
 
-    def _init_module(self, name, mod_class, *args):
+    def _safe_init(self, mod_name, class_name, *args):
         try:
-            return mod_class(*args)
+            mod = __import__(f"modules.{mod_name}", fromlist=[class_name])
+            cls = getattr(mod, class_name)
+            return cls(*args)
         except Exception as e:
-            logging.error(f"COMMAND SECTOR OFFLINE: {name} initialization failed: {e}")
+            logging.error(f"COMMAND SECTOR OFFLINE: {mod_name} initialization failed: {e}")
             return MagicMock()
 
     def get_registry(self):

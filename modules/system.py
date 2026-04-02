@@ -32,7 +32,11 @@ try:
     HAS_WINSHELL = True
 except:
     HAS_WINSHELL = False
-import pyperclip
+try:
+    import pyperclip
+    HAS_PYPERCLIP = True
+except ImportError:
+    HAS_PYPERCLIP = False
 
 try:
     import pygetwindow as gw
@@ -141,8 +145,13 @@ class SystemModule:
                 os.startfile(app)
                 return f"Executing {app_name} via standard protocol."
             except:
-                subprocess.Popen(["cmd", "/c", "start", "", app], shell=False, creationflags=0x08000000)
-                return f"Executing {app_name} via secondary protocol."
+                # Direct subprocess fallback
+                try:
+                    subprocess.Popen([f"{app}.exe"], shell=False)
+                    return f"Executing {app_name} via direct link."
+                except:
+                    subprocess.Popen(["cmd", "/c", "start", "", app], shell=False, creationflags=0x08000000)
+                    return f"Executing {app_name} via secondary protocol."
 
         except Exception as e: return f"Execution failed: {e}"
 
@@ -167,27 +176,36 @@ class SystemModule:
         except Exception as e: return f"Relocation failed: {e}"
 
     def close_app(self, app_name):
-        if not gw: return "Window management offline."
         try:
             if not app_name: return "Specify target for closure."
             target = app_name.lower()
 
-            # Fuzzy matching across all open windows
-            all_wins = gw.getAllWindows()
-            matching_wins = [w for w in all_wins if target in w.title.lower()]
+            closed = False
+            # Tier 1: PyGetWindow (Fuzzy matching)
+            if gw:
+                all_wins = gw.getAllWindows()
+                matching_wins = [w for w in all_wins if target in w.title.lower()]
+                if matching_wins:
+                    for win in matching_wins:
+                        try: win.close()
+                        except: pass
+                    closed = True
 
-            if matching_wins:
-                for win in matching_wins:
-                    try: win.close()
-                    except: pass
-                return f"Closing {len(matching_wins)} instances of {app_name}."
+            # Tier 2: PSUtil (Process Termination)
+            if HAS_PSUTIL:
+                for proc in psutil.process_iter(['name']):
+                    if target in proc.info['name'].lower():
+                        proc.terminate()
+                        closed = True
 
-            # Process termination as fallback
-            for proc in psutil.process_iter(['name']):
-                if target in proc.info['name'].lower():
-                    proc.terminate()
-                    return f"Process {proc.info['name']} terminated."
+            # Tier 3: Taskkill (OS Standard Library Fallback)
+            if not closed:
+                try:
+                    subprocess.run(["taskkill", "/F", "/IM", f"{app_name}*"], capture_output=True, shell=False)
+                    closed = True
+                except: pass
 
+            if closed: return f"Closure protocols executed for {app_name}."
             return f"No active interface or process for {app_name} found."
         except Exception as e: return f"Closure protocol failed: {e}"
 
@@ -544,12 +562,14 @@ class SystemModule:
         except: return "Structural analysis protocol failed."
 
     def get_clipboard(self):
+        if not HAS_PYPERCLIP: return "Clipboard sector offline."
         try:
             text = pyperclip.paste()
             return f"Clipboard content acquired: {text[:200]}..." if text else "Clipboard is empty."
         except: return "Clipboard link failed."
 
     def set_clipboard(self, text):
+        if not HAS_PYPERCLIP: return "Clipboard sector offline."
         try:
             pyperclip.copy(text)
             return "Data synchronized to system clipboard."
