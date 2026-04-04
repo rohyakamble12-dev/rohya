@@ -26,6 +26,14 @@ except ImportError:
 from unittest.mock import MagicMock
 
 # Tactical Module Imports
+class OfflineModule:
+    def __init__(self, *args, **kwargs): pass
+    def __getattr__(self, name):
+        def _method(*args, **kwargs):
+            return f"SECTOR ERROR: Tactical subsystem '{name}' is currently offline or unreachable."
+        return _method
+    def __bool__(self): return False
+
 # Bulletproof Module Imports (Internal modules are safe to import normally as they guard their own deps)
 def _safe_import(mod_name, class_name):
     try:
@@ -33,8 +41,8 @@ def _safe_import(mod_name, class_name):
         return getattr(mod, class_name)
     except Exception as e:
         logging.error(f"MODULE CRASH: {mod_name} sector offline: {e}")
-        # Return a Mock to keep the kernel from crashing
-        return MagicMock
+        # Return a robust Offline class to keep the kernel from crashing
+        return OfflineModule
 
 VedaHUD = _safe_import("ui", "VedaHUD")
 VedaVoice = _safe_import("voice", "VedaVoice")

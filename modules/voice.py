@@ -30,8 +30,9 @@ except ImportError:
     VOSK_AVAILABLE = False
 
 class VedaVoice:
-    def __init__(self, config):
+    def __init__(self, config, assistant=None):
         self.config = config
+        self.assistant = assistant
         self.active_id = config.get("identity", {}).get("active_id", "FRIDAY")
         self._update_voice_profile()
         self.wake_word = config['preferences']['voice']['wake_word']

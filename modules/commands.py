@@ -23,7 +23,9 @@ class CommandRouter:
             return cls(*args)
         except Exception as e:
             logging.error(f"COMMAND SECTOR OFFLINE: {mod_name} initialization failed: {e}")
-            return MagicMock()
+            # We return a mock that handles calls gracefully
+            from main import OfflineModule
+            return OfflineModule()
 
     def get_registry(self):
         """Returns a summarized registry of all tactical intents."""
@@ -270,7 +272,9 @@ class CommandRouter:
             ("IOT", self.iot), ("PROTOCOLS", self.protocols), ("COMMS", self.comms),
             ("AUTO", self.auto), ("BRAIN", self.assistant.brain), ("VOICE", self.assistant.voice)
         ]
+        from main import OfflineModule
         for name, mod in sectors:
-            status = "NOMINAL" if not isinstance(mod, MagicMock) else "OFFLINE"
+            # Check if it's an OfflineModule or MagicMock
+            status = "NOMINAL" if (mod and not isinstance(mod, (OfflineModule, MagicMock))) else "OFFLINE"
             report += f"{name}: {status}\n"
         return report

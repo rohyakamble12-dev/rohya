@@ -21,6 +21,14 @@ if not HAS_GUI:
         def pack(self, *args, **kwargs): pass
         def grid(self, *args, **kwargs): pass
         def configure(self, *args, **kwargs): pass
+        def attributes(self, *args): pass
+        def geometry(self, *args): pass
+        def title(self, *args): pass
+        def overrideredirect(self, *args): pass
+        def bind(self, *args): pass
+        def iconify(self): pass
+        def destroy(self): pass
+        def mainloop(self): pass
     class VedaHUD(MockBase):
         def __init__(self, *args, **kwargs):
             super().__init__()
@@ -190,8 +198,15 @@ class LogPanel(VedaPanel):
         self.chat_scroll._parent_canvas.yview_moveto(1.0)
         return lbl
 
-class VedaHUD(ctk.CTk):
+class VedaHUD(ctk.CTk if HAS_GUI else MockBase):
     def __init__(self, config, assistant):
+        if not HAS_GUI:
+            super().__init__()
+            self.assistant = assistant
+            self.sidebar = MagicMock()
+            self.log = MagicMock()
+            return
+
         super().__init__()
         self.assistant = assistant
         self.overrideredirect(True)
