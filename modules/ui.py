@@ -17,7 +17,11 @@ from unittest.mock import MagicMock
 # Mock classes if GUI is missing to prevent import errors in main.py
 if not HAS_GUI:
     class MockBase:
-        def __init__(self, *args, **kwargs): pass
+        def __init__(self, *args, **kwargs):
+            self.master = MagicMock()
+            self.sidebar = MagicMock()
+            self.center = MagicMock()
+            self.log = MagicMock()
         def pack(self, *args, **kwargs): pass
         def grid(self, *args, **kwargs): pass
         def configure(self, *args, **kwargs): pass
@@ -29,6 +33,9 @@ if not HAS_GUI:
         def iconify(self): pass
         def destroy(self): pass
         def mainloop(self): pass
+        def update_idletasks(self): pass
+        def winfo_width(self): return 1100
+        def winfo_height(self): return 650
     class VedaHUD(MockBase):
         def __init__(self, *args, **kwargs):
             super().__init__()
