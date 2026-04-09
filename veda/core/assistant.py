@@ -131,7 +131,7 @@ class VedaAssistant:
                 self.gui.update_chat("System", f"⚠️ {issue}")
         else:
             logger.info("Startup check passed.")
-            self.gui.update_chat("Veda", "All systems nominal. How can I help you today?")
+            self.gui.update_chat("Veda", "Greetings Sir, you're awake late at night today. What you up to?")
 
     def sync_protocols(self):
         """Syncs local protocol state with GUI toggles."""

@@ -11,8 +11,15 @@ class ResearchPlugin(VedaPlugin):
     def setup(self):
         self.register_intent("deep_research", self.get_summary, PermissionTier.SAFE,
                             input_schema={"type": "object", "properties": {"topic": {"type": "string"}}, "required": ["topic"], "additionalProperties": False})
+
         self.register_intent("read_doc", self.read_document_intent, PermissionTier.SAFE,
                             input_schema={"type": "object", "properties": {"path": {"type": "string"}}, "required": ["path"], "additionalProperties": False})
+
+        self.register_intent("summarize", self.summarize_text, PermissionTier.SAFE,
+                            input_schema={"type": "object", "properties": {"text": {"type": "string"}}, "required": ["text"], "additionalProperties": False})
+
+        self.register_intent("explain_code", self.explain_code, PermissionTier.SAFE,
+                            input_schema={"type": "object", "properties": {"code": {"type": "string"}, "language": {"type": "string"}}, "required": ["code"], "additionalProperties": False})
 
     def get_summary(self, params):
         topic = params.get("topic")
@@ -46,3 +53,17 @@ class ResearchPlugin(VedaPlugin):
                 return "File format currently outside strategic parameters."
         except Exception as e:
             return f"Extraction Failure: {e}"
+
+    def summarize_text(self, params):
+        """Strategic Summarization."""
+        text = params.get("text", "")
+        if not text: return "Content required for analysis."
+        prompt = f"Summarize the following text concisely:\n\n{text}"
+        return self.assistant.llm.chat(prompt)
+
+    def explain_code(self, params):
+        """Neural Code Analysis."""
+        code = params.get("code", "")
+        lang = params.get("language", "Python")
+        prompt = f"Explain the following {lang} code in plain English, step by step:\n\n```{lang.lower()}\n{code}\n```"
+        return self.assistant.llm.chat(prompt)
