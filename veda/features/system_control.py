@@ -68,6 +68,9 @@ class SystemPlugin(VedaPlugin):
         self.register_intent("restart", self.restart_pc, PermissionTier.CONFIRM_REQUIRED,
                             input_schema={"type": "object", "properties": {}})
 
+        self.register_intent("world_monitor", self.open_world_monitor, PermissionTier.SAFE,
+                            input_schema={"type": "object", "properties": {}})
+
         self.register_intent("shell_isolated", self.shell_isolated, PermissionTier.ADMIN,
                             input_schema={"type": "object", "properties": {"command": {"type": "string"}}, "required": ["command"], "additionalProperties": False})
 
@@ -210,6 +213,15 @@ class SystemPlugin(VedaPlugin):
         safe_query = urllib.parse.quote(query)
         webbrowser.open(f"https://www.google.com/search?q={safe_query}")
         return "Searching..."
+
+    def open_world_monitor(self, params):
+        """Strategic Visual Intel: Opens World Monitor dashboard."""
+        url = "https://worldmonitor.app/"
+        try:
+            webbrowser.open(url)
+            return "Displaying the World Monitor on your primary screen now, Sir."
+        except Exception as e:
+            return f"I'm unable to initialize the visual monitor: {e}"
 
     def empty_recycle_bin(self, params):
         try:

@@ -1,4 +1,8 @@
 import requests
+import httpx
+import xml.etree.ElementTree as ET
+import asyncio
+import re
 from duckduckgo_search import DDGS
 from veda.features.base import VedaPlugin, PermissionTier
 from veda.utils.throttling import limiter
@@ -12,6 +16,9 @@ class WebPlugin(VedaPlugin):
                             input_schema={"type": "object", "properties": {"city": {"type": "string", "maxLength": 50}}, "additionalProperties": False})
 
         self.register_intent("get_news", self.get_news, PermissionTier.SAFE,
+                            input_schema={"type": "object", "properties": {}, "additionalProperties": False})
+
+        self.register_intent("world_briefing", self.get_world_briefing, PermissionTier.SAFE,
                             input_schema={"type": "object", "properties": {}, "additionalProperties": False})
 
         self.register_intent("stock_price", self.get_market_info, PermissionTier.SAFE,
@@ -53,6 +60,54 @@ class WebPlugin(VedaPlugin):
                 results = list(ddgs.news("world", max_results=3))
                 return "Global Intel: " + " | ".join([r['title'] for r in results])
         except Exception as e: return "Intel feed disconnected."
+
+    async def _fetch_rss_feed(self, client, url):
+        """Tactical RSS Ingress."""
+        try:
+            response = await client.get(url, headers={'User-Agent': 'Veda-AI/1.1'}, timeout=5.0)
+            if response.status_code != 200: return []
+            root = ET.fromstring(response.content)
+            source = url.split('.')[1].upper()
+            items = []
+            for item in root.findall(".//item")[:3]:
+                title = item.findtext("title")
+                desc = item.findtext("description")
+                if desc: desc = re.sub('<[^<]+?>', '', desc).strip()
+                items.append(f"[{source}] {title}: {desc[:100]}...")
+            return items
+        except Exception: return []
+
+    def get_world_briefing(self, params):
+        """Parallel Global News Briefing."""
+        feeds = [
+            'https://feeds.bbci.co.uk/news/world/rss.xml',
+            'https://www.cnbc.com/id/100727362/device/rss/rss.html',
+            'https://rss.nytimes.com/services/xml/rss/nyt/World.xml',
+            'https://www.aljazeera.com/xml/rss/all.xml'
+        ]
+
+        async def _gather():
+            async with httpx.AsyncClient(follow_redirects=True, timeout=10) as client:
+                tasks = [self._fetch_rss_feed(client, url) for url in feeds]
+                results = await asyncio.gather(*tasks)
+                flat = [item for sub in results for item in sub]
+                return "\n".join(flat[:10]) if flat else "Global news grid unresponsive."
+
+        try:
+            # Check if an event loop is already running (e.g. in some environments)
+            try:
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                     # This is a bit tricky since get_world_briefing is not async.
+                     # For now, we use a simple synchronous fallback or a new thread if needed.
+                     # But in Veda, this runs in a background thread already (via VedaController),
+                     # so we can use asyncio.run safely if no loop exists there.
+                     return asyncio.run(_gather())
+                return loop.run_until_complete(_gather())
+            except RuntimeError:
+                return asyncio.run(_gather())
+        except Exception as e:
+            return f"Intel failure: {e}"
 
     def get_market_info(self, params):
         symbol = params.get("symbol") or params.get("coin") or "market"
