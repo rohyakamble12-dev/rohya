@@ -322,6 +322,11 @@ class VedaLLM:
              city = match.group(1).strip() if match else "auto"
              return {"intent": "weather", "params": {"city": city}, "confidence": 1.0, "survival": True}
 
+        if "world briefing" in ui or "news" in ui:
+             return {"intent": "world_briefing", "params": {}, "confidence": 1.0, "survival": True}
+        if "world monitor" in ui:
+             return {"intent": "world_monitor", "params": {}, "confidence": 1.0, "survival": True}
+
         # 5. Common Conversational Instant-Replies
         if any(word in ui for word in ["hello", "hi ", "greetings", "hey veda"]):
              return {"intent": "chat", "params": {"response": "Hello, Sir. Ready for your command."}, "confidence": 1.0, "survival": True}

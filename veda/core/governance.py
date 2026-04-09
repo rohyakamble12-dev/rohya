@@ -99,9 +99,5 @@ class VedaGovernance:
     def scrub_output(self, result):
         return privacy.scrub(str(result))
 
-    def scrub_context(self, text):
-        """Redacts sensitive info from interaction context."""
-        return privacy.scrub(str(text))
-
 # Global instance for easy access in features
 governance = VedaGovernance()

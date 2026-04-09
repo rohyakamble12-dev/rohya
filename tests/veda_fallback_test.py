@@ -20,17 +20,17 @@ class TestSystemFallback(unittest.TestCase):
         mock_startfile.side_effect = Exception("Not found")
         mock_popen.side_effect = Exception("Not found")
 
-        # Mock WebPlugin search
-        mock_web_plugin = MagicMock()
-        mock_web_plugin.search.return_value = "Search results"
-        self.assistant.plugins.get_plugin.return_value = mock_web_plugin
+        # Mock web plugin
+        mock_web = MagicMock()
+        mock_web.search.return_value = "Mock web intelligence data."
+        self.assistant.plugins.get_plugin.return_value = mock_web
 
         res = self.plugin.open_app({"app_name": "unknown_app"})
 
         # Verify fallback message
-        self.assertIn("Initiating web search sequence", res)
-        # Verify web search plugin was triggered
-        mock_web_plugin.search.assert_called()
+        self.assertIn("My web intelligence reports", res)
+        # Verify web search was triggered via plugin
+        mock_web.search.assert_called()
 
 if __name__ == "__main__":
     unittest.main()
