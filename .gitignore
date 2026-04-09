@@ -1,21 +1,42 @@
+# Python
 __pycache__/
-*.pyc
-veda_memory.db
-veda_notes.txt
-.env
-*.mp3
-*.wav
 *.py[cod]
 *$py.class
-.env
+*.pyc
 venv/
 ENV/
-veda_notes.txt
-Veda_Screenshot.png
-*.mp3
+.env
+
+# Veda Tactical Storage & Logs
+veda/storage/
 *.db
+*.log
 logs/
 audit.log
 veda.log
+veda_memory.db
+
+# Media & Assets
+*.mp3
+*.wav
+*.jpg
+*.png
 veda_sight.jpg
+Veda_Screenshot.png
+
+# User Data & Notes
+veda_notes.txt
 macro_*.json
+
+# Archives
+*.zip
+jules_session_18404974549309337060.zip
+veda_production.zip
+
+# IDEs & System
+.vscode/
+.idea/
+.DS_Store
+
+# Temporary extraction
+temp_jules_session/

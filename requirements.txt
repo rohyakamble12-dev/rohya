@@ -33,3 +33,5 @@ pytesseract
 keyboard
 numpy
 jsonschema
+winshell
+openai

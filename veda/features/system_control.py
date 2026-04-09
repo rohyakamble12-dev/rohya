@@ -1,165 +1,239 @@
 import os
 import subprocess
-import pyautogui
-import threading
+try:
+    if os.environ.get('DISPLAY'):
+        import pyautogui
+    else:
+        pyautogui = None
+except (ImportError, KeyError):
+    pyautogui = None
+import webbrowser
+import re
 import time
-from veda.utils.sanitizer import VedaSanitizer
-
 try:
     from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
-    from ctypes import cast, POINTER
+    from ctypes import cast, POINTER, HRESULT
     from comtypes import CLSCTX_ALL
-    WINDOWS_AUDIO = True
-except ImportError:
-    WINDOWS_AUDIO = False
+    import pythoncom
+except (ImportError, AttributeError):
+    # Fallback for non-Windows environments to allow discovery
+    AudioUtilities = None
+    IAudioEndpointVolume = None
+    cast = None
+    POINTER = None
+    CLSCTX_ALL = None
 
 try:
     import screen_brightness_control as sbc
-    WINDOWS_BRIGHTNESS = True
 except ImportError:
-    WINDOWS_BRIGHTNESS = False
+    sbc = None
 
-class SystemControl:
-    @staticmethod
-    def open_app(app_name):
-        """Opens an application by name safely."""
+from veda.features.base import VedaPlugin, PermissionTier
+from veda.utils.sandbox import sandbox
+
+class SystemPlugin(VedaPlugin):
+    def setup(self):
+        # 1. Strict Intent Whitelist with RBAC metadata and Tactical Contracts
+        self.register_intent("open_app", self.open_app, PermissionTier.SAFE,
+                            input_schema={"type": "object", "properties": {"app_name": {"type": "string"}}, "required": ["app_name"], "additionalProperties": False})
+
+        self.register_intent("close_app", self.close_app, PermissionTier.CONFIRM_REQUIRED,
+                            input_schema={"type": "object", "properties": {"app_name": {"type": "string"}}, "required": ["app_name"], "additionalProperties": False})
+
+        self.register_intent("set_volume", self.set_volume, PermissionTier.SAFE,
+                            input_schema={"type": "object", "properties": {"level": {"type": "integer", "minimum": 0, "maximum": 100}}, "required": ["level"], "additionalProperties": False})
+
+        self.register_intent("set_brightness", self.set_brightness, PermissionTier.SAFE,
+                            input_schema={"type": "object", "properties": {"level": {"type": "integer", "minimum": 0, "maximum": 100}}, "required": ["level"], "additionalProperties": False})
+
+        self.register_intent("lock_pc", self.lock_pc, PermissionTier.SAFE,
+                            input_schema={"type": "object", "properties": {}})
+        self.register_intent("sleep", self.system_sleep, PermissionTier.CONFIRM_REQUIRED,
+                            input_schema={"type": "object", "properties": {}})
+        self.register_intent("mute_toggle", self.toggle_mute, PermissionTier.SAFE,
+                            input_schema={"type": "object", "properties": {}})
+        self.register_intent("screenshot", self.screenshot, PermissionTier.SAFE,
+                            input_schema={"type": "object", "properties": {}})
+
+        self.register_intent("web_find", self.web_find, PermissionTier.SAFE,
+                            input_schema={"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"], "additionalProperties": False})
+
+        self.register_intent("empty_trash", self.empty_recycle_bin, PermissionTier.CONFIRM_REQUIRED,
+                            input_schema={"type": "object", "properties": {}, "additionalProperties": False})
+        self.register_intent("set_wallpaper", self.set_wallpaper, PermissionTier.SAFE,
+                            input_schema={"type": "object", "properties": {"path": {"type": "string"}}, "required": ["path"], "additionalProperties": False})
+
+        self.register_intent("shutdown", self.shutdown_pc, PermissionTier.CONFIRM_REQUIRED,
+                            input_schema={"type": "object", "properties": {}})
+        self.register_intent("restart", self.restart_pc, PermissionTier.CONFIRM_REQUIRED,
+                            input_schema={"type": "object", "properties": {}})
+
+        self.register_intent("shell_isolated", self.shell_isolated, PermissionTier.ADMIN,
+                            input_schema={"type": "object", "properties": {"command": {"type": "string"}}, "required": ["command"], "additionalProperties": False})
+
+    def _get_app_whitelist(self):
+        return ["chrome", "notepad", "calculator", "vscode", "zoom", "spotify", "explorer", "cmd", "powershell", "taskmgr", "control", "winword", "excel", "powerpnt"]
+
+    def validate_params(self, intent, params):
+        # 2. Strict Parameter Validation
+        if 'app_name' in params:
+            app = sandbox.filter_app_name(params['app_name'])
+            # User Request: If app not found locally, we try web.
+            # So we must allow the intent to proceed to open_app even if not in the "known safe" whitelist.
+            params['app_name'] = app
+
+        if 'command' in params:
+            if not sandbox.validate_shell(params['command']):
+                return False, "Security Alert: Malicious shell pattern detected."
+
+        return True, "Valid."
+
+    def predict_impact(self, intent, params):
+        if intent == "close_app":
+            return f"Impact: Targeted termination of '{params.get('app_name')}' process."
+        if intent == "empty_trash":
+            return "Impact: Permanent deletion of all items in Recycle Bin."
+        return super().predict_impact(intent, params)
+
+    def _sanitize(self, text):
+        return re.sub(r'[^a-zA-Z0-9\s._-]', '', str(text)).strip()
+
+    def open_app(self, params):
+        app_name = params.get("app_name", "").lower()
+
+        # Tactical Aliases
+        aliases = {
+            "chrome": "chrome.exe",
+            "word": "winword.exe",
+            "excel": "excel.exe",
+            "powerpoint": "powerpnt.exe",
+            "task manager": "taskmgr.exe",
+            "control panel": "control.exe",
+            "cmd": "cmd.exe",
+            "powershell": "powershell.exe"
+        }
+
+        executable = aliases.get(app_name, app_name)
+        if not executable.endswith(".exe") and "." not in executable:
+             executable += ".exe"
+
+        # os.startfile is safer than os.system
         try:
-            # Strictly sanitize the app name to prevent command injection
-            safe_app = VedaSanitizer.normalize_app_name(app_name)
-            if not safe_app:
-                return "I couldn't identify the application you want to open."
-
-            # Basic common apps mapping
-            apps = {
-                "chrome": ["start", "chrome"],
-                "notepad": ["notepad.exe"],
-                "calculator": ["calc.exe"],
-                "settings": ["start", "ms-settings:"],
-                "explorer": ["explorer.exe"],
-                "paint": ["mspaint.exe"],
-                "cmd": ["start", "cmd.exe"],
-                "powershell": ["start", "powershell.exe"]
-            }
-
-            args = apps.get(safe_app.lower(), ["start", safe_app])
-            # Use shell=True for 'start' commands on Windows, but since we sanitized, it's safer
-            # Note: subprocess.Popen is generally better than os.system to avoid blocking
-            subprocess.Popen(args, shell=True)
-            return f"Opening {safe_app}"
+            os.startfile(executable)
+            return f"Opening {app_name}."
         except Exception as e:
-            return f"Failed to open {app_name}: {str(e)}"
+            # Fallback for common apps that might not be in PATH
+            try:
+                subprocess.Popen(executable, shell=False)
+                return f"Opening {app_name}."
+            except:
+                # User Request: If app not found, search web but do NOT open browser.
+                web_plugin = self.assistant.plugins.get_plugin("WebPlugin")
+                if web_plugin:
+                    intel = web_plugin.search({"query": f"detailed summary of the application {app_name}"})
+                    if intel and "Zero matches" not in intel:
+                         return f"Sir, I couldn't find '{app_name}' locally. My web intelligence reports:\n\n{intel}"
 
-    @staticmethod
-    def close_app(app_name):
-        """Closes an application by name safely."""
-        try:
-            safe_app = VedaSanitizer.normalize_app_name(app_name)
-            # Common app name normalization for taskkill
-            app_map = {
-                "chrome": "chrome",
-                "notepad": "notepad",
-                "calculator": "CalculatorApp",
-                "paint": "mspaint",
-                "explorer": "explorer"
-            }
-            im_name = app_map.get(safe_app.lower(), safe_app)
-            # Use taskkill safely
-            subprocess.run(["taskkill", "/f", "/im", f"{im_name}.exe"], check=False, capture_output=True)
-            return f"Closing {safe_app}"
-        except Exception as e:
-            return f"Failed to close {app_name}: {str(e)}"
+                return f"Sir, I couldn't find '{app_name}' locally, and tactical web intelligence provides no data on this application."
 
-    @staticmethod
-    def set_volume(level):
-        """Sets system volume (0-100)."""
-        if not WINDOWS_AUDIO:
-            return "Volume control is only available on Windows."
+    def close_app(self, params):
+        app_name = params.get("app_name", "")
+        # taskkill is safer than raw shell if we control args
+        subprocess.run(["taskkill", "/f", "/im", f"{app_name}.exe"], capture_output=True)
+        return f"Attempted to terminate {app_name}."
+
+    def set_volume(self, params):
+        level = params.get("level", 50)
         try:
+            pythoncom.CoInitialize()
             devices = AudioUtilities.GetSpeakers()
             interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
             volume = cast(interface, POINTER(IAudioEndpointVolume))
             volume.SetMasterVolumeLevelScalar(float(level) / 100, None)
-            return f"Volume set to {level} percent"
+            return f"Volume set to {level}%."
         except Exception as e:
-            return f"Failed to set volume: {str(e)}"
+            return f"Volume control failed: {e}"
+        finally:
+            try: pythoncom.CoUninitialize()
+            except: pass
 
-    @staticmethod
-    def set_brightness(level):
-        """Sets screen brightness (0-100)."""
-        if not WINDOWS_BRIGHTNESS:
-            return "Brightness control is only available on Windows."
+    def set_brightness(self, params):
+        if not sbc: return "Brightness control library missing or incompatible."
         try:
+            level = params.get("level", 50)
             sbc.set_brightness(int(level))
-            return f"Brightness set to {level} percent"
+            return f"Brightness set to {level}%."
         except Exception as e:
-            return f"Failed to set brightness: {str(e)}"
+            return f"Brightness control failed: {e}"
 
-    @staticmethod
-    def lock_pc():
-        """Locks the Windows PC."""
+    def lock_pc(self, params):
+        # Using subprocess for better control than os.system
+        subprocess.run(["rundll32.exe", "user32.dll,LockWorkStation"], capture_output=True)
+        return "System locked."
+
+    def system_sleep(self, params):
+        # Using subprocess with explicit args
+        subprocess.run(["rundll32.exe", "powrprof.dll,SetSuspendState", "0,1,0"], capture_output=True)
+        return "Suspending system."
+
+    def toggle_mute(self, params):
         try:
-            # Using rundll32.exe safely
-            subprocess.run(["rundll32.exe", "user32.dll,LockWorkStation"], check=True)
-            return "Locking the PC"
+            pythoncom.CoInitialize()
+            devices = AudioUtilities.GetSpeakers()
+            interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
+            volume = cast(interface, POINTER(IAudioEndpointVolume))
+            is_muted = volume.GetMute()
+            volume.SetMute(not is_muted, None)
+            return "Mute toggled: " + ("OFF" if is_muted else "ON")
         except Exception as e:
-            return f"Failed to lock PC: {str(e)}"
+            return f"Mute control failed: {e}"
+        finally:
+            try: pythoncom.CoUninitialize()
+            except: pass
 
-    @staticmethod
-    def screenshot():
-        """Takes a screenshot and saves it."""
+    def screenshot(self, params):
+        if not pyautogui: return "Screenshot capability restricted (pyautogui missing)."
+        save_dir = os.path.join(os.path.expanduser("~"), "Pictures")
+        os.makedirs(save_dir, exist_ok=True)
+        save_path = os.path.join(save_dir, f"Veda_Screenshot_{int(time.time())}.png")
+        pyautogui.screenshot(save_path)
+        return f"Screenshot saved to Pictures as Veda_Screenshot_{int(time.time())}.png"
+
+    def web_find(self, params):
+        import urllib.parse
+        query = params.get('query', '')
+        # Sanitize query to prevent argument injection in the browser command
+        safe_query = urllib.parse.quote(query)
+        webbrowser.open(f"https://www.google.com/search?q={safe_query}")
+        return "Searching..."
+
+    def empty_recycle_bin(self, params):
         try:
-            pic_dir = os.path.join(os.path.expanduser("~"), "Pictures")
-            if not os.path.exists(pic_dir):
-                os.makedirs(pic_dir)
-            path = os.path.join(pic_dir, f"Veda_Screenshot_{int(time.time())}.png")
-            pyautogui.screenshot(path)
-            return f"Screenshot saved to Pictures folder"
+            import winshell
+            winshell.recycle_bin().empty(confirm=False, show_progress=False, sound=True)
+            return "Recycle bin purged."
+        except ImportError:
+            return "Sir, winshell library is missing. I cannot purge the bin manually."
         except Exception as e:
-            return f"Failed to take screenshot: {str(e)}"
+            return f"Recycle bin purge failed: {e}"
 
-    @staticmethod
-    def find(query):
-        """Searches for files in the current user's folder (limited depth)."""
-        try:
-            user_home = os.path.expanduser("~")
-            results = []
-            target_dirs = ["Documents", "Desktop", "Downloads", "Pictures"]
-            for folder in target_dirs:
-                path = os.path.join(user_home, folder)
-                if not os.path.exists(path):
-                    continue
-                # Limit search depth to 2 to avoid GUI hang
-                for root, dirs, files in os.walk(path):
-                    depth = root[len(path):].count(os.sep)
-                    if depth > 2:
-                        continue
-                    for file in files:
-                        if query.lower() in file.lower():
-                            results.append(os.path.join(root, file))
-                        if len(results) >= 5: break
-                    if len(results) >= 5: break
-                if len(results) >= 5: break
+    def set_wallpaper(self, params):
+        path = sandbox.sanitize_path(params.get("path", ""))
+        if not path or not os.path.exists(path): return "Invalid wallpaper path."
 
-            if results:
-                res_str = "\n".join(results[:3])
-                if len(results) > 3:
-                    res_str += f"\n... and {len(results)-3} more."
-                return f"I found these files:\n{res_str}"
-            return f"I couldn't find any files matching '{query}'."
-        except Exception as e:
-            return f"Search failed: {str(e)}"
+        import ctypes
+        # SPI_SETDESKWALLPAPER = 20
+        ctypes.windll.user32.SystemParametersInfoW(20, 0, path, 3)
+        return "Wallpaper updated."
 
-    @staticmethod
-    def move(source, destination=None):
-        """Moves a file or folder safely."""
-        if not destination:
-             return "Please specify both the file you want to move and the destination."
-        try:
-            import shutil
-            # Ensure path safety
-            if not os.path.exists(source):
-                return f"Source file '{source}' does not exist."
-            shutil.move(source, destination)
-            return f"Moved '{source}' to '{destination}'"
-        except Exception as e:
-            return f"Failed to move: {str(e)}"
+    def shutdown_pc(self, params):
+        subprocess.run(["shutdown", "/s", "/t", "30"], capture_output=True)
+        return "System shutdown sequence initiated (30s delay)."
+
+    def restart_pc(self, params):
+        subprocess.run(["shutdown", "/r", "/t", "30"], capture_output=True)
+        return "System restart sequence initiated (30s delay)."
+
+    def shell_isolated(self, params):
+        from veda.utils.sandbox import shell
+        return shell.execute(params.get("command", "echo Veda Runtime Active"))
