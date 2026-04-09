@@ -1,37 +1,39 @@
-ollama
-edge-tts
-pyttsx3
-SpeechRecognition
-customtkinter
-pyautogui; sys_platform == 'win32'
-pycaw; sys_platform == 'win32'
-comtypes; sys_platform == 'win32'
-screen-brightness-control; sys_platform == 'win32'
-PyGetWindow; sys_platform == 'win32'
 Pillow
-requests
-beautifulsoup4
-wikipedia
+PyGetWindow; sys_platform == 'win32'
 PyPDF2
-psutil
-pywin32; sys_platform == 'win32'
-winrt-Windows.UI.Notifications; sys_platform == 'win32'
-winrt-Windows.Data.Xml.Dom; sys_platform == 'win32'
-winrt-Windows.Foundation; sys_platform == 'win32'
-win10toast; sys_platform == 'win32'
+SpeechRecognition
+beautifulsoup4
+comtypes; sys_platform == 'win32'
+customtkinter
 deep-translator
 duckduckgo-search
-pyaudio; sys_platform == 'win32'
-pygame
-pynput
-opencv-python
-pycryptodome
-wolframalpha
-python-docx
-pandas
-pytesseract
+edge-tts
+httpx
+jsonschema
 keyboard
 numpy
-jsonschema
-winshell; sys_platform == 'win32'
+ollama
 openai
+opencv-python
+pandas
+psutil
+pyaudio; sys_platform == 'win32'
+pyautogui; sys_platform == 'win32'
+pycaw; sys_platform == 'win32'
+pycryptodome
+pygame
+pynput
+pytesseract
+python-docx
+python-dotenv
+pyttsx3
+pywin32; sys_platform == 'win32'
+requests
+screen-brightness-control; sys_platform == 'win32'
+wikipedia
+win10toast; sys_platform == 'win32'
+winrt-Windows.Data.Xml.Dom; sys_platform == 'win32'
+winrt-Windows.Foundation; sys_platform == 'win32'
+winrt-Windows.UI.Notifications; sys_platform == 'win32'
+winshell; sys_platform == 'win32'
+wolframalpha

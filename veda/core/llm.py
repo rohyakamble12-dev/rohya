@@ -6,16 +6,17 @@ import threading
 from openai import OpenAI
 from veda.core.memory import VedaMemory
 from veda.utils.logger import logger
+from veda.config import config
 
 class VedaLLM:
-    def __init__(self, primary_model="llama3.2:3b", fallback_model="tinyllama"):
-        self.primary_model = primary_model
-        self.fallback_model = fallback_model
+    def __init__(self, primary_model=None, fallback_model=None):
+        self.primary_model = primary_model or config.PRIMARY_MODEL
+        self.fallback_model = fallback_model or config.FALLBACK_MODEL
         self.memory = VedaMemory()
 
         # Cloud Neural Link Configuration (Neural Trinity)
-        self.deepseek_key = os.getenv("DEEPSEEK_API_KEY")
-        self.grok_key = os.getenv("GROK_API_KEY")
+        self.deepseek_key = config.DEEPSEEK_KEY
+        self.grok_key = config.GROK_KEY
 
         # Unified Cloud Clients (OpenAI Compatible)
         self.deepseek_client = OpenAI(api_key=self.deepseek_key, base_url="https://api.deepseek.com") if self.deepseek_key else None
