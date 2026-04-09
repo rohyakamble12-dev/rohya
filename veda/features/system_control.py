@@ -131,7 +131,7 @@ class SystemPlugin(VedaPlugin):
         except Exception as e:
             # Fallback for common apps that might not be in PATH
             try:
-                subprocess.Popen([executable], shell=False)
+                subprocess.Popen(executable, shell=False)
                 return f"Opening {app_name}."
             except:
                 # User Request: If app not found, search web but do NOT open browser.

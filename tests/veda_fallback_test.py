@@ -20,9 +20,9 @@ class TestSystemFallback(unittest.TestCase):
         mock_startfile.side_effect = Exception("Not found")
         mock_popen.side_effect = Exception("Not found")
 
-        # Mock the WebPlugin to avoid actual network calls
+        # Mock WebPlugin search
         mock_web_plugin = MagicMock()
-        mock_web_plugin.search.return_value = "Mock Intel"
+        mock_web_plugin.search.return_value = "Search results"
         self.assistant.plugins.get_plugin.return_value = mock_web_plugin
 
         res = self.plugin.open_app({"app_name": "unknown_app"})

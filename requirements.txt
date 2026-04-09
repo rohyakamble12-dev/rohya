@@ -13,7 +13,6 @@ jsonschema
 keyboard
 numpy
 ollama
-openai
 opencv-python
 pandas
 psutil
@@ -25,7 +24,6 @@ pygame
 pynput
 pytesseract
 python-docx
-python-dotenv
 pyttsx3
 pywin32; sys_platform == 'win32'
 requests
@@ -35,5 +33,4 @@ win10toast; sys_platform == 'win32'
 winrt-Windows.Data.Xml.Dom; sys_platform == 'win32'
 winrt-Windows.Foundation; sys_platform == 'win32'
 winrt-Windows.UI.Notifications; sys_platform == 'win32'
-winshell; sys_platform == 'win32'
 wolframalpha

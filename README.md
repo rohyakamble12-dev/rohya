@@ -13,12 +13,6 @@ Veda has evolved into the ultimate Marvel-inspired AI digital partner. This **Ma
 ### 🏠 IOT & Smart Home Protocols
 - **Physical Environment Control**: Veda can now trigger IOT devices and smart home setups via customizable webhooks (IFTTT, Home Assistant).
 
-### 📰 Parallel World Briefing
-- **Global Intelligence**: Veda now aggregates live headlines from BBC, CNBC, NYT, and Al Jazeera simultaneously. Ask "What did I miss?" for a full brief.
-
-### 🗺️ World Monitor
-- **Visual Situational Awareness**: Direct tactical link to real-time global event dashboards via "World Monitor" command.
-
 ### 🚀 Marvel Protocols (Easter Eggs)
 - **House Party Protocol**: Ready for a break? This protocol sets the mood by launching fun apps and playing music.
 - **Clean Slate Protocol**: Instant shutdown of all non-essential work applications and system muting.
@@ -60,9 +54,9 @@ Veda remains 100% local. Your webcam data, screen captures, and macro recordings
 
 | Category | Commands |
 | :--- | :--- |
-| **System** | `Open [App]`, `Close [App]`, `Set Volume [0-100]`, `System Health`, `Screenshot` | , `World Monitor`
+| **System** | `Open [App]`, `Close [App]`, `Set Volume [0-100]`, `System Health`, `Screenshot` |
 | **Media** | `Play [Song Name]`, `Pause`, `Next`, `Translate to [Language]` |
-| **Intel** | `Search for [Topic]`, `Deep research on [Topic]`, `Summarize URL [Link]`, `Calculate [Math]` |, `World Briefing`, `Explain Code`, `Format JSON`
+| **Intel** | `Search for [Topic]`, `Deep research on [Topic]`, `Summarize URL [Link]`, `Calculate [Math]` |
 | **Life** | `Add to todo [Task]`, `Show todo list`, `Start Pomodoro [Mins]`, `Weather in [City]` |
 | **Sensors** | `What am I looking at?`, `Look through the camera` |
 | **Special** | `Run protocol [Name]`, `Focus Mode`, `Gaming Mode`, `Test sound` |

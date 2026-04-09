@@ -2,7 +2,7 @@
     "global_policy": "STRICT",
     "rbac_model": {
         "guest": ["help", "time", "date", "weather", "describe_modes", "world_briefing"],
-        "operator": ["help", "time", "date", "weather", "open_app", "close_app", "web_search", "sys_health", "translate", "calculate", "describe_modes", "set_mode", "set_volume", "set_brightness", "mute_toggle", "screenshot", "lock_pc", "sleep", "empty_trash", "focus_mode", "stealth_mode", "gaming_mode", "normal_mode", "house_party", "todo_add", "todo_list", "set_timer", "shutdown", "restart", "world_briefing", "world_monitor", "format_json", "word_count", "fetch_url", "summarize", "explain_code"],
+        "operator": ["help", "time", "date", "weather", "open_app", "close_app", "web_search", "sys_health", "translate", "calculate", "describe_modes", "set_mode", "set_volume", "set_brightness", "mute_toggle", "screenshot", "lock_pc", "sleep", "empty_trash", "focus_mode", "stealth_mode", "gaming_mode", "normal_mode", "house_party", "todo_add", "todo_list", "set_timer", "shutdown", "restart", "world_briefing", "world_monitor"],
         "admin": ["*"]
     },
     "default_role": "guest",
@@ -10,5 +10,5 @@
     "blocked_intents": ["registry_edit", "direct_memory_wipe"],
     "restricted_sectors": ["C:\\Windows", "/etc", "/var", "/root"],
     "domain_whitelist": ["google.com", "wikipedia.org", "github.com", "microsoft.com", "duckduckgo.com"],
-    "version": "1.2.0"
+    "version": "1.1.0"
 }

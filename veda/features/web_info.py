@@ -3,7 +3,6 @@ import httpx
 import xml.etree.ElementTree as ET
 import asyncio
 import re
-import webbrowser
 from duckduckgo_search import DDGS
 from veda.features.base import VedaPlugin, PermissionTier
 from veda.utils.throttling import limiter
@@ -22,9 +21,6 @@ class WebPlugin(VedaPlugin):
         self.register_intent("world_briefing", self.get_world_briefing, PermissionTier.SAFE,
                             input_schema={"type": "object", "properties": {}, "additionalProperties": False})
 
-        self.register_intent("fetch_url", self.fetch_url, PermissionTier.SAFE,
-                            input_schema={"type": "object", "properties": {"url": {"type": "string"}}, "required": ["url"], "additionalProperties": False})
-
         self.register_intent("stock_price", self.get_market_info, PermissionTier.SAFE,
                             input_schema={"type": "object", "properties": {"symbol": {"type": "string", "maxLength": 10}}, "required": ["symbol"], "additionalProperties": False})
 
@@ -37,6 +33,7 @@ class WebPlugin(VedaPlugin):
         if not query: return "Search topic required."
         try:
             with DDGS() as ddgs:
+                # Add strict timeout via proxy or library if possible, otherwise rely on requests if it uses it
                 results = list(ddgs.text(query, max_results=3))
                 if results: return results[0]['body']
                 return "Zero matches."
@@ -47,10 +44,14 @@ class WebPlugin(VedaPlugin):
         from veda.utils.network import network
         city = params.get("city", "auto")
         url = f"https://wttr.in/{city}?format=%C+%t"
+
+        # Security: Use proxy for weather ingress
         res_text = network.safe_get(url, timeout=5)
         if "Security Violation" in res_text: return res_text
+
         if "Network Error" in res_text:
             return "Orbital sensors failing to report weather."
+
         return f"Atmospheric status ({city}): {res_text}"
 
     def get_news(self, params):
@@ -93,28 +94,23 @@ class WebPlugin(VedaPlugin):
                 return "\n".join(flat[:10]) if flat else "Global news grid unresponsive."
 
         try:
-            new_loop = asyncio.new_event_loop()
-            return new_loop.run_until_complete(_gather())
+            loop = asyncio.new_event_loop()
+            return loop.run_until_complete(_gather())
         except Exception as e:
             return f"Intel failure: {e}"
 
     def get_market_info(self, params):
         symbol = params.get("symbol") or params.get("coin") or "market"
         try:
+             # Use a more direct API for finance to be functional
              from veda.utils.network import network
              if params.get("coin"):
                  url = f"https://api.coingecko.com/api/v3/simple/price?ids={symbol.lower()}&vs_currencies=usd"
                  data = network.safe_get_json(url)
                  if data and symbol.lower() in data:
                      return f"Current value for {symbol}: ${data[symbol.lower()]['usd']}"
-             return self.search({"query": f"current price of {symbol}"})
+             else:
+                 # Standard stock via search for simplicity as we lack yfinance in requirements
+                 return self.search({"query": f"current price of {symbol}"})
         except:
              return self.search({"query": f"current price of {symbol}"})
-
-    def fetch_url(self, params):
-        """Strategic Ingress: Fetches raw content from a URL."""
-        from veda.utils.network import network
-        url = params.get("url")
-        if not url: return "URL required."
-        content = network.safe_get(url, timeout=10)
-        return content[:4000]

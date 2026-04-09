@@ -1,6 +1,5 @@
 import psutil
 import socket
-import platform
 from veda.features.base import VedaPlugin, PermissionTier
 
 class DiagnosticsPlugin(VedaPlugin):
@@ -24,14 +23,7 @@ class DiagnosticsPlugin(VedaPlugin):
 
         cpu = psutil.cpu_percent()
         ram = psutil.virtual_memory().percent
-
-        system_info = (
-            f"OS: {platform.system()} {platform.release()} | "
-            f"Machine: {platform.machine()} | "
-            f"Python: {platform.python_version()}"
-        )
-
-        return f"Armor status: CPU {cpu}% | RAM {ram}% | {system_info}{issues}."
+        return f"Armor status: CPU {cpu}% | RAM {ram}%{issues}."
 
     def get_network_info(self, params):
         return f"Network: {socket.gethostname()} | IP: {socket.gethostbyname(socket.gethostname())}"

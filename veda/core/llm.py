@@ -6,17 +6,16 @@ import threading
 from openai import OpenAI
 from veda.core.memory import VedaMemory
 from veda.utils.logger import logger
-from veda.config import config
 
 class VedaLLM:
-    def __init__(self, primary_model=None, fallback_model=None):
-        self.primary_model = primary_model or config.PRIMARY_MODEL
-        self.fallback_model = fallback_model or config.FALLBACK_MODEL
+    def __init__(self, primary_model="qwen2.5:3b", fallback_model="tinyllama"):
+        self.primary_model = primary_model
+        self.fallback_model = fallback_model
         self.memory = VedaMemory()
 
         # Cloud Neural Link Configuration (Neural Trinity)
-        self.deepseek_key = config.DEEPSEEK_KEY
-        self.grok_key = config.GROK_KEY
+        self.deepseek_key = os.getenv("DEEPSEEK_API_KEY")
+        self.grok_key = os.getenv("GROK_API_KEY")
 
         # Unified Cloud Clients (OpenAI Compatible)
         self.deepseek_client = OpenAI(api_key=self.deepseek_key, base_url="https://api.deepseek.com") if self.deepseek_key else None
@@ -28,11 +27,9 @@ class VedaLLM:
 
         self.system_prompt = (
             "You are Veda, a sophisticated AI partner inspired by JARVIS and FRIDAY. "
-            "You are calm, composed, and always informed. Speak like a trusted aide — precise, warm, and occasionally dry. "
             "Refer to the user as 'Sir'. No markdown or emojis. Output the final tactical result only. "
-            "Use natural spoken language: contractions, light pauses, no stiff phrasing. "
             "Direct Action Policy: Prioritize actions over suggestions. Do not suggest doing things; just do them if a tool is available. "
-            "Conversational Awareness: Respond naturally as a helpful partner. Hit the biggest points only. No rambling."
+            "Conversational Awareness: If the user is just talking or asking for information that doesn't require a tool, respond naturally as a helpful partner."
         )
         self.messages = [{"role": "system", "content": self.system_prompt}]
 
