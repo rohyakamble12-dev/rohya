@@ -243,19 +243,19 @@ class VedaLLM:
 
         # 3. System Controls
         if "mute" in ui:
-             return {"intent": "mute_toggle", "params": {}, "confidence": get_confidence("mute")}
+             return {"intent": "mute_toggle", "params": {}, "confidence": get_confidence("mute"), "survival": True}
 
         if "volume" in ui:
             match = re.search(r"(?:set|change|put|volume)\D*(\d+)", ui)
-            if match: return {"intent": "set_volume", "params": {"level": int(match.group(1))}, "confidence": 1.0}
+            if match: return {"intent": "set_volume", "params": {"level": int(match.group(1))}, "confidence": 1.0, "survival": True}
             if "up" in ui or "increase" in ui:
-                 return {"intent": "set_volume", "params": {"level": 70}, "confidence": 0.9}
+                 return {"intent": "set_volume", "params": {"level": 70}, "confidence": 0.9, "survival": True}
             if "down" in ui or "decrease" in ui:
-                 return {"intent": "set_volume", "params": {"level": 30}, "confidence": 0.9}
+                 return {"intent": "set_volume", "params": {"level": 30}, "confidence": 0.9, "survival": True}
 
         if "brightness" in ui:
             match = re.search(r"(?:set|change|put|brightness)\D*(\d+)", ui)
-            if match: return {"intent": "set_brightness", "params": {"level": int(match.group(1))}, "confidence": 1.0}
+            if match: return {"intent": "set_brightness", "params": {"level": int(match.group(1))}, "confidence": 1.0, "survival": True}
 
         # 4. App Management
         if any(word in ui for word in ["open", "launch", "start"]):
@@ -263,17 +263,17 @@ class VedaLLM:
             match = re.search(r"(?:open|launch|start)\s+(?:the\s+)?([a-zA-Z0-9.\-_ ]+?)(?:\s+and\s+|\s+then\s+|\.|\,|$)", ui)
             if match:
                  app = match.group(1).strip()
-                 return {"intent": "open_app", "params": {"app_name": app}, "confidence": get_confidence(app)}
+                 return {"intent": "open_app", "params": {"app_name": app}, "confidence": get_confidence(app), "survival": True}
 
         if any(word in ui for word in ["close", "exit", "terminate", "stop"]):
             match = re.search(r"(?:close|exit|terminate|stop)\s+(?:the\s+)?([a-zA-Z0-9.\-_ ]+?)(?:\s+and\s+|\s+then\s+|\.|\,|$)", ui)
             if match:
                 app = match.group(1).strip()
-                return {"intent": "close_app", "params": {"app_name": app}, "confidence": get_confidence(app)}
+                return {"intent": "close_app", "params": {"app_name": app}, "confidence": get_confidence(app), "survival": True}
 
         # 5. Modes
         if any(word in ui for word in ["describe modes", "what modes", "list modes", "modes available"]):
-            return {"intent": "describe_modes", "params": {}, "confidence": 1.0}
+            return {"intent": "describe_modes", "params": {}, "confidence": 1.0, "survival": True}
 
         mode_match = re.search(r"(?:set|engage|switch to|change to|go to|activate|switch|turn on)\s+(?:mode\s+)?(\w+)", ui)
         if mode_match:
@@ -281,58 +281,58 @@ class VedaLLM:
             # If the extracted word is a known mode, boost confidence to 1.0
             known_modes = ["focus", "stealth", "gaming", "normal", "clean slate", "house party"]
             if mode_val in known_modes:
-                 return {"intent": "set_mode", "params": {"mode": mode_val}, "confidence": 1.0}
-            return {"intent": "set_mode", "params": {"mode": mode_val}, "confidence": 0.9}
+                 return {"intent": "set_mode", "params": {"mode": mode_val}, "confidence": 1.0, "survival": True}
+            return {"intent": "set_mode", "params": {"mode": mode_val}, "confidence": 0.9, "survival": True}
 
-        if "focus mode" in ui: return {"intent": "focus_mode", "params": {}, "confidence": 1.0}
-        if "stealth mode" in ui: return {"intent": "stealth_mode", "params": {}, "confidence": 1.0}
-        if "shutdown" in ui: return {"intent": "shutdown", "params": {}, "confidence": 1.0}
-        if "restart" in ui: return {"intent": "restart", "params": {}, "confidence": 1.0}
-        if "screenshot" in ui or "capture" in ui: return {"intent": "screenshot", "params": {}, "confidence": 1.0}
-        if "lock" in ui: return {"intent": "lock_pc", "params": {}, "confidence": 1.0}
-        if "sleep" in ui: return {"intent": "sleep", "params": {}, "confidence": 1.0}
-        if "trash" in ui or "recycle" in ui: return {"intent": "empty_trash", "params": {}, "confidence": 1.0}
-        if "gaming" in ui: return {"intent": "gaming_mode", "params": {}, "confidence": 1.0}
-        if "normal" in ui: return {"intent": "normal_mode", "params": {}, "confidence": 1.0}
-        if "clean slate" in ui: return {"intent": "clean_slate", "params": {}, "confidence": 1.0}
+        if "focus mode" in ui: return {"intent": "focus_mode", "params": {}, "confidence": 1.0, "survival": True}
+        if "stealth mode" in ui: return {"intent": "stealth_mode", "params": {}, "confidence": 1.0, "survival": True}
+        if "shutdown" in ui: return {"intent": "shutdown", "params": {}, "confidence": 1.0, "survival": True}
+        if "restart" in ui: return {"intent": "restart", "params": {}, "confidence": 1.0, "survival": True}
+        if "screenshot" in ui or "capture" in ui: return {"intent": "screenshot", "params": {}, "confidence": 1.0, "survival": True}
+        if "lock" in ui: return {"intent": "lock_pc", "params": {}, "confidence": 1.0, "survival": True}
+        if "sleep" in ui: return {"intent": "sleep", "params": {}, "confidence": 1.0, "survival": True}
+        if "trash" in ui or "recycle" in ui: return {"intent": "empty_trash", "params": {}, "confidence": 1.0, "survival": True}
+        if "gaming" in ui: return {"intent": "gaming_mode", "params": {}, "confidence": 1.0, "survival": True}
+        if "normal" in ui: return {"intent": "normal_mode", "params": {}, "confidence": 1.0, "survival": True}
+        if "clean slate" in ui: return {"intent": "clean_slate", "params": {}, "confidence": 1.0, "survival": True}
 
         # 6. Life & Tools
         if "timer" in ui:
              match = re.search(r"(\d+)\s*(?:min|minute)", ui)
-             if match: return {"intent": "set_timer", "params": {"minutes": int(match.group(1))}, "confidence": 1.0}
+             if match: return {"intent": "set_timer", "params": {"minutes": int(match.group(1))}, "confidence": 1.0, "survival": True}
 
         if "todo" in ui or "task" in ui:
-             if any(w in ui for w in ["list", "show", "get"]): return {"intent": "todo_list", "params": {}, "confidence": 1.0}
+             if any(w in ui for w in ["list", "show", "get"]): return {"intent": "todo_list", "params": {}, "confidence": 1.0, "survival": True}
              match = re.search(r"(?:add|put|log|create)\s+(.*?)(?:\s+to\s+tasks?|\s+to\s+todo|$)", ui)
              if match and match.group(1):
-                  return {"intent": "todo_add", "params": {"task": match.group(1).strip()}, "confidence": 1.0}
+                  return {"intent": "todo_add", "params": {"task": match.group(1).strip()}, "confidence": 1.0, "survival": True}
 
         # 7. Search
         if any(word in ui for word in ["search", "find", "google", "look up", "look up"]):
              match = re.search(r"(?:search|find|google|look up|look\s+up)\s+(?:for\s+)?(.*)", ui)
              if match:
                  q = match.group(1).strip()
-                 return {"intent": "web_search", "params": {"query": q}, "confidence": 0.9}
+                 return {"intent": "web_search", "params": {"query": q}, "confidence": 0.9, "survival": True}
 
         # 8. Intel
-        if "time" in ui and "date" not in ui: return {"intent": "time", "params": {}, "confidence": 1.0}
-        if "date" in ui or "today" in ui: return {"intent": "date", "params": {}, "confidence": 1.0}
+        if "time" in ui and "date" not in ui: return {"intent": "time", "params": {}, "confidence": 1.0, "survival": True}
+        if "date" in ui or "today" in ui: return {"intent": "date", "params": {}, "confidence": 1.0, "survival": True}
         if "weather" in ui:
              match = re.search(r"weather\s+(?:in|for|at)\s+([\w\s]+)", ui)
              city = match.group(1).strip() if match else "auto"
-             return {"intent": "weather", "params": {"city": city}, "confidence": 1.0}
+             return {"intent": "weather", "params": {"city": city}, "confidence": 1.0, "survival": True}
 
         # 5. Common Conversational Instant-Replies
         if any(word in ui for word in ["hello", "hi ", "greetings", "hey veda"]):
-             return {"intent": "chat", "params": {"response": "Hello, Sir. Ready for your command."}, "confidence": 1.0}
+             return {"intent": "chat", "params": {"response": "Hello, Sir. Ready for your command."}, "confidence": 1.0, "survival": True}
         if "how are you" in ui:
-             return {"intent": "chat", "params": {"response": "All systems nominal, Sir. Operating at peak performance."}, "confidence": 1.0}
+             return {"intent": "chat", "params": {"response": "All systems nominal, Sir. Operating at peak performance."}, "confidence": 1.0, "survival": True}
         if "who are you" in ui or "your name" in ui:
-             return {"intent": "chat", "params": {"response": "I am Veda, your personal AI assistant. Inspired by JARVIS and FRIDAY, built for absolute sovereign performance."}, "confidence": 1.0}
+             return {"intent": "chat", "params": {"response": "I am Veda, your personal AI assistant. Inspired by JARVIS and FRIDAY, built for absolute sovereign performance."}, "confidence": 1.0, "survival": True}
         if "status" in ui or "system report" in ui or "health" in ui:
-             return {"intent": "sys_health", "params": {}, "confidence": 1.0}
+             return {"intent": "sys_health", "params": {}, "confidence": 1.0, "survival": True}
 
-        return {"intent": "none", "params": {}}
+        return {"intent": "none", "params": {}, "survival": True}
 
     def embed_text(self, text):
         try: return ollama.embeddings(model=self.primary_model, prompt=text)['embedding']

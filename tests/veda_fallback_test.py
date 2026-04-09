@@ -13,20 +13,24 @@ class TestSystemFallback(unittest.TestCase):
         self.assistant = MagicMock()
         self.plugin = SystemPlugin(self.assistant)
 
-    @patch('os.startfile')
+    @patch('os.startfile', create=True)
     @patch('subprocess.Popen')
-    @patch('webbrowser.open')
-    def test_open_app_fallback(self, mock_web, mock_popen, mock_startfile):
+    def test_open_app_fallback(self, mock_popen, mock_startfile):
         # Simulate app not found
         mock_startfile.side_effect = Exception("Not found")
         mock_popen.side_effect = Exception("Not found")
+
+        # Mock the WebPlugin to avoid actual network calls
+        mock_web_plugin = MagicMock()
+        mock_web_plugin.search.return_value = "Mock Intel"
+        self.assistant.plugins.get_plugin.return_value = mock_web_plugin
 
         res = self.plugin.open_app({"app_name": "unknown_app"})
 
         # Verify fallback message
         self.assertIn("Initiating web search sequence", res)
-        # Verify web search was triggered
-        mock_web.assert_called()
+        # Verify web search plugin was triggered
+        mock_web_plugin.search.assert_called()
 
 if __name__ == "__main__":
     unittest.main()

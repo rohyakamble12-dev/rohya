@@ -119,12 +119,16 @@ class SystemPlugin(VedaPlugin):
 
         # os.startfile is safer than os.system
         try:
-            os.startfile(executable)
-            return f"Opening {app_name}."
+            if hasattr(os, 'startfile'):
+                os.startfile(executable)
+                return f"Opening {app_name}."
+            else:
+                subprocess.Popen([executable], shell=False)
+                return f"Opening {app_name}."
         except Exception as e:
             # Fallback for common apps that might not be in PATH
             try:
-                subprocess.Popen(executable, shell=False)
+                subprocess.Popen([executable], shell=False)
                 return f"Opening {app_name}."
             except:
                 # User Request: If app not found, search web but do NOT open browser.
@@ -132,7 +136,7 @@ class SystemPlugin(VedaPlugin):
                 if web_plugin:
                     intel = web_plugin.search({"query": f"detailed summary of the application {app_name}"})
                     if intel and "Zero matches" not in intel:
-                         return f"Sir, I couldn't find '{app_name}' locally. My web intelligence reports:\n\n{intel}"
+                         return f"Sir, I couldn't find '{app_name}' locally. Initiating web search sequence. My web intelligence reports:\n\n{intel}"
 
                 return f"Sir, I couldn't find '{app_name}' locally, and tactical web intelligence provides no data on this application."
 
