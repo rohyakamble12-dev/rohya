@@ -150,6 +150,93 @@ class SystemControl:
             return f"Search failed: {str(e)}"
 
     @staticmethod
+    def clean_slate():
+        """Mutes volume and forcefully closes common productivity apps."""
+        try:
+            # Mute volume
+            if WINDOWS_AUDIO:
+                try:
+                    devices = AudioUtilities.GetSpeakers()
+                    interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
+                    volume = cast(interface, POINTER(IAudioEndpointVolume))
+                    volume.SetMute(1, None)
+                except Exception:
+                    pass
+
+            # Apps to kill
+            apps_to_kill = ["winword.exe", "excel.exe", "powerpnt.exe", "msedge.exe", "teams.exe", "outlook.exe"]
+            killed = 0
+            for app in apps_to_kill:
+                res = subprocess.run(["taskkill", "/f", "/im", app], check=False, capture_output=True)
+                if res.returncode == 0:
+                    killed += 1
+
+            return "Clean slate protocol engaged. System muted and productivity apps closed."
+        except Exception as e:
+            return f"Failed to engage clean slate protocol: {str(e)}"
+
+    @staticmethod
+    def system_health():
+        """Returns diagnostic information using psutil."""
+        try:
+            import psutil
+            import urllib.request
+            import cv2
+
+            # CPU and RAM
+            cpu_usage = psutil.cpu_percent(interval=0.5)
+            ram = psutil.virtual_memory()
+            ram_usage = ram.percent
+
+            # Internet check
+            try:
+                urllib.request.urlopen("http://1.1.1.1", timeout=2)
+                internet_status = "Online"
+            except Exception:
+                internet_status = "Offline"
+
+            # Webcam check
+            try:
+                cap = cv2.VideoCapture(0)
+                if cap is None or not cap.isOpened():
+                    webcam_status = "Unavailable"
+                else:
+                    webcam_status = "Online"
+                if cap is not None:
+                    cap.release()
+            except Exception:
+                webcam_status = "Error"
+
+            report = (
+                f"Mark 42 Diagnostic Report:\n"
+                f"CPU Usage: {cpu_usage}%\n"
+                f"RAM Usage: {ram_usage}%\n"
+                f"Network Status: {internet_status}\n"
+                f"Optical Sensor: {webcam_status}"
+            )
+            return report
+        except Exception as e:
+            return f"Failed to run diagnostics: {str(e)}"
+
+    @staticmethod
+    def media_control(action):
+        """Controls media playback."""
+        try:
+            action = action.lower()
+            if action == "play" or action == "pause":
+                pyautogui.press('playpause')
+                return "Toggled media playback."
+            elif action == "next":
+                pyautogui.press('nexttrack')
+                return "Skipping to next track."
+            elif action == "previous":
+                pyautogui.press('prevtrack')
+                return "Going to previous track."
+            return "Unknown media action."
+        except Exception as e:
+            return f"Failed to control media: {str(e)}"
+
+    @staticmethod
     def move(source, destination=None):
         """Moves a file or folder safely."""
         if not destination:

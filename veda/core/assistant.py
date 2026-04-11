@@ -8,6 +8,9 @@ from veda.features.web_info import WebInfo
 from veda.features.tools import VedaTools
 from veda.features.tasks import TaskManager
 from veda.features.modes import ModeManager
+from veda.features.vision import VisionSensor
+from veda.features.computation import ComputationEngine
+from veda.features.iot import IOTController
 
 class VedaAssistant:
     def __init__(self, gui):
@@ -105,6 +108,27 @@ class VedaAssistant:
         elif intent == "set_mode":
             mode = params.get("mode", cleaned_input)
             response = self.modes.set_mode(mode)
+            action_taken = True
+        elif intent == "calculate":
+            query = params.get("query", cleaned_input)
+            response = ComputationEngine.calculate(query)
+            action_taken = True
+        elif intent == "look_camera":
+            response = VisionSensor.analyze_scene()
+            action_taken = True
+        elif intent == "trigger_iot":
+            response = IOTController.trigger_webhook()
+            action_taken = True
+        elif intent == "pomodoro":
+            minutes = params.get("minutes", 25)
+            response = self.tools.start_pomodoro(minutes)
+            action_taken = True
+        elif intent == "system_health":
+            response = self.system.system_health()
+            action_taken = True
+        elif intent == "media_control":
+            action = params.get("action", "play")
+            response = self.system.media_control(action)
             action_taken = True
 
         # 5. If no specific action or we want a conversational response

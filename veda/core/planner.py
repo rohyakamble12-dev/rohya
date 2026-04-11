@@ -16,7 +16,7 @@ class TacticalFastPath:
             "open_app": [
                 r"open ([\w\s.-]+)",
                 r"launch ([\w\s.-]+)",
-                r"start ([\w\s.-]+)"
+                r"start (?!pomodoro)([\w\s.-]+)"
             ],
             "close_app": [
                 r"close ([\w\s.-]+)",
@@ -67,6 +67,34 @@ class TacticalFastPath:
             "weather": [
                 r"weather in ([\w\s]+)",
                 r"weather for ([\w\s]+)"
+            ],
+            "calculate": [
+                r"calculate (.*)",
+                r"convert (.*)",
+                r"math (.*)"
+            ],
+            "look_camera": [
+                r"look through the camera",
+                r"what am i looking at"
+            ],
+            "trigger_iot": [
+                r"trigger iot",
+                r"trigger smart home"
+            ],
+            "pomodoro": [
+                r"start pomodoro (?:for )?(\d+) (?:mins|minutes)",
+                r"pomodoro (\d+)"
+            ],
+            "system_health": [
+                r"system health",
+                r"mark 42 status",
+                r"diagnostic report"
+            ],
+            "media_control": [
+                r"play (?!.*song name)(.*)", # match 'play song' but not literal prompt cheat sheet
+                r"pause",
+                r"next",
+                r"previous"
             ]
         }
 
@@ -94,6 +122,21 @@ class TacticalFastPath:
                         params["mode"] = match.group(1).strip()
                     elif intent == "weather":
                         params["city"] = match.group(1).strip()
+                    elif intent == "calculate":
+                        params["query"] = match.group(1).strip()
+                    elif intent == "pomodoro":
+                        params["minutes"] = match.group(1).strip()
+                    elif intent == "media_control":
+                        if "play" in text and match.lastindex and match.lastindex >= 1:
+                            # if it matches play (something), we might want to just start playing or open the song.
+                            # For simplicity we just pass 'play' as action
+                            params["action"] = "play"
+                        elif "pause" in text:
+                            params["action"] = "pause"
+                        elif "next" in text:
+                            params["action"] = "next"
+                        elif "previous" in text:
+                            params["action"] = "previous"
 
                     return {"intent": intent, "params": params, "confidence": 1.0}
 
