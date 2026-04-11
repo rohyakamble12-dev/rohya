@@ -28,6 +28,11 @@ class TacticalFastPath:
                 r"search for ([\w\s.-]+)",
                 r"where is ([\w\s.-]+)"
             ],
+            "deep_research": [
+                r"deep research on (.*)",
+                r"research (.*)",
+                r"tell me everything about (.*)"
+            ],
             "move": [
                 r"move ([\w\s./\\]+) to ([\w\s./\\]+)"
             ],
@@ -113,6 +118,8 @@ class TacticalFastPath:
                         params["app_name"] = match.group(1).strip()
                     elif intent == "find":
                         params["query"] = match.group(1).strip()
+                    elif intent == "deep_research":
+                        params["topic"] = match.group(1).strip()
                     elif intent == "move":
                         params["source"] = match.group(1).strip()
                         params["destination"] = match.group(2).strip()

@@ -69,6 +69,10 @@ class VedaAssistant:
             query = params.get("query", cleaned_input)
             response = self.web.search(query)
             action_taken = True
+        elif intent == "deep_research":
+            topic = params.get("topic", cleaned_input)
+            response = self.web.deep_research(topic)
+            action_taken = True
         elif intent == "weather":
             city = params.get("city", "auto")
             response = self.web.get_weather(city)
