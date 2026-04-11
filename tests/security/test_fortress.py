@@ -12,7 +12,7 @@ def test_sanitization():
 def test_context_scrubbing():
     # Test PII redaction
     raw = "My secret password is 12345"
-    scrubbed = governance.scrub_context(raw)
+    scrubbed = governance.scrub_output(raw)
     assert "[REDACTED]" in scrubbed
     assert "password" not in scrubbed.lower()
 
