@@ -29,6 +29,26 @@ class WebInfo:
             return f"Weather check failed: {str(e)}"
 
     @staticmethod
+    def deep_research(topic):
+        """Performs deep research using Wikipedia."""
+        try:
+            import wikipedia
+            # Set language to english
+            wikipedia.set_lang("en")
+
+            # Force auto_suggest=False to prevent strange typos from the library
+            summary = wikipedia.summary(topic, sentences=3, auto_suggest=False)
+            return f"Here is what I found on {topic}:\n{summary}"
+        except wikipedia.exceptions.DisambiguationError as e:
+            # Handle ambiguous queries
+            options = ", ".join(e.options[:3])
+            return f"{topic} is too broad. Did you mean: {options}?"
+        except wikipedia.exceptions.PageError:
+            return f"I couldn't find any detailed Wikipedia articles on {topic}."
+        except Exception as e:
+            return f"Research failed: {str(e)}"
+
+    @staticmethod
     def get_news():
         """Gets top news headlines."""
         try:

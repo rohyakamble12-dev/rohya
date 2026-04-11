@@ -7,7 +7,7 @@ import os
 import tempfile
 
 class VedaVoice:
-    def __init__(self, online_voice="en-US-AvaNeural"):
+    def __init__(self, online_voice="en-IE-EmilyNeural"):
         self.online_voice = online_voice
         self.offline_engine = pyttsx3.init()
         self.setup_offline_voice()
