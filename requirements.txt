@@ -4,21 +4,23 @@ pyttsx3
 SpeechRecognition
 customtkinter
 pyautogui
-pycaw
-comtypes
+pycaw ; sys_platform == 'win32'
+comtypes ; sys_platform == 'win32'
 screen-brightness-control
-PyGetWindow
+PyGetWindow ; sys_platform == 'win32'
 Pillow
 requests
+httpx
 beautifulsoup4
 wikipedia
 PyPDF2
 psutil
-pywin32
-winrt-Windows.UI.Notifications
-winrt-Windows.Data.Xml.Dom
-winrt-Windows.Foundation
-win10toast
+pywin32 ; sys_platform == 'win32'
+winshell ; sys_platform == 'win32'
+winrt-Windows.UI.Notifications ; sys_platform == 'win32'
+winrt-Windows.Data.Xml.Dom ; sys_platform == 'win32'
+winrt-Windows.Foundation ; sys_platform == 'win32'
+win10toast ; sys_platform == 'win32'
 deep-translator
 duckduckgo-search
 pyaudio

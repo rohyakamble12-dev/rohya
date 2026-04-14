@@ -99,5 +99,10 @@ class VedaGovernance:
     def scrub_output(self, result):
         return privacy.scrub(str(result))
 
+    def scrub_context(self, context_list):
+        """Mandatory sanitization for all LLM context strings."""
+        if not context_list: return []
+        return [privacy.scrub(str(item)) for item in context_list]
+
 # Global instance for easy access in features
 governance = VedaGovernance()

@@ -1,4 +1,5 @@
 import requests
+import httpx
 from bs4 import BeautifulSoup
 from veda.features.base import VedaPlugin, PermissionTier
 from veda.core.governance import governance
@@ -7,6 +8,9 @@ class ScraperPlugin(VedaPlugin):
     def setup(self):
         self.register_intent("ingest_web", self.ingest_url, PermissionTier.SAFE,
                             permissions=["web_access"],
+                            input_schema={"type": "object", "properties": {"url": {"type": "string"}}, "required": ["url"], "additionalProperties": False})
+
+        self.register_intent("fetch_url_raw", self.fetch_raw, PermissionTier.SAFE,
                             input_schema={"type": "object", "properties": {"url": {"type": "string"}}, "required": ["url"], "additionalProperties": False})
 
     def validate_params(self, intent, params):
@@ -36,3 +40,15 @@ class ScraperPlugin(VedaPlugin):
             return clean_text[:4000]
         except Exception as e:
             return f"Ingestion Failure: {e}"
+
+    def fetch_raw(self, params):
+        """Tactical Ingress of raw URL content."""
+        import httpx
+        url = params.get("url")
+        try:
+            with httpx.Client(follow_redirects=True, timeout=10) as client:
+                response = client.get(url)
+                response.raise_for_status()
+                return response.text[:4000]
+        except Exception as e:
+            return f"Raw Fetch Failure: {e}"

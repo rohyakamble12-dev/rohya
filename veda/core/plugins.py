@@ -12,28 +12,44 @@ import sys
 PLUGIN_REGISTRY = {}
 
 def discover_and_load():
-    """Isolated discovery: Allows child processes to autonomously map tactical modules."""
+    """Recursive Tactical Discovery: Maps feature modules across nested directories."""
     global PLUGIN_REGISTRY
     plugin_dir = os.path.join(os.path.dirname(__file__), "..", "features")
     if not os.path.exists(plugin_dir):
         return
 
-    for filename in os.listdir(plugin_dir):
-        if filename.endswith(".py") and not filename.startswith("__"):
-            module_name = f"veda.features.{filename[:-3]}"
-            try:
-                # Ensure the module is loaded or reloaded
-                if module_name in sys.modules:
-                    module = importlib.reload(sys.modules[module_name])
-                else:
-                    module = importlib.import_module(module_name)
+    # Recursive Walk for "Perfect" multifolder structure support
+    for root, dirs, files in os.walk(plugin_dir):
+        # 1. Check for package-style modules (folders with __init__.py)
+        if "__init__.py" in files:
+            rel_path = os.path.relpath(root, plugin_dir)
+            if rel_path == ".": continue
+            module_path = rel_path.replace(os.sep, '.')
+            module_name = f"veda.features.{module_path}"
+            _load_module(module_name)
+            continue # Don't process files individually if it's a package
 
-                for name, obj in inspect.getmembers(module):
-                    # Robust check for VedaPlugin inheritance
-                    if inspect.isclass(obj) and any(base.__name__ == "VedaPlugin" for base in obj.__mro__):
-                        PLUGIN_REGISTRY[obj.__name__] = obj
-            except Exception as e:
-                logger.warning(f"Sovereign Discovery: Failed to load {module_name}: {e}")
+        # 2. Check for individual .py modules
+        for filename in files:
+            if filename.endswith(".py") and not filename.startswith("__"):
+                rel_path = os.path.relpath(os.path.join(root, filename), plugin_dir)
+                module_path = rel_path[:-3].replace(os.sep, '.')
+                module_name = f"veda.features.{module_path}"
+                _load_module(module_name)
+
+def _load_module(module_name):
+    """Internal helper to load and register plugin classes."""
+    try:
+        if module_name in sys.modules:
+            module = importlib.reload(sys.modules[module_name])
+        else:
+            module = importlib.import_module(module_name)
+
+        for name, obj in inspect.getmembers(module):
+            if inspect.isclass(obj) and any(base.__name__ == "VedaPlugin" for base in obj.__mro__):
+                PLUGIN_REGISTRY[obj.__name__] = obj
+    except Exception as e:
+        logger.warning(f"Sovereign Discovery: Failed to load {module_name}: {e}")
 
 def get_plugin_class(name):
     if not PLUGIN_REGISTRY: discover_and_load()

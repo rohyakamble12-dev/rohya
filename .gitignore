@@ -8,7 +8,6 @@ veda_notes.txt
 Veda_Screenshot.png
 *.mp3
 *.db
-veda/storage/
 logs/
 audit.log
 veda.log

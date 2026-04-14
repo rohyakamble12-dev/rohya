@@ -6,7 +6,7 @@ import os
 # Add the current directory to sys.path so we can import veda
 sys.path.append(os.getcwd())
 
-from veda.features.system_control import SystemPlugin
+from veda.features.system.apps import AppControlPlugin as SystemPlugin
 
 class TestSystemFallback(unittest.TestCase):
     def setUp(self):
@@ -27,7 +27,7 @@ class TestSystemFallback(unittest.TestCase):
 
         res = self.plugin.open_app({"app_name": "unknown_app"})
 
-        # Verify fallback message
+        # Verify fallback message contains the reports header
         self.assertIn("My web intelligence reports", res)
         # Verify web search was triggered via plugin
         mock_web.search.assert_called()
