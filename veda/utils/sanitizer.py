@@ -1,27 +1,28 @@
 import re
+import html
+from veda.utils.logger import logger
 
 class VedaSanitizer:
     @staticmethod
-    def clean_input(text):
-        """Removes wake words, punctuation, and extra whitespace."""
-        if not text:
-            return ""
+    def sanitize_user_input(text):
+        """Zero-Trust Sanitization: Neutralizes potential injection vectors in user input."""
+        if not text: return ""
 
-        # Lowercase and strip first
-        cleaned = text.lower().strip()
+        # 1. Strip HTML tags
+        clean_text = re.sub(r'<.*?>', '', text)
 
-        # Remove common prefixes followed by optional punctuation like comma
-        prefixes = [r"^veda[,\s]*", r"^hey veda[,\s]*", r"^please[,\s]*", r"^friday[,\s]*", r"^hey friday[,\s]*"]
+        # 2. Escape HTML entities
+        clean_text = html.escape(clean_text)
 
-        for p in prefixes:
-            cleaned = re.sub(p, "", cleaned).strip()
+        # 3. Block command injection tokens
+        blocked_tokens = [";", "&&", "||", "`", "$(", "system("]
+        for token in blocked_tokens:
+            if token in clean_text:
+                logger.warning(f"Sanitizer: Neutralized dangerous token '{token}' in user input.")
+                clean_text = clean_text.replace(token, "[BLOCKED]")
 
-        # Remove trailing punctuation
-        cleaned = re.sub(r"[?!.,]$", "", cleaned)
+        # 4. Limit length to prevent buffer/token overflow attacks
+        return clean_text[:2000].strip()
 
-        return cleaned.strip()
-
-    @staticmethod
-    def normalize_app_name(app_name):
-        """Sanitizes application names for system calls."""
-        return re.sub(r"[^a-zA-Z0-9\s:-]", "", app_name).strip()
+# Global Sanitizer
+sanitizer = VedaSanitizer()

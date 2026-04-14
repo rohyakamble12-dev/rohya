@@ -1,10 +1,4 @@
 __pycache__/
-*.pyc
-veda_memory.db
-veda_notes.txt
-.env
-*.mp3
-*.wav
 *.py[cod]
 *$py.class
 .env
